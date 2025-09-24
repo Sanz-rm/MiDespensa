@@ -6,51 +6,43 @@
       </ion-toolbar>
     </ion-header>
 
-    <ion-content :fullscreen="true">
-      <ion-header collapse="condense">
-        <ion-toolbar>
-          <ion-title size="large">Blank</ion-title>
-        </ion-toolbar>
-      </ion-header>
+    <ion-tab-bar color="light">
+      <ion-tab-button tab="1">
+        <ion-icon :icon="heart" />
+        <ion-label>Favorites</ion-label>
+        <ion-badge color="danger"></ion-badge>
+      </ion-tab-button>
 
-      <div id="container">
-        <strong>Ready to create an app?</strong>
-        <p>Start with Ionic <a target="_blank" rel="noopener noreferrer" href="https://ionicframework.com/docs/components">UI Components</a></p>
-      </div>
-    </ion-content>
+      <ion-tab-button tab="2">
+        <ion-icon :icon="musicalNote" />
+        <ion-label>Music</ion-label>
+      </ion-tab-button>
+
+      <ion-tab-button tab="3">
+        <ion-icon :icon="calendar" />
+        <ion-label>Calendar</ion-label>
+        <ion-badge color="danger">47</ion-badge>
+      </ion-tab-button>
+    </ion-tab-bar>
   </ion-page>
+
 </template>
 
-<script setup lang="ts">
-import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from '@ionic/vue';
+<script lang="ts">
+import { IonBadge, IonTabBar, IonTabButton, IonIcon, IonLabel } from '@ionic/vue';
+import { heart, calendar, musicalNote } from 'ionicons/icons';
+import { defineComponent } from 'vue';
+
+export default defineComponent({
+  components: {
+    IonBadge,
+    IonTabBar,
+    IonTabButton,
+    IonIcon,
+    IonLabel,
+  },
+  setup() {
+    return { heart, calendar, musicalNote };
+  },
+});
 </script>
-
-<style scoped>
-#container {
-  text-align: center;
-  
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 50%;
-  transform: translateY(-50%);
-}
-
-#container strong {
-  font-size: 20px;
-  line-height: 26px;
-}
-
-#container p {
-  font-size: 16px;
-  line-height: 22px;
-  
-  color: #8c8c8c;
-  
-  margin: 0;
-}
-
-#container a {
-  text-decoration: none;
-}
-</style>
