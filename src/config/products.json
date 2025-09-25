@@ -1,7 +1,7 @@
 {
-  "platano": "/images/productos/platano.png",
-  "manzana": "/images/productos/manzana.png",
-  "pera": "/images/productos/pera.png",
+  "platano": "products/platano.png",
+  "manzana": "products/manzana.png",
+  "pera": "products/pera.png",
   "naranja": "/images/productos/naranja.png",
   "limon": "/images/productos/limon.png",
   "fresa": "/images/productos/fresa.png",
