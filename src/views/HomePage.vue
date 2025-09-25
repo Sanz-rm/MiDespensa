@@ -33,6 +33,7 @@ const items: Item[] = [
   { name: 'Arroz basmati', units: 2, pantryCode: 'P001', locationId: 'Despensa' },
   { name: 'Macarrones', units: 3, pantryCode: 'P001', locationId: 'Despensa' },
   { name: 'Harina de trigo', units: 1, pantryCode: 'P001', locationId: 'Despensa' },
+  { name: 'Algo', units: 1, pantryCode: 'P001', locationId: 'Despensa' },
   { name: 'Leche entera', units: 2, pantryCode: 'P001', locationId: 'Nevera' }
 ];
 
