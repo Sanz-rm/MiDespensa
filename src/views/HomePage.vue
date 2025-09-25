@@ -23,14 +23,19 @@ import productsMap from '@/config/products.json'
 import type { Item } from '@/models/item'
 import type { ItemWithImage } from '@/models/itemWithImage'
 
+
 const items: Item[] = [
-  { name: 'Platano de Canarias', units: 6, pantryCode: 'P001', locationId: 'Nevera' },
-  { name: 'platanos verdes', units: 4, pantryCode: 'P001', locationId: 'Otro' },
-  { name: 'Manzana Fuji', units: 3, pantryCode: 'P001', locationId: 'Otro' },
-  { name: 'Lomo de salmon', units: 3, pantryCode: 'P001', locationId: 'Nevera' },
-  { name: 'Sel', units: 1, pantryCode: 'P001', locationId: 'Otro' },
-  { name: 'Salmon', units: 1, pantryCode: 'P001', locationId: 'Congelador' }
-]
+  { name: 'Plátano de Canarias', units: 6, pantryCode: 'P001', locationId: 'Nevera' },
+  { name: 'Manzana Fuji', units: 4, pantryCode: 'P001', locationId: 'Despensa' },
+  { name: 'Pera Conferencia', units: 5, pantryCode: 'P001', locationId: 'Nevera' },
+  { name: 'Lomo de salmón', units: 2, pantryCode: 'P001', locationId: 'Congelador' },
+  { name: 'Pan de molde', units: 1, pantryCode: 'P001', locationId: 'Otro' },
+  { name: 'Arroz basmati', units: 2, pantryCode: 'P001', locationId: 'Despensa' },
+  { name: 'Macarrones', units: 3, pantryCode: 'P001', locationId: 'Despensa' },
+  { name: 'Harina de trigo', units: 1, pantryCode: 'P001', locationId: 'Despensa' },
+  { name: 'Leche entera', units: 2, pantryCode: 'P001', locationId: 'Nevera' }
+];
+
 
 const normalize = (s: string) =>
   s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
