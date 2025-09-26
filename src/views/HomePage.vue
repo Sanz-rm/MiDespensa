@@ -1,9 +1,7 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Despensas</ion-title>
-      </ion-toolbar>
+    <ion-header translucent>
+      <PantryHeader title="MI DESPENSA" />
     </ion-header>
     <ion-content class="ion-padding">
       <!-- Mensaje de error -->
@@ -32,12 +30,14 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonSpinner } from '@ionic/vue'
+
+import PantryHeader from '@/components/ui/PantryHeader.vue'
+import { IonPage, IonHeader, IonContent, IonSpinner } from '@ionic/vue'
 import productsMap from '@/config/products.json'
 import type { Item } from '@/models/item'
 import type { ItemWithImage } from '@/models/itemWithImage'
 import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
-import { collection, query, where, getDocs, addDoc, deleteDoc, doc, updateDoc, onSnapshot, type Unsubscribe } from 'firebase/firestore'
+import { collection, query, where, getDocs, addDoc, deleteDoc, onSnapshot, type Unsubscribe } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { Pantry } from '@/models/pantry'
 
