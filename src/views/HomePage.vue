@@ -4,17 +4,25 @@
       <PantryHeader title="MI DESPENSA" />
     </ion-header>
     <ion-content class="ion-padding">
-      <div style="display:flex; gap:20px; flex-wrap:wrap;">
-        <div v-for="(pantry, i) in pantries" :key="i" style="text-align:center;" @click="getPantryItems(pantry.code)">
-          <p>{{ pantry.name }} ({{ pantry.code }})</p>
-        </div>
+      <!-- Mensaje de error -->
+      <div v-if="pantryError" style="margin-bottom:10px; text-align:center;">
+        <span style="color:red; font-weight:bold;">{{ pantryError }}</span>
       </div>
-    </ion-content>
-    <ion-content class="ion-padding">
-      <div style="display:flex; gap:20px; flex-wrap:wrap;">
-        <div v-for="(item, i) in itemsWithImage" :key="i" style="text-align:center;">
-          <img :src="`/src/assets/img/products/${item.image}`" :alt="item.name" style="width:120px; height:auto;" />
-          <p>{{ item.name }} ({{ item.units }})</p>
+
+      <div v-if="loading" style="display:flex; justify-content:center; align-items:center; height:100%;">
+        <ion-spinner name="crescent" style="transform:scale(2);"></ion-spinner>
+      </div>
+      <div v-else>
+        <div style="display:flex; gap:20px; flex-wrap:wrap;">
+          <div v-for="(pantry, i) in pantries" :key="i" style="text-align:center;" @click="getPantryItems(pantry.code)">
+            <p>{{ pantry.name }} ({{ pantry.code }})</p>
+          </div>
+        </div>
+        <div style="display:flex; gap:20px; flex-wrap:wrap; margin-top:20px;">
+          <div v-for="(item, i) in itemsWithImage" :key="i" style="text-align:center;">
+            <img :src="`/src/assets/img/products/${item.image}`" :alt="item.name" style="width:120px; height:auto;" />
+            <p>{{ item.name }} ({{ item.units }})</p>
+          </div>
         </div>
       </div>
     </ion-content>
@@ -22,28 +30,28 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonHeader, IonContent } from '@ionic/vue'
+
 import PantryHeader from '@/components/ui/PantryHeader.vue'
+import { IonPage, IonHeader, IonContent, IonSpinner } from '@ionic/vue'
 import productsMap from '@/config/products.json'
 import type { Item } from '@/models/item'
 import type { ItemWithImage } from '@/models/itemWithImage'
 import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
-import { collection, query, where, onSnapshot, type Unsubscribe } from 'firebase/firestore'
+import { collection, query, where, getDocs, addDoc, deleteDoc, onSnapshot, type Unsubscribe } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { Pantry } from '@/models/pantry'
 
-// const existing: string[] = JSON.parse(localStorage.getItem('myPantries') ?? '[]');
-//   existing.push("56N31A");
-//   localStorage.setItem('myPantries', JSON.stringify(existing));
+const pantries = ref<Pantry[]>([])
+const error = ref<string | null>(null)
+const pantryError = ref<string | null>(null)
+const loading = ref<boolean>(false)
+
+const codes: string[] = JSON.parse(localStorage.getItem('myPantries') ?? '[]');
+const pantryName = ref<string>('');
+let stop: Unsubscribe | null = null
 
 const deviceId = getDeviceId();
-console.log('ID del dispositivo:', deviceId);
-const pantries = ref<Pantry[]>([])
 const items = ref<Item[]>([])
-const error = ref<string | null>(null)
-const codes: string[] = JSON.parse(localStorage.getItem('myPantries') ?? '[]');
-
-let stop: Unsubscribe | null = null
 
 // Recuperamos toda la información necesaria
 onMounted(() => {
@@ -53,6 +61,7 @@ onMounted(() => {
 // Al cerrar la ventana dejaremos de escuchar a firestore
 onBeforeUnmount(() => stop?.())
 
+// Obtenemos el Identificador de nuestro dispositivo
 function getDeviceId(): string {
   let id = localStorage.getItem('deviceId');
   if (!id) {
@@ -63,8 +72,16 @@ function getDeviceId(): string {
   return id;
 }
 
-function getUserPantries() {
+// pequeña utilidad para simular retraso
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+// Obtenemos todas las despensas que tenga guardadas nuestro
+async function getUserPantries() {
   console.log('Mis despensas', codes)
+  loading.value = true
+  await sleep(1000) // simulamos carga
   const q = query(collection(db, 'pantries'), where('code', 'in', codes))
   stop = onSnapshot(
     q,
@@ -80,15 +97,104 @@ function getUserPantries() {
         } as Pantry
       })
       console.log('Despensas actuales:', pantries.value)
+      loading.value = false
     },
     err => {
       error.value = err?.message ?? String(err)
+      loading.value = false
     }
   )
 }
 
+// Crearemos una nueva despensa generando un código aleatorio
+const createPantry = async () => {
+  pantryError.value = null
+
+  const name = pantryName.value?.trim() ?? ''
+
+  if (name === '') {
+    pantryError.value = 'El nombre de la despensa es obligatorio.'
+    return
+  }
+  if (name.length > 25) {
+    pantryError.value = 'El nombre de la despensa es muy largo.'
+    return
+  }
+
+  try {
+    const code = await generatePantryCode()
+    await addDoc(collection(db, 'pantries'), {
+      name,
+      code,
+      memberCount: 1,
+      creatorId: deviceId
+    })
+    addPantryToStorage(code)
+    pantryError.value = null
+  } catch (e: any) {
+    pantryError.value = e?.message ?? 'Error al crear la despensa.'
+  }
+}
+
+
+// Eliminar despensa (si eres el creador)
+const deletePantry = async (code: string) => {
+  const q = query(collection(db, 'pantries'), where('code', '==', code));
+  const snap = await getDocs(q);
+  if (snap.empty) return;
+
+  const docRef = snap.docs[0].ref;
+  const pantry = snap.docs[0].data();
+
+  if (pantry.creatorId === deviceId) {
+    await deleteDoc(docRef);
+  }
+  pantries.value = pantries.value.filter(p => p.code !== code);
+  removePantryFromStorage(code);
+};
+
+
+// Generar código aleatorio de 6 caracteres comprobando que no exista ya
+async function generatePantryCode(): Promise<string> {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
+  let code = ''
+  let exists = true
+
+  while (exists) {
+    code = ''
+    for (let i = 0; i < 6; i++) {
+      code += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+
+    const q = query(collection(db, 'pantries'), where('code', '==', code))
+    const snap = await getDocs(q)
+    exists = !snap.empty
+  }
+
+  return code
+}
+
+// Añadir despensa a la lista de despensas del dispositivo
+function addPantryToStorage(code: string) {
+  const existing: string[] = JSON.parse(localStorage.getItem('myPantries') ?? '[]');
+  if (!existing.includes(code)) {
+    existing.push(code);
+    localStorage.setItem('myPantries', JSON.stringify(existing));
+  }
+}
+
+// Eliminar despensa de la lista de despensas del dispositivo
+function removePantryFromStorage(code: string) {
+  const existing: string[] = JSON.parse(localStorage.getItem('myPantries') ?? '[]');
+  const updated = existing.filter(c => c !== code);
+  localStorage.setItem('myPantries', JSON.stringify(updated));
+}
+
+
 // Recuperamos los items de la despensa seleccionada
-function getPantryItems(pantryCode: string) {
+async function getPantryItems(pantryCode: string) {
+  loading.value = true
+  await sleep(1500) // simulamos carga
   const q = query(collection(db, 'items'), where('pantryCode', '==', pantryCode))
   stop = onSnapshot(
     q,
@@ -104,28 +210,14 @@ function getPantryItems(pantryCode: string) {
         } as Item
       })
       console.log('Productos actuales:', items.value)
+      loading.value = false
     },
     err => {
       error.value = err?.message ?? String(err)
+      loading.value = false
     }
   )
 }
-
-/*
-const items: Item[] = [
-  { name: 'Plátano de Canarias', units: 6, pantryCode: '56N31A', locationId: 'QgAJafIEA6kOIamjePBW' },
-  { name: 'Manzana Fuji', units: 4, pantryCode: 'P001', locationId: 'Despensa' },
-  { name: 'Pera Conferencia', units: 5, pantryCode: 'P001', locationId: 'Nevera' },
-  { name: 'Lomo de salmón', units: 2, pantryCode: 'P001', locationId: 'Congelador' },
-  { name: 'Pan de molde', units: 1, pantryCode: 'P001', locationId: 'Otro' },
-  { name: 'Arroz basmati', units: 2, pantryCode: 'P001', locationId: 'Despensa' },
-  { name: 'Macarrones', units: 3, pantryCode: 'P001', locationId: 'Despensa' },
-  { name: 'Harina de trigo', units: 1, pantryCode: 'P001', locationId: 'Despensa' },
-  { name: 'Algo', units: 1, pantryCode: 'P001', locationId: 'Despensa' },
-  { name: 'Leche entera', units: 2, pantryCode: 'P001', locationId: 'Nevera' }
-];
-*/
-
 // Devolveremos el item en minusculas y sin tildes
 const normalize = (s: string) => {
   return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
@@ -152,7 +244,6 @@ const findImageForName = (name: string): string | null => {
   }
   return bestKey ? productsMap[bestKey] : null
 }
-
 // Crearemos una nueva lista de Items pero le añadiremos el campo de imagen para poder mostrarlo correctamente
 const itemsWithImage = computed<ItemWithImage[]>(() =>
   items.value.map(item => ({
