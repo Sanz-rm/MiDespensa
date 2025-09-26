@@ -1,9 +1,7 @@
 <template>
   <ion-page>
-    <ion-header>
-      <ion-toolbar>
-        <ion-title>Despensas</ion-title>
-      </ion-toolbar>
+    <ion-header translucent>
+      <PantryHeader title="MI DESPENSA" />
     </ion-header>
     <ion-content class="ion-padding">
       <div style="display:flex; gap:20px; flex-wrap:wrap;">
@@ -24,7 +22,8 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent } from '@ionic/vue'
+import { IonPage, IonHeader, IonContent } from '@ionic/vue'
+import PantryHeader from '@/components/ui/PantryHeader.vue'
 import productsMap from '@/config/products.json'
 import type { Item } from '@/models/item'
 import type { ItemWithImage } from '@/models/itemWithImage'
@@ -33,7 +32,12 @@ import { collection, query, where, onSnapshot, type Unsubscribe } from 'firebase
 import { db } from '@/firebase'
 import { Pantry } from '@/models/pantry'
 
+// const existing: string[] = JSON.parse(localStorage.getItem('myPantries') ?? '[]');
+//   existing.push("56N31A");
+//   localStorage.setItem('myPantries', JSON.stringify(existing));
+
 const deviceId = getDeviceId();
+console.log('ID del dispositivo:', deviceId);
 const pantries = ref<Pantry[]>([])
 const items = ref<Item[]>([])
 const error = ref<string | null>(null)
