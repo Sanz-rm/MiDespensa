@@ -141,7 +141,6 @@ function getDeviceId(): string {
 
 // Obtenemos todas las despensas que tenga guardadas nuestro
 async function getUserPantries() {
-  alert('Mis despensas' + codes)
   console.log('Mis despensas', codes)
   loading.value = true
   const q = query(collection(db, 'pantries'), where('code', 'in', codes))
