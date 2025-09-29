@@ -13,11 +13,11 @@
       <!-- Acciones -->
       <div class="actions">
         <button class="btn btn-solid">
-          <span class="btn-icon">＋</span>
+          <span class="material-icons">add</span>
           Nueva Despensa
         </button>
         <button class="btn btn-outline">
-          <span class="btn-icon">👥</span>
+          <span class="material-icons">group</span>
           Unirse a Despensa
         </button>
       </div>
@@ -43,13 +43,15 @@
             title="Acción"
             aria-label="Acción"
           >
-            <span v-if="pantry.creatorId === deviceId">🗑️</span>
-            <span v-else>↗️</span>
+            <span class="material-icons icons-red" v-if="pantry.creatorId === deviceId">delete</span>
+            <span class="material-icons icons-red" v-else>open_in_new</span>
           </button>
 
           <!-- Icono -->
           <div class="icon-box">
-            <div class="icon-house">🏠</div>
+            <div class="icon-house">
+              <span class="material-icons">home</span>
+            </div>
           </div>
 
           <!-- Info -->
@@ -59,7 +61,7 @@
             </div>
             <div class="meta">
               <div class="meta-item">
-                <span class="meta-icon">👥</span>
+                <span class="meta-icon material-icons">group</span>
                 <span>
                   {{ pantry.memberCount }}
                   {{ pantry.memberCount === 1 ? 'miembro' : 'miembros' }}
@@ -73,7 +75,7 @@
             <div class="footer-row">
               <div class="code-chip">
                 <span class="chip-text">{{ pantry.code }}</span>
-                <span class="chip-copy">📋</span>
+                <span class="chip-copy material-icons">content_copy</span>
               </div>
             </div>
           </div>
@@ -93,7 +95,6 @@
 </template>
 
 <script setup lang="ts">
-
 import PantryHeader from '@/components/ui/PantryHeader.vue'
 import { IonPage, IonHeader, IonContent, IonSpinner } from '@ionic/vue'
 import productsMap from '@/config/products.json'
@@ -345,15 +346,16 @@ ion-header.rounded-header::after { display: none; }
   font-weight: 700;
 }
 
-/* Acciones */
+/* Acciones: lado a lado si caben; si no, se apilan ocupando todo el ancho */
 .actions {
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); /* 2+ columnas si caben, si no 1 columna */
   gap: 12px;
-  flex-wrap: wrap;
 }
 .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center; /* centra icono + texto */
   gap: 8px;
   border-radius: 999px;
   padding: 10px 14px;
@@ -363,8 +365,8 @@ ion-header.rounded-header::after { display: none; }
   background: transparent;
   color: #1f9d55;
   box-shadow: 0 1px 0 rgba(0,0,0,0.04);
+  width: 100%; /* ocupa todo el ancho de su celda */
 }
-.btn .btn-icon { font-size: 16px; line-height: 0; }
 .btn-solid {
   background: #1f9d55;
   color: #fff;
@@ -372,6 +374,10 @@ ion-header.rounded-header::after { display: none; }
 .btn-outline:hover,
 .btn-solid:hover {
   transform: translateY(-1px);
+}
+
+.btn-outline:last-child{
+  margin-bottom: 5%;
 }
 
 /* Loading */
@@ -514,5 +520,9 @@ ion-header.rounded-header::after { display: none; }
   margin: 2px 0 0;
   font-size: 12px;
   color: #6b7280;
+}
+
+.icons-red{
+  color: red;
 }
 </style>
