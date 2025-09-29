@@ -45,7 +45,6 @@ import { App } from '@capacitor/app'
 
 type Props = {
   title?: string
-  logo?: string
   alt?: string
 }
 
@@ -164,6 +163,8 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
+
+
 .banner {
   display: flex;
   align-items: center;
