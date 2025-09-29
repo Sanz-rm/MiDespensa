@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <ion-header translucent>
+    <ion-header class="rounded-header">
       <PantryHeader title="MI DESPENSA" />
     </ion-header>
     <ion-content class="ion-padding">
@@ -25,6 +25,8 @@
           </div>
         </div>
       </div>
+
+      
     </ion-content>
   </ion-page>
 </template>
@@ -252,3 +254,18 @@ const itemsWithImage = computed<ItemWithImage[]>(() =>
   }))
 )
 </script>
+<style scoped>
+/* hace transparente el fondo de ion-header y elimina su sombra/borde rectos */
+ion-header.rounded-header {
+  --background: transparent;
+  --ion-background-color: transparent;
+  --box-shadow: none;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0;
+  padding: 0;
+  overflow: visible;
+}
+/* quita la fina línea inferior en Android */
+ion-header.rounded-header::after { display: none; }
+</style>

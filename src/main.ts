@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router';
+import { initTheme } from './theme/theme';
 
 import { IonicVue } from '@ionic/vue';
 
@@ -23,16 +24,17 @@ import '@ionic/vue/css/display.css';
 /**
  * Ionic Dark Mode
  * -----------------------------------------------------
- * For more info, please see:
- * https://ionicframework.com/docs/theming/dark-mode
+ * Usamos el modo oscuro por clase para ignorar el tema del sistema.
  */
 
-/* @import '@ionic/vue/css/palettes/dark.always.css'; */
-/* @import '@ionic/vue/css/palettes/dark.class.css'; */
-import '@ionic/vue/css/palettes/dark.system.css';
+/* import '@ionic/vue/css/palettes/dark.always.css'; */
+/* import '@ionic/vue/css/palettes/dark.system.css'; */
+import '@ionic/vue/css/palettes/dark.class.css';
 
 /* Theme variables */
 import './theme/variables.css';
+
+initTheme();
 
 const app = createApp(App)
   .use(IonicVue)

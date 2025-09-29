@@ -14,6 +14,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'purchase', component: () => import('@/views/PurchasePage.vue') },
     ],
   },
+  { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },
   { path: '/:pathMatch(.*)*', redirect: '/tabs/home' },
 ]
 
