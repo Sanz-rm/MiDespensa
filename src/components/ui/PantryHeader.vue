@@ -2,7 +2,7 @@
 <template>
   <header class="banner" role="banner">
     <div class="left">
-      <img class="logo" :src="logoUrl" :alt="alt" />
+      <img class="logo" src="@/assets/img/logo-mi-despensa.png" :alt="alt" />
       <h1 class="title">{{ title }}</h1>
     </div>
 
@@ -63,10 +63,6 @@ const btnRef = ref<HTMLButtonElement | null>(null)
 const title = computed(() => props.title)
 const alt = computed(() => props.alt)
 
-// Soporta logo por prop o el asset por defecto
-const logoUrl = computed(() =>
-  props.logo ?? new URL('@/assets/img/logo-mi-despensa.png', import.meta.url).href
-)
 
 // Detección de plataforma nativa (Capacitor v5+)
 const isNative = () =>
@@ -171,6 +167,7 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   gap: 12px;
   padding: 14px 18px;
+  padding-top: 8%;
   background: #2ea15d;
   color: #fff;
   border-bottom-left-radius: 18px;
