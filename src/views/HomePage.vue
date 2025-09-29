@@ -83,7 +83,7 @@
       <!-- Productos de la despensa seleccionada -->
       <div v-if="!loading && itemsWithImage.length" class="items-grid">
         <div v-for="(item, i) in itemsWithImage" :key="i" class="item-card">
-          <img :src="`/src/assets/img/products/${item.image}`" :alt="item.name" />
+          <img :src="`/img/products/${item.image}`" :alt="item.name" />
           <p class="item-name">{{ item.name }}</p>
           <p class="item-units">{{ item.units }} uds</p>
         </div>
@@ -119,6 +119,10 @@ const items = ref<Item[]>([])
 // Recuperamos toda la información necesaria
 onMounted(() => {
   getUserPantries()
+  removePantryFromStorage('56N31A')
+  removePantryFromStorage('24S331')
+  addPantryToStorage('56N31A') 
+  addPantryToStorage('24S331') 
 })
 
 // Al cerrar la ventana dejaremos de escuchar a firestore
@@ -135,16 +139,11 @@ function getDeviceId(): string {
   return id;
 }
 
-// pequeña utilidad para simular retraso
-function sleep(ms: number) {
-  return new Promise(resolve => setTimeout(resolve, ms))
-}
-
 // Obtenemos todas las despensas que tenga guardadas nuestro
 async function getUserPantries() {
+  alert('Mis despensas' + codes)
   console.log('Mis despensas', codes)
   loading.value = true
-  await sleep(1000) // simulamos carga
   const q = query(collection(db, 'pantries'), where('code', 'in', codes))
   stop = onSnapshot(
     q,
@@ -257,7 +256,6 @@ function removePantryFromStorage(code: string) {
 // Recuperamos los items de la despensa seleccionada
 async function getPantryItems(pantryCode: string) {
   loading.value = true
-  await sleep(1500) // simulamos carga
   const q = query(collection(db, 'items'), where('pantryCode', '==', pantryCode))
   stop = onSnapshot(
     q,
