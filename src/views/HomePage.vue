@@ -25,6 +25,8 @@
           </div>
         </div>
       </div>
+
+      
     </ion-content>
   </ion-page>
 </template>
@@ -252,3 +254,5 @@ const itemsWithImage = computed<ItemWithImage[]>(() =>
   }))
 )
 </script>
+<style scoped>
+</style>
