@@ -2,7 +2,7 @@
 <template>
   <header class="banner" role="banner">
     <div class="left">
-      <img class="logo" src="@/assets/img/logo-mi-despensa.png" :alt="alt" />
+      <img class="logo" :src="logoUrl" :alt="alt" />
       <h1 class="title">{{ title }}</h1>
     </div>
 
@@ -38,7 +38,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { Capacitor } from '@capacitor/core'
 import { App } from '@capacitor/app'
@@ -54,8 +54,6 @@ const props = withDefaults(defineProps<Props>(), {
   alt: 'Logo Mi Despensa'
 })
 
-const { title, alt } = props
-
 const emit = defineEmits<{ (e: 'menu', action: string): void }>()
 const router = useRouter()
 
@@ -63,16 +61,46 @@ const isOpen = ref(false)
 const menuRef = ref<HTMLElement | null>(null)
 const btnRef = ref<HTMLButtonElement | null>(null)
 
+const title = computed(() => props.title)
+const alt = computed(() => props.alt)
+
+// Soporta logo por prop o el asset por defecto
+const logoUrl = computed(() =>
+  props.logo ?? new URL('@/assets/img/logo-mi-despensa.png', import.meta.url).href
+)
+
+// Detección de plataforma nativa (Capacitor v5+)
+const isNative = () =>
+  typeof (Capacitor as any).isNativePlatform === 'function'
+    ? (Capacitor as any).isNativePlatform()
+    : Capacitor.getPlatform() !== 'web'
+
 const toggle = () => { isOpen.value = !isOpen.value }
 const close = () => { isOpen.value = false }
 
-const exitApp = async () => {
-  if (Capacitor.isNativePlatform()) {
-    await App.exitApp()
-    return
+const gracefulWebExit = async () => {
+  // En web, intentamos volver atrás; si no hay historial, vamos a la raíz
+  if (window.history.length > 1) {
+    window.history.back()
+  } else {
+    try {
+      await router.replace({ name: 'home' } as any)
+    } catch {
+      location.href = '/'
+    }
   }
-  window.close()
-  location.replace('about:blank')
+}
+
+const exitApp = async () => {
+  if (isNative()) {
+    try {
+      await App.exitApp()
+      return
+    } catch {
+      // Fallback por si no está disponible (iOS no soporta cerrar)
+    }
+  }
+  await gracefulWebExit()
 }
 
 const onMenu = async (action: string) => {
@@ -80,7 +108,7 @@ const onMenu = async (action: string) => {
 
   if (action === 'settings') {
     try {
-      await router.push({ name: 'settings' })
+      await router.push({ name: 'settings' } as any)
     } catch {}
   } else if (action === 'exit') {
     await exitApp()
@@ -98,8 +126,41 @@ const onDocClick = (e: MouseEvent) => {
   if (clickedOutsideMenu && clickedOutsideBtn) close()
 }
 
-onMounted(() => document.addEventListener('click', onDocClick))
-onBeforeUnmount(() => document.removeEventListener('click', onDocClick))
+// Manejo del botón físico "Atrás" en Android (Capacitor)
+let removeBackListener: (() => void) | null = null
+
+onMounted(async () => {
+  document.addEventListener('click', onDocClick)
+
+  if (isNative()) {
+    try {
+      const { remove } = await App.addListener('backButton', ({ canGoBack }) => {
+        // 1) Si el menú está abierto, ciérralo
+        if (isOpen.value) {
+          close()
+          return
+        }
+        // 2) Si el router puede retroceder, vuelve atrás; si no, sal de la app
+        if (canGoBack) {
+          router.back()
+        } else {
+          App.exitApp().catch(() => {})
+        }
+      })
+      removeBackListener = remove
+    } catch {
+      // Ignorar si no está disponible
+    }
+  }
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', onDocClick)
+  if (removeBackListener) {
+    try { removeBackListener() } catch {}
+    removeBackListener = null
+  }
+})
 </script>
 
 <style scoped>
