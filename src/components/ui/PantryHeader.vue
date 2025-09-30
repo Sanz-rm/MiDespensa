@@ -2,7 +2,7 @@
 <template>
   <header class="banner" role="banner">
     <div class="left">
-      <img class="logo" src="@/assets/img/logo-mi-despensa.png" :alt="alt" />
+      <img class="logo" src="@/assets/img/logo-midespensa.png" :alt="alt" />
       <h1 class="title">{{ title }}</h1>
     </div>
 
