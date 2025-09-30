@@ -29,7 +29,7 @@
 
       <!-- Lista de despensas -->
       <div v-else class="pantry-list">
-        <div v-for="(pantry, i) in pantries" :key="i" class="pantry-card" @click="navigateToInventory(pantry.code)">
+        <div v-for="(pantry, i) in pantries" :key="i" class="pantry-card" @click="selectPantry(pantry.code)">
           <!-- Botón esquina derecha (solo visual) -->
           <button class="corner-btn" :class="pantry.creatorId === deviceId ? 'danger' : 'accent'" @click.stop
             title="Acción" aria-label="Acción">
@@ -299,6 +299,11 @@ function deletePantryFromStorage(code: string) {
 function navigateToInventory(pantryCode: string) {
   console.log('Despensa seleccionada:', pantryCode)
   router.push({ name: 'inventary', params: { code: pantryCode } })
+}
+
+function selectPantry(pantryCode: string) {
+  localStorage.setItem('selectedPantry', pantryCode);
+  console.log('Despensa seleccionada:', pantryCode)
 }
 
 // Recuperamos los items de la despensa seleccionada
