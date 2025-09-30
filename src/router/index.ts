@@ -10,7 +10,7 @@ const routes: RouteRecordRaw[] = [
     children: [
       { path: '', redirect: '/tabs/home' },
       { path: 'home', component: () => import('@/views/HomePage.vue') },
-      { path: 'inventary', component: () => import('@/views/InventaryPage.vue') },
+      { path: 'inventary/:code', name: 'inventary', component: () => import('@/views/InventaryPage.vue'), props: true },
       { path: 'purchase', component: () => import('@/views/PurchasePage.vue') },
     ],
   },

@@ -1,4 +1,3 @@
-<!-- src/views/TabsPage.vue (layout de tabs, como en la doc) -->
 <template>
   <ion-page>
     <ion-tabs>
