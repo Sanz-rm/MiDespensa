@@ -1,4 +1,3 @@
-// src/router/index.ts
 import { createRouter, createWebHistory } from '@ionic/vue-router'
 import type { RouteRecordRaw } from 'vue-router'
 
@@ -10,8 +9,8 @@ const routes: RouteRecordRaw[] = [
     children: [
       { path: '', redirect: '/tabs/home' },
       { path: 'home', component: () => import('@/views/HomePage.vue') },
-      { path: 'inventary', component: () => import('@/views/InventaryPage.vue') },
-      { path: 'purchase', component: () => import('@/views/PurchasePage.vue') },
+      { path: 'inventory/:code', name: 'inventory', component: () => import('@/views/InventoryPage.vue'), props: true },
+      { path: 'purchase/:code', name: 'purchase', component: () => import('@/views/PurchasePage.vue'), props: true  },
     ],
   },
   { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },
