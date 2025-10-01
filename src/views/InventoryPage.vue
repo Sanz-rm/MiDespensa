@@ -1,0 +1,160 @@
+<template>
+  <ion-page>
+    <ion-header class="rounded-header">
+      <PantryHeader title="INVENTARIO" />
+    </ion-header>
+
+    <ion-content class="ion-padding pantry-content">
+      <!-- Mensaje de error -->
+      <div v-if="pantryError" class="error-box">
+        <span>{{ pantryError }}</span>
+      </div>
+
+      <!-- Loading -->
+      <div v-if="loading" class="loading-box">
+        <ion-spinner name="crescent" style="transform:scale(2);"></ion-spinner>
+      </div>
+
+      <!-- Productos de la despensa seleccionada -->
+      <div v-if="!loading && itemsWithImage.length" class="items-grid">
+        <div v-for="(item, i) in itemsWithImage" :key="i" class="item-card">
+          <img :src="`/img/products/${item.image}`" :alt="item.name" />
+          <p class="item-name">{{ item.name }}</p>
+          <p class="item-units">{{ item.units }} uds</p>
+        </div>
+      </div>
+    </ion-content>
+  </ion-page>
+</template>
+
+<script setup lang="ts">
+import PantryHeader from '@/components/ui/PantryHeader.vue'
+import { IonPage, IonHeader, IonContent, IonSpinner } from '@ionic/vue'
+import productsMap from '@/config/products.json'
+import type { Item } from '@/models/item'
+import type { ItemWithImage } from '@/models/itemWithImage'
+import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
+import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, type Unsubscribe } from 'firebase/firestore'
+import { db } from '@/firebase'
+import { useRouter } from 'vue-router'
+
+
+const props = defineProps<{ code: string }>()
+console.log('Código recibido:', props.code)
+
+const error = ref<string | null>(null)
+const pantryError = ref<string | null>(null)
+const loading = ref<boolean>(false)
+
+const codes: string[] = JSON.parse(localStorage.getItem('myPantries') ?? '[]');
+
+const selectedCode = ref<string>('')
+let stop: Unsubscribe | null = null
+
+const items = ref<Item[]>([])
+const router = useRouter()
+
+onMounted(() => {
+  getPantryItems(props.code)
+})
+
+// Recuperamos los items de la despensa seleccionada
+async function getPantryItems(pantryCode: string) {
+  loading.value = true
+  const q = query(collection(db, 'items'), where('pantryCode', '==', pantryCode))
+  stop = onSnapshot(
+    q,
+    snap => {
+      items.value = snap.docs.map(d => {
+        const item = d.data() as any
+        return {
+          id: String(d.id),
+          name: String(item.name ?? ''),
+          units: Number(item.units ?? 0),
+          pantryCode: String(item.pantryCode ?? pantryCode),
+          locationId: String(item.locationId ?? 'Otro')
+        } as Item
+      })
+      console.log('Productos actuales:', items.value)
+      loading.value = false
+    },
+    err => {
+      error.value = err?.message ?? String(err)
+      loading.value = false
+    }
+  )
+}
+// Devolveremos el item en minusculas y sin tildes
+const normalize = (s: string) => {
+  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+}
+
+// Almacenamos en una lista todas las claves de propiedades
+const keys = Object.keys(productsMap) as Array<keyof typeof productsMap>
+
+/**
+ * Obtenemos la imagen mas adecuada del item.
+ * Normalizaremos nuestras claves e items para comprobar que clave coincide mejor con el item seleccionado.
+ * Una vez obtenida la clave con mas coincidencia devolveremos el valor del nombre de la imagen a asociar.
+ */
+const findImageForName = (name: string): string | null => {
+  const n = normalize(name)
+  let bestKey: keyof typeof productsMap | null = null
+  let bestLen = -1
+  for (const key of keys) {
+    const nk = normalize(String(key))
+    if (n.includes(nk) && nk.length > bestLen) {
+      bestKey = key
+      bestLen = nk.length
+    }
+  }
+  return bestKey ? productsMap[bestKey] : null
+}
+// Crearemos una nueva lista de Items pero le añadiremos el campo de imagen para poder mostrarlo correctamente
+const itemsWithImage = computed<ItemWithImage[]>(() =>
+  items.value.map(item => ({
+    ...item,
+    image: findImageForName(item.name) ?? 'default.png'
+  }))
+)
+</script>
+
+<style scoped>
+/* Grid de productos */
+.items-grid {
+  margin-top: 8px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 14px;
+}
+
+.item-card {
+  text-align: center;
+  padding: 10px;
+  border-radius: 12px;
+  border: 1px solid #eef2f4;
+  background: #fff;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+.item-card img {
+  width: 100%;
+  height: 100px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 8px;
+}
+
+.item-name {
+  margin: 0;
+  font-weight: 700;
+  font-size: 14px;
+  color: #111827;
+}
+
+.item-units {
+  margin: 2px 0 0;
+  font-size: 12px;
+  color: #6b7280;
+}
+</style>

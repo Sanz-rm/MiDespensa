@@ -29,7 +29,7 @@
 
       <!-- Lista de despensas -->
       <div v-else class="pantry-list">
-        <div v-for="(pantry, i) in pantries" :key="i" class="pantry-card" @click="getPantryItems(pantry.code)">
+        <div v-for="(pantry, i) in pantries" :key="i" class="pantry-card" @click="selectPantry(pantry.code)">
           <!-- Botón esquina derecha (solo visual) -->
           <button class="corner-btn" :class="pantry.creatorId === deviceId ? 'danger' : 'accent'" @click.stop
             title="Acción" aria-label="Acción">
@@ -94,6 +94,7 @@ import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
 import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, type Unsubscribe } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { Pantry } from '@/models/pantry'
+import { useRouter } from 'vue-router'
 
 const pantries = ref<Pantry[]>([])
 const error = ref<string | null>(null)
@@ -101,11 +102,13 @@ const pantryError = ref<string | null>(null)
 const loading = ref<boolean>(false)
 
 const codes: string[] = JSON.parse(localStorage.getItem('myPantries') ?? '[]');
-const pantryName = ref<string>('Prueba unirse');
+const pantryName = ref<string>('');
 let stop: Unsubscribe | null = null
 
 const deviceId = getDeviceId();
 const items = ref<Item[]>([])
+const router = useRouter()
+
 
 // Recuperamos toda la información necesaria
 onMounted(() => {
@@ -292,6 +295,16 @@ function deletePantryFromStorage(code: string) {
   localStorage.setItem('myPantries', JSON.stringify(updated));
 }
 
+// Navegamos al inventario de nuestra despensa y almacenamos el codigo de la despensa seleccionada
+function navigateToInventory(pantryCode: string) {
+  console.log('Despensa seleccionada:', pantryCode)
+  router.push({ name: 'inventary', params: { code: pantryCode } })
+}
+
+function selectPantry(pantryCode: string) {
+  localStorage.setItem('selectedPantry', pantryCode);
+  console.log('Despensa seleccionada:', pantryCode)
+}
 
 // Recuperamos los items de la despensa seleccionada
 async function getPantryItems(pantryCode: string) {
@@ -452,7 +465,7 @@ ion-header.rounded-header::after {
   grid-template-columns: 56px 1fr;
   gap: 12px;
   padding: 12px;
-  border: 2px solid #d9f2e4;
+  border: 2px solid #2ea15d;
   background: #ffffff;
   border-radius: 14px;
   box-shadow: 0 2px 0 rgba(31, 157, 85, 0.1);
