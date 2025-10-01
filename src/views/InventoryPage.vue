@@ -119,6 +119,18 @@ const itemsWithImage = computed<ItemWithImage[]>(() =>
 </script>
 
 <style scoped>
+/* Header transparente y sin sombra */
+ion-header.rounded-header {
+  --background: transparent;
+  --ion-background-color: transparent;
+  --box-shadow: none;
+  background: transparent !important;
+  box-shadow: none !important;
+  border: 0;
+  padding: 0;
+  overflow: visible;
+}
+
 /* Grid de productos */
 .items-grid {
   margin-top: 8px;
