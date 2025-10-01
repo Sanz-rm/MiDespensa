@@ -3,7 +3,7 @@
     <ion-tabs>
       <ion-router-outlet />
       <ion-tab-bar slot="bottom" class="tabs">
-        <ion-tab-button tab="inventary" @click="navigateTo('inventory')">
+        <ion-tab-button tab="inventory" :href="inventoryHref" :disabled="!selectedPantry">
           <ion-icon :icon="cubeOutline" />
           <ion-label>Inventario</ion-label>
         </ion-tab-button>
@@ -13,7 +13,7 @@
           <ion-label>Despensas</ion-label>
         </ion-tab-button>
 
-        <ion-tab-button tab="purchase" @click="navigateTo('purchase')">
+        <ion-tab-button tab="purchase" :href="purchaseHref" :disabled="!selectedPantry">
           <ion-icon :icon="cartOutline" />
           <ion-label>Compra</ion-label>
         </ion-tab-button>
@@ -23,20 +23,23 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonTabs, IonRouterOutlet } from '@ionic/vue'
-import { IonTabBar, IonTabButton, IonIcon, IonLabel } from '@ionic/vue'
+import { IonPage, IonTabs, IonRouterOutlet, IonTabBar, IonTabButton, IonIcon, IonLabel } from '@ionic/vue'
 import { homeOutline, cubeOutline, cartOutline } from 'ionicons/icons'
-import { useRouter } from 'vue-router'
+import { ref, computed, onMounted } from 'vue'
 
-const router = useRouter()
+const selectedPantry = ref<string | null>(null)
 
-function navigateTo(nameView: string) {
-  let selectedPantry = localStorage.getItem('selectedPantry');
-  if (selectedPantry) {
-    router.push({ name: nameView, params: { code: selectedPantry } })
-  }
-}
+onMounted(() => {
+  selectedPantry.value = localStorage.getItem('selectedPantry')
+})
 
+const inventoryHref = computed(() =>
+  selectedPantry.value ? `/tabs/inventory/${selectedPantry.value}` : undefined
+)
+
+const purchaseHref = computed(() =>
+  selectedPantry.value ? `/tabs/purchase/${selectedPantry.value}` : undefined
+)
 </script>
 
 <style scoped>
