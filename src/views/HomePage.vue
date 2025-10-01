@@ -296,14 +296,10 @@ function deletePantryFromStorage(code: string) {
 }
 
 // Navegamos al inventario de nuestra despensa y almacenamos el codigo de la despensa seleccionada
-function navigateToInventory(pantryCode: string) {
-  console.log('Despensa seleccionada:', pantryCode)
-  router.push({ name: 'inventary', params: { code: pantryCode } })
-}
-
 function selectPantry(pantryCode: string) {
-  localStorage.setItem('selectedPantry', pantryCode);
+  localStorage.setItem('selectedPantry', pantryCode)
   console.log('Despensa seleccionada:', pantryCode)
+  router.push({ name: 'inventory', params: { code: pantryCode } })
 }
 
 // Recuperamos los items de la despensa seleccionada
