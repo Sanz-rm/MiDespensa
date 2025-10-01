@@ -24,13 +24,13 @@
 
 <script setup lang="ts">
 import router from '@/router'
-import { IonPage, IonTabs, IonRouterOutlet, IonTabBar, IonTabButton, IonIcon, IonLabel, toastController} from '@ionic/vue'
+import { IonPage, IonTabs, IonRouterOutlet, IonTabBar, IonTabButton, IonIcon, IonLabel, toastController } from '@ionic/vue'
 import { homeOutline, cubeOutline, cartOutline } from 'ionicons/icons'
 import { ref } from 'vue'
 
 const selectedPantry = ref<string | null>(null)
 
-async function navigateTo(view: string) {
+async function navigateTo(view: 'inventory' | 'purchase') {
   selectedPantry.value = localStorage.getItem('selectedPantry')
   if (selectedPantry.value) {
     router.push({ name: view, params: { code: selectedPantry.value } })
