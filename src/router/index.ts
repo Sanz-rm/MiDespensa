@@ -8,9 +8,22 @@ const routes: RouteRecordRaw[] = [
     component: () => import('@/views/TabsPage.vue'),
     children: [
       { path: '', redirect: '/tabs/home' },
-      { path: 'home', component: () => import('@/views/HomePage.vue') },
-      { path: 'inventory/:code', name: 'inventory', component: () => import('@/views/InventoryPage.vue'), props: true },
-      { path: 'purchase/:code', name: 'purchase', component: () => import('@/views/PurchasePage.vue'), props: true  },
+      { path: 'home', name: 'home', component: () => import('@/views/HomePage.vue') },
+
+      {
+        path: 'pantry/:code/inventory',
+        name: 'inventory',
+        component: () => import('@/views/InventoryPage.vue'),
+        props: true,
+        alias: ['inventory/:code'],
+      },
+      {
+        path: 'pantry/:code/purchase',
+        name: 'purchase',
+        component: () => import('@/views/PurchasePage.vue'),
+        props: true,
+        alias: ['purchase/:code'],
+      },
     ],
   },
   { path: '/settings', name: 'settings', component: () => import('@/views/SettingsView.vue') },
