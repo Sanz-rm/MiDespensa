@@ -34,9 +34,8 @@ import productsMap from '@/config/products.json'
 import type { Item } from '@/models/item'
 import type { ItemWithImage } from '@/models/itemWithImage'
 import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
-import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, type Unsubscribe } from 'firebase/firestore'
+import { collection, query, where, onSnapshot, type Unsubscribe } from 'firebase/firestore'
 import { db } from '@/firebase'
-import { useRouter } from 'vue-router'
 
 
 const props = defineProps<{ code: string }>()
@@ -46,17 +45,17 @@ const error = ref<string | null>(null)
 const pantryError = ref<string | null>(null)
 const loading = ref<boolean>(false)
 
-const codes: string[] = JSON.parse(localStorage.getItem('myPantries') ?? '[]');
 
-const selectedCode = ref<string>('')
 let stop: Unsubscribe | null = null
 
 const items = ref<Item[]>([])
-const router = useRouter()
 
 onMounted(() => {
   getPantryItems(props.code)
 })
+
+// Al cerrar la ventana dejaremos de escuchar a firestore
+onBeforeUnmount(() => stop?.())
 
 // Recuperamos los items de la despensa seleccionada
 async function getPantryItems(pantryCode: string) {
