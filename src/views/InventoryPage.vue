@@ -1,7 +1,14 @@
 <template>
   <ion-page>
     <ion-header class="rounded-header">
-      <PantryHeader title="INVENTARIO" />
+      <ion-toolbar class="back-toolbar">
+        <ion-buttons slot="start">
+          <ion-button :routerLink="{ name: 'home' }" routerDirection="root" fill="clear">
+            <ion-icon :icon="arrowBackOutline" style="font-size:28px;" />
+          </ion-button>
+        </ion-buttons>
+        <ion-title>{{ props.name }}</ion-title>
+      </ion-toolbar>
     </ion-header>
 
     <ion-content class="ion-padding pantry-content">
@@ -28,8 +35,8 @@
 </template>
 
 <script setup lang="ts">
-import PantryHeader from '@/components/ui/PantryHeader.vue'
-import { IonPage, IonHeader, IonContent, IonSpinner } from '@ionic/vue'
+import { IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons, IonButton, IonIcon } from '@ionic/vue'
+import { arrowBackOutline} from 'ionicons/icons'
 import productsMap from '@/config/products.json'
 import type { Item } from '@/models/item'
 import type { ItemWithImage } from '@/models/itemWithImage'
@@ -37,17 +44,14 @@ import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
 import { collection, query, where, onSnapshot, type Unsubscribe } from 'firebase/firestore'
 import { db } from '@/firebase'
 
-
-const props = defineProps<{ code: string }>()
-console.log('Código recibido:', props.code)
+const props = defineProps<{ code: string; name: string }>()
+console.log('Codigo y nombre de la despensa:', props.code, props.name)
 
 const error = ref<string | null>(null)
 const pantryError = ref<string | null>(null)
 const loading = ref<boolean>(false)
 
-
 let stop: Unsubscribe | null = null
-
 const items = ref<Item[]>([])
 
 onMounted(() => {
@@ -119,19 +123,39 @@ const itemsWithImage = computed<ItemWithImage[]>(() =>
 </script>
 
 <style scoped>
-/* Header transparente y sin sombra */
+/* Header */
 ion-header.rounded-header {
-  --background: transparent;
-  --ion-background-color: transparent;
+  --background: #2ea15d;
+  --ion-background-color: #2ea15d;
+  --color: #fff;
   --box-shadow: none;
-  background: transparent !important;
+  background: #2ea15d !important;
   box-shadow: none !important;
   border: 0;
   padding: 0;
   overflow: visible;
 }
 
-/* Grid de productos */
+.back-toolbar {
+  --background: transparent;
+  --border-width: 0;
+  padding-inline: 4px;
+}
+
+ion-header.rounded-header ion-buttons ion-button {
+  --color: #fff;
+}
+
+ion-header.rounded-header ion-icon {
+  color: #fff;
+}
+
+ion-header.rounded-header ion-title {
+  color: #fff;
+  font-weight: 700;
+}
+
+/* Productos */
 .items-grid {
   margin-top: 8px;
   display: grid;
