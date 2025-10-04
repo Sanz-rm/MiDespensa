@@ -29,7 +29,7 @@
 
       <!-- Lista de despensas -->
       <div v-else class="pantry-list">
-        <div v-for="(pantry, i) in pantries" :key="i" class="pantry-card" @click="selectPantry(pantry.code)">
+        <div v-for="(pantry, i) in pantries" :key="i" class="pantry-card" @click="selectPantry(pantry.code, pantry.name)">
           <!-- Botón esquina derecha (solo visual) -->
           <button class="corner-btn" :class="pantry.creatorId === deviceId ? 'danger' : 'accent'" @click.stop
             title="Acción" aria-label="Acción">
@@ -71,15 +71,6 @@
           </div>
         </div>
       </div>
-
-      <!-- Productos de la despensa seleccionada -->
-      <div v-if="!loading && itemsWithImage.length" class="items-grid">
-        <div v-for="(item, i) in itemsWithImage" :key="i" class="item-card">
-          <img :src="`/img/products/${item.image}`" :alt="item.name" />
-          <p class="item-name">{{ item.name }}</p>
-          <p class="item-units">{{ item.units }} uds</p>
-        </div>
-      </div>
     </ion-content>
   </ion-page>
 </template>
@@ -87,10 +78,7 @@
 <script setup lang="ts">
 import PantryHeader from '@/components/ui/PantryHeader.vue'
 import { IonPage, IonHeader, IonContent, IonSpinner } from '@ionic/vue'
-import productsMap from '@/config/products.json'
-import type { Item } from '@/models/item'
-import type { ItemWithImage } from '@/models/itemWithImage'
-import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
+import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, type Unsubscribe } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { Pantry } from '@/models/pantry'
@@ -106,7 +94,6 @@ const pantryName = ref<string>('');
 let stop: Unsubscribe | null = null
 
 const deviceId = getDeviceId();
-const items = ref<Item[]>([])
 const router = useRouter()
 
 
@@ -295,72 +282,12 @@ function deletePantryFromStorage(code: string) {
   localStorage.setItem('myPantries', JSON.stringify(updated));
 }
 
-// Navegamos al inventario de nuestra despensa y almacenamos el codigo de la despensa seleccionada
-function selectPantry(pantryCode: string) {
-  localStorage.setItem('selectedPantry', pantryCode)
-  console.log('Despensa seleccionada:', pantryCode)
-  router.push({ name: 'inventory', params: { code: pantryCode } })
+// Navegamos al inventario de nuestra despensa
+function selectPantry(code: string, name: string) {
+   router.push(`/tabs/${code}/${name}/inventory`)
 }
 
-// Recuperamos los items de la despensa seleccionada
-async function getPantryItems(pantryCode: string) {
-  loading.value = true
-  const q = query(collection(db, 'items'), where('pantryCode', '==', pantryCode))
-  stop = onSnapshot(
-    q,
-    snap => {
-      items.value = snap.docs.map(d => {
-        const item = d.data() as any
-        return {
-          id: String(d.id),
-          name: String(item.name ?? ''),
-          units: Number(item.units ?? 0),
-          pantryCode: String(item.pantryCode ?? pantryCode),
-          locationId: String(item.locationId ?? 'Otro')
-        } as Item
-      })
-      console.log('Productos actuales:', items.value)
-      loading.value = false
-    },
-    err => {
-      error.value = err?.message ?? String(err)
-      loading.value = false
-    }
-  )
-}
-// Devolveremos el item en minusculas y sin tildes
-const normalize = (s: string) => {
-  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-}
 
-// Almacenamos en una lista todas las claves de propiedades
-const keys = Object.keys(productsMap) as Array<keyof typeof productsMap>
-
-/**
- * Obtenemos la imagen mas adecuada del item.
- * Normalizaremos nuestras claves e items para comprobar que clave coincide mejor con el item seleccionado.
- * Una vez obtenida la clave con mas coincidencia devolveremos el valor del nombre de la imagen a asociar.
- */
-const findImageForName = (name: string): string | null => {
-  const n = normalize(name)
-  let bestKey: keyof typeof productsMap | null = null
-  let bestLen = -1
-  for (const key of keys) {
-    const nk = normalize(String(key))
-    if (n.includes(nk) && nk.length > bestLen) {
-      bestKey = key
-      bestLen = nk.length
-    }
-  }
-  return bestKey ? productsMap[bestKey] : null
-}
-// Crearemos una nueva lista de Items pero le añadiremos el campo de imagen para poder mostrarlo correctamente
-const itemsWithImage = computed<ItemWithImage[]>(() =>
-  items.value.map(item => ({
-    ...item,
-    image: findImageForName(item.name) ?? 'default.png'
-  }))
-)
 </script>
 
 <style scoped>

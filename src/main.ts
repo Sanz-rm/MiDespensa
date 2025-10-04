@@ -39,8 +39,6 @@ import './theme/variables.css';
 
 initTheme();
 
-localStorage.removeItem('selectedPantry')
-
 const app = createApp(App)
   .use(IonicVue)
   .use(router);
