@@ -50,18 +50,22 @@
               <h3 class="name">{{ pantry.name }}</h3>
             </div>
             <div class="meta">
-              <div class="meta-item">
-                <span class="meta-icon material-icons">group</span>
-                <span>
-                  {{ pantry.memberCount }}
-                  {{ pantry.memberCount === 1 ? 'miembro' : 'miembros' }}
-                </span>
-              </div>
-              <div class="meta-sep">•</div>
-              <div class="meta-item">
-                <span>Productos</span>
-              </div>
+            <div class="meta-item">
+              <span class="meta-icon material-icons" aria-hidden="true">group</span>
+              <span>
+                {{ pantry.memberCount ?? 0 }}
+                {{ (pantry.memberCount ?? 0) === 1 ? 'miembro' : 'miembros' }}
+              </span>
             </div>
+            <div class="meta-sep">•</div>
+            <div class="meta-item">
+              <span class="meta-icon material-icons" aria-hidden="true">inventory_2</span>
+              <span>
+                {{ pantry.totalItems ?? 0 }}
+                {{ (pantry.totalItems ?? 0) === 1 ? 'producto' : 'productos' }}
+              </span>
+            </div>
+          </div>
             <div class="footer-row">
               <div class="code-chip">
                 <span class="chip-text">{{ pantry.code }}</span>
@@ -135,6 +139,7 @@ async function getUserPantries() {
           code: String(pantry.code ?? ''),
           name: String(pantry.name ?? ''),
           memberCount: Number(pantry.memberCount ?? 1),
+          totalItems: Number(pantry.totalItems ?? 0),
           creatorId: String(pantry.creatorId ?? '0000')
         } as Pantry
       })
@@ -169,6 +174,7 @@ async function createPantry() {
       name,
       code,
       memberCount: 1,
+      totalItems: 0,
       creatorId: deviceId
     })
     addPantryToStorage(code)
@@ -209,6 +215,7 @@ async function joinPantry(joinCode: string) {
     code: pantry.code,
     name: pantry.name,
     memberCount: pantry.memberCount + 1,
+    totalItems: 0,
     creatorId: pantry.creatorId
   }
   pantries.value.push(newPantry)

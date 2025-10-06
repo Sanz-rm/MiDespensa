@@ -7,19 +7,14 @@
             <ion-icon :icon="arrowBackOutline" style="font-size:28px;" />
           </ion-button>
         </ion-buttons>
-        <ion-title>{{ props.name }} Inventario</ion-title>
+        <ion-title>Inventario de {{ props.name }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
     <ion-content class="ion-padding pantry-content">
       <!-- Buscador -->
       <div class="actions">
-        <ion-searchbar
-          v-model="search"
-          placeholder="Buscar producto…"
-          :debounce="150"
-          show-clear-button="focus"
-        />
+        <ion-searchbar v-model="search" placeholder="Buscar producto…" :debounce="150" show-clear-button="focus" />
       </div>
 
       <!-- Loading -->
@@ -29,24 +24,25 @@
 
       <!-- Productos de la despensa seleccionada -->
       <div v-if="!loading && filteredItemsWithImage.length" class="items-grid">
-        <div v-for="(item, i) in filteredItemsWithImage" :key="i" class="item-card">
-          <!-- Badge EN COMPRA -->
-          <span v-if="item.inPurchase" class="badge-purchase">En compra</span>
-
+        <div v-for="item in filteredItemsWithImage" :key="item.id" class="item-card">
+        <ion-button
+          class="delete-btn"
+          fill="clear"
+          size="small"
+          aria-label="Eliminar producto"
+          @click="deleteItemFromPantry(item)"
+        >
+          <ion-icon :icon="trashOutline" />
+        </ion-button>
           <img :src="`/img/products/${item.image}`" :alt="item.name" />
           <p class="item-name">{{ item.name }}</p>
           <p class="item-units">Cantidad: {{ item.units }}</p>
 
           <div class="card-actions">
-            <ion-button
-              size="small"
-              color="success"
-              class="btn-add"
-              :disabled="item.inPurchase || adding[item.id]"
-              @click="addItemToPurchase(item.id)"
-            >
+            <ion-button size="small" :class="item.inPurchase ? 'btn-remove' : 'btn-add'"
+              @click="togglePurchaseState(item)">
               <ion-icon :icon="cartOutline" slot="start" />
-              {{ item.inPurchase ? 'En compra' : 'Añadir a compra' }}
+              {{ item.inPurchase ? 'Quitar de compra' : 'Añadir a compra' }}
             </ion-button>
           </div>
         </div>
@@ -61,12 +57,13 @@
 
 <script setup lang="ts">
 import {
-  IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonSearchbar
+  IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons,
+  IonButton, IonIcon, IonTitle, IonSearchbar, toastController
 } from '@ionic/vue'
-import { arrowBackOutline, cartOutline } from 'ionicons/icons'
+import { arrowBackOutline, cartOutline, trashOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
 import { onMounted, onBeforeUnmount, ref } from 'vue'
-import { collection, query, where, updateDoc, doc, getDoc, onSnapshot, type Unsubscribe } from 'firebase/firestore'
+import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showItem } from '@/composables/showItem'
 
@@ -74,14 +71,14 @@ const props = defineProps<{ code: string; name: string }>()
 console.log('Codigo y nombre de la despensa:', props.code, props.name)
 
 const loading = ref<boolean>(false)
-const search  = ref<string>('')
+const search = ref<string>('')
 
 let stop: Unsubscribe | null = null
 const items = ref<Item[]>([])
-const adding = ref<Record<string, boolean>>({}) // para deshabilitar el botón mientras se añade
 
-// Reutilizamos métodos de presentación (imagen + filtro por nombre)
+// Lista de productos en inventario con imagen y filtro por nombre
 const { filteredItemsWithImage } = showItem(items, search)
+const pantryDocId = ref<string | null>(null)
 
 onMounted(() => {
   getPantryItems(props.code)
@@ -108,31 +105,129 @@ async function getPantryItems(pantryCode: string) {
           inPurchase: Boolean(item.inPurchase ?? false)
         } as Item
       })
+      items.value = items.value.sort((a, b) => a.name.localeCompare(b.name))
       loading.value = false
     },
-    err => {
+    async err => {
       console.error('Error al recuperar los items:', err)
       loading.value = false
+      await showErrorToast('Error al cargar los productos de la despensa.')
     }
   )
 }
 
-// Añadir a compra desde la card
-async function addItemToPurchase(idItem: string) {
-  if (!idItem || adding.value[idItem]) return
+// Agregamos el item a la compra (o lo quitamos si ya estaba)
+async function togglePurchaseState(item: Item) {
   try {
-    adding.value = { ...adding.value, [idItem]: true }
-    const ref = doc(db, 'items', idItem)
-    const snap = await getDoc(ref)
-    if (!snap.exists()) {
-      console.log('No existe el item:', idItem)
+    const ref = doc(db, 'items', item.id)
+    await updateDoc(ref, { inPurchase: !item.inPurchase })
+  } catch (err) {
+    console.error('Error al actualizar inPurchase:', err)
+    await showErrorToast(`No se pudo actualizar el estado de ${item.name}.`)
+  }
+}
+
+// Añade un nuevo item a la despensa
+async function addItemFromPantry(nameItem: string) {
+  const name = (nameItem ?? '').trim()
+  if (!name) {
+    await showErrorToast('Escribe un nombre de producto.')
+    return
+  }
+
+  loading.value = true
+  try {
+    // Comprobar que no exista ya un item con ese nombre en la despensa
+    const dupQ = query(
+      collection(db, 'items'),
+      where('pantryCode', '==', props.code),
+      where('name', '==', name)
+    )
+    const dupSnap = await getDocs(dupQ)
+    if (!dupSnap.empty) {
+      await showErrorToast(`El producto ${name} ya existe en la despensa.`)
       return
     }
-    await updateDoc(ref, { inPurchase: true })
-    // onSnapshot actualizará automáticamente el estado de la UI (badge + botón)
+    // Agregamos el item y actualizamos el totalItems de la despensa
+    const batch = writeBatch(db)
+    const newItemRef = doc(collection(db, 'items'))
+    batch.set(newItemRef, {
+      name,
+      pantryCode: props.code,
+      units: 1,
+      inPurchase: false,
+      locationId: 'fi4aM1bw8qP44Gu6JFwl',
+    })
+
+    const pantryRef = await getPantryRefByCode()
+    batch.update(pantryRef, { totalItems: increment(1) })
+
+    await batch.commit()
+    await showSuccessToast(`Producto ${name} añadido.`)
+  } catch (err) {
+    console.error('Error al añadir producto:', err)
+    await showErrorToast(`No se pudo añadir el producto ${name}.`)
   } finally {
-    adding.value = { ...adding.value, [idItem]: false }
+    loading.value = false
   }
+}
+
+// Elimina un item de la despensa y actualiza totalItems de la despensa
+async function deleteItemFromPantry(item: Item) {
+  try {
+    if (!item.id) return
+
+    const batch = writeBatch(db)
+    const itemRef = doc(db, 'items', item.id)
+    batch.delete(itemRef)
+
+    const pantryRef = await getPantryRefByCode()
+    batch.update(pantryRef, { totalItems: increment(-1) })
+
+    await batch.commit()
+    await showSuccessToast(`Producto ${item.name} eliminado.`)
+  } catch (err) {
+    console.error('Error al eliminar producto:', err)
+    await showErrorToast(`No se pudo eliminar el producto ${item.name}.`)
+  }
+}
+
+// Obtenemos el identificador del documento de la despensa actual
+async function getPantryRefByCode() {
+  if (pantryDocId.value) return doc(db, 'pantries', pantryDocId.value)
+
+  const q = query(
+    collection(db, 'pantries'),
+    where('code', '==', props.code),
+    limit(1)
+  )
+  const snap = await getDocs(q)
+  if (snap.empty) throw new Error(`No existe la despensa con code ${props.code}`)
+
+  pantryDocId.value = snap.docs[0].id
+  return snap.docs[0].ref
+}
+
+// Muestra un toast verde para confirmaciones
+async function showSuccessToast(message: string) {
+  const toast = await toastController.create({
+    message,
+    duration: 1800,
+    color: 'success',
+    position: 'bottom'
+  })
+  await toast.present()
+}
+
+// Muestra un toast rojo para errores (update o select)
+async function showErrorToast(message: string) {
+  const toast = await toastController.create({
+    message,
+    duration: 2000,
+    color: 'danger',
+    position: 'bottom'
+  })
+  await toast.present()
 }
 </script>
 
@@ -156,12 +251,25 @@ ion-header.rounded-header {
   padding-inline: 4px;
 }
 
-ion-header.rounded-header ion-buttons ion-button { --color: #fff; }
-ion-header.rounded-header ion-icon { color: #fff; }
-ion-header.rounded-header ion-title { color: #fff; font-weight: 700; }
+ion-header.rounded-header ion-buttons ion-button {
+  --color: #fff;
+}
+
+ion-header.rounded-header ion-icon {
+  color: #fff;
+}
+
+ion-header.rounded-header ion-title {
+  color: #fff;
+  font-weight: 700;
+}
 
 /* Acciones (buscador) */
-.actions { display: grid; gap: 12px; margin-bottom: 8px; }
+.actions {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 8px;
+}
 
 /* Productos */
 .items-grid {
@@ -174,7 +282,7 @@ ion-header.rounded-header ion-title { color: #fff; font-weight: 700; }
 .item-card {
   position: relative;
   text-align: center;
-  padding: 10px;
+  padding: 14px;
   border-radius: 12px;
   border: 1px solid #eef2f4;
   background: #fff;
@@ -183,7 +291,7 @@ ion-header.rounded-header ion-title { color: #fff; font-weight: 700; }
 
 .item-card img {
   width: 100%;
-  height: 100px;
+  height: 80px;
   object-fit: contain;
   display: block;
   margin: 0 auto 8px;
@@ -202,24 +310,28 @@ ion-header.rounded-header ion-title { color: #fff; font-weight: 700; }
   color: #6b7280;
 }
 
+.delete-btn {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  --padding-start: 6px;
+  --padding-end: 6px;
+  --padding-top: 6px;
+  --padding-bottom: 6px;
+  --background: transparent;
+  --color: #ef4444;           
+  z-index: 2;
+}
+
+.delete-btn:hover,
+.delete-btn:focus {
+  --color: #dc2626;
+}
+
 /* Botón dentro de la card */
 .card-actions {
   display: flex;
   justify-content: center;
-}
-
-/* Badge “En compra” */
-.badge-purchase {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  background: #f59e0b; /* ámbar para destacar */
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 4px 6px;
-  border-radius: 8px;
-  box-shadow: 0 1px 4px rgba(0,0,0,.15);
 }
 
 /* Loading */
@@ -246,4 +358,14 @@ ion-header.rounded-header ion-title { color: #fff; font-weight: 700; }
   text-transform: none;
 }
 
+/* Color personalizado para el botón de quitar de compra */
+.btn-remove {
+  --background: #dc2626;
+  --background-hover: #b91c1c;
+  --background-activated: #991b1b;
+  --color: #fff;
+  border-radius: 8px;
+  font-weight: 600;
+  text-transform: none;
+}
 </style>
