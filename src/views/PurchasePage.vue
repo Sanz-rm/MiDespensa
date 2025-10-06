@@ -7,24 +7,14 @@
             <ion-icon :icon="arrowBackOutline" style="font-size:28px;" />
           </ion-button>
         </ion-buttons>
-        <ion-title>{{ props.name }} Compra</ion-title>
+        <ion-title>Compra de {{ props.name }}</ion-title>
       </ion-toolbar>
     </ion-header>
 
     <ion-content class="ion-padding pantry-content">
       <div class="actions">
-        <ion-searchbar
-          v-model="search"
-          placeholder="Buscar producto…"
-          :debounce="150"
-          show-clear-button="focus"
-        />
-        <ion-button
-          color="danger"
-          expand="block"
-          :disabled="loading || !items.length"
-          @click="clearPurchase()"
-        >
+        <ion-searchbar v-model="search" placeholder="Buscar producto…" :debounce="150" show-clear-button="focus" />
+        <ion-button color="danger" expand="block" :disabled="loading || !items.length" @click="clearPurchase()">
           <ion-icon :icon="trashOutline" slot="start" />
           Vaciar compra
         </ion-button>
@@ -37,24 +27,14 @@
 
       <!-- Productos de la despensa seleccionada (en compra) -->
       <div v-if="!loading && filteredItemsWithImage.length" class="list-cards">
-        <div
-          v-for="(item, i) in filteredItemsWithImage"
-          :key="i"
-          class="item-row"
-        >
+        <div v-for="(item, i) in filteredItemsWithImage" :key="i" class="item-row">
           <img class="icon" :src="`/img/products/${item.image}`" :alt="item.name" />
           <div class="info">
             <p class="name">{{ item.name }}</p>
-            <p class="units">Cantidad: {{ item.units }}</p>
+            <p class="units">Stock: {{ item.units }}</p>
           </div>
-          <ion-button
-            class="trash"
-            color="danger" 
-            fill="clear"
-            size="small"
-            aria-label="Quitar de la compra"
-            @click="deleteItemToPurchase(item.id)"
-          >
+          <ion-button class="trash" color="danger" fill="clear" size="small" aria-label="Quitar de la compra"
+            @click="deleteItemToPurchase(item.id)">
             <ion-icon :icon="trashOutline" />
           </ion-button>
         </div>
@@ -69,7 +49,8 @@
 
 <script setup lang="ts">
 import {
-  IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonSearchbar
+  IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonSearchbar,
+  toastController
 } from '@ionic/vue'
 import { arrowBackOutline, trashOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
@@ -85,12 +66,12 @@ const props = defineProps<{ code: string; name: string }>()
 console.log('Codigo y nombre de la despensa:', props.code, props.name)
 
 const loading = ref<boolean>(false)
-const search  = ref<string>('')
+const search = ref<string>('')
 
 let stop: Unsubscribe | null = null
 const items = ref<Item[]>([])
 
-// Usa el composable (no re-declarar abajo)
+// Lista de productos en compra con imagen y filtro por nombre
 const { filteredItemsWithImage } = showItem(items, search)
 
 onMounted(() => {
@@ -122,36 +103,59 @@ async function getPurchaseItems(pantryCode: string) {
           inPurchase: Boolean(item.inPurchase ?? false)
         } as Item
       })
-      console.log('Productos actuales:', items.value)
+      items.value = items.value.sort((a, b) => a.name.localeCompare(b.name))
       loading.value = false
     },
-    err => {
+    // ⬇️ Toast rojo si falla la suscripción/lectura
+    async err => {
       console.error('Error al recuperar los items:', err)
       loading.value = false
+      await showErrorToast('Error al cargar los productos de la compra.')
     }
   )
 }
 
 // Quitar un item de la compra
 async function deleteItemToPurchase(idItem: string) {
-  if (!idItem) return
-  const ref = doc(db, 'items', idItem)
-  const snap = await getDoc(ref)
-  if (!snap.exists()) {
-    console.log('No existe el item:', idItem)
-    return
+  try {
+    if (!idItem) return
+    const ref = doc(db, 'items', idItem)
+    const snap = await getDoc(ref)
+    if (!snap.exists()) {
+      console.log('No existe el item:', idItem)
+      return
+    }
+    await updateDoc(ref, { inPurchase: false })
+  } catch (err) {
+    console.error('Error al quitar de la compra:', err)
+    await showErrorToast('No se pudo quitar el producto de la compra.')
   }
-  await updateDoc(ref, { inPurchase: false })
 }
 
 // Vaciar compra (poner inPurchase=false a todos los productos de la compra)
 async function clearPurchase() {
-  if (!items.value.length) return
-  const batch = writeBatch(db)
-  for (const it of items.value) {
-    batch.update(doc(db, 'items', it.id), { inPurchase: false })
+  try {
+    if (!items.value.length) return
+    const batch = writeBatch(db)
+    for (const it of items.value) {
+      batch.update(doc(db, 'items', it.id), { inPurchase: false })
+    }
+    await batch.commit()
+  } catch (err) {
+    console.error('Error al vaciar la compra:', err)
+    await showErrorToast('No se pudo vaciar la compra.')
   }
-  await batch.commit()
+}
+
+// Muestra un toast rojo para errores (update o select)
+async function showErrorToast(message: string) {
+  const toast = await toastController.create({
+    message,
+    duration: 2000,
+    color: 'danger',
+    position: 'bottom'
+  })
+  await toast.present()
 }
 </script>
 
@@ -209,7 +213,7 @@ ion-header.rounded-header ion-title {
   background: #fff;
   border-radius: 12px;
   border: 1px solid #eef2f4;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
   padding: 10px 12px;
 }
 
