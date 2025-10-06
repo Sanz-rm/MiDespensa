@@ -7,52 +7,81 @@
             <ion-icon :icon="arrowBackOutline" style="font-size:28px;" />
           </ion-button>
         </ion-buttons>
-        <ion-title>{{ props.name }}</ion-title>
+        <ion-title>{{ props.name }} Inventario</ion-title>
       </ion-toolbar>
     </ion-header>
 
     <ion-content class="ion-padding pantry-content">
-      <!-- Mensaje de error -->
-      <div v-if="pantryError" class="error-box">
-        <span>{{ pantryError }}</span>
+      <!-- Buscador -->
+      <div class="actions">
+        <ion-searchbar
+          v-model="search"
+          placeholder="Buscar producto…"
+          :debounce="150"
+          show-clear-button="focus"
+        />
       </div>
 
       <!-- Loading -->
       <div v-if="loading" class="loading-box">
-        <ion-spinner name="crescent" style="transform:scale(2);"></ion-spinner>
+        <ion-spinner name="crescent" style="transform:scale(2);" />
       </div>
 
       <!-- Productos de la despensa seleccionada -->
-      <div v-if="!loading && itemsWithImage.length" class="items-grid">
-        <div v-for="(item, i) in itemsWithImage" :key="i" class="item-card">
+      <div v-if="!loading && filteredItemsWithImage.length" class="items-grid">
+        <div v-for="(item, i) in filteredItemsWithImage" :key="i" class="item-card">
+          <!-- Badge EN COMPRA -->
+          <span v-if="item.inPurchase" class="badge-purchase">En compra</span>
+
           <img :src="`/img/products/${item.image}`" :alt="item.name" />
           <p class="item-name">{{ item.name }}</p>
-          <p class="item-units">{{ item.units }} uds</p>
+          <p class="item-units">Cantidad: {{ item.units }}</p>
+
+          <div class="card-actions">
+            <ion-button
+              size="small"
+              color="success"
+              class="btn-add"
+              :disabled="item.inPurchase || adding[item.id]"
+              @click="addItemToPurchase(item.id)"
+            >
+              <ion-icon :icon="cartOutline" slot="start" />
+              {{ item.inPurchase ? 'En compra' : 'Añadir a compra' }}
+            </ion-button>
+          </div>
         </div>
+      </div>
+
+      <div v-else-if="!loading" class="empty">
+        <p>No hay productos.</p>
       </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle } from '@ionic/vue'
-import { arrowBackOutline} from 'ionicons/icons'
-import productsMap from '@/config/products.json'
+import {
+  IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonSearchbar
+} from '@ionic/vue'
+import { arrowBackOutline, cartOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
-import type { ItemWithImage } from '@/models/itemWithImage'
-import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
-import { collection, query, where, onSnapshot, type Unsubscribe } from 'firebase/firestore'
+import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { collection, query, where, updateDoc, doc, getDoc, onSnapshot, type Unsubscribe } from 'firebase/firestore'
 import { db } from '@/firebase'
+import { showItem } from '@/composables/showItem'
 
 const props = defineProps<{ code: string; name: string }>()
 console.log('Codigo y nombre de la despensa:', props.code, props.name)
 
-const error = ref<string | null>(null)
-const pantryError = ref<string | null>(null)
 const loading = ref<boolean>(false)
+const search  = ref<string>('')
 
 let stop: Unsubscribe | null = null
 const items = ref<Item[]>([])
+const adding = ref<Record<string, boolean>>({}) // para deshabilitar el botón mientras se añade
+
+// Reutilizamos métodos de presentación (imagen + filtro por nombre)
+const { filteredItemsWithImage } = showItem(items, search)
 
 onMounted(() => {
   getPantryItems(props.code)
@@ -79,48 +108,32 @@ async function getPantryItems(pantryCode: string) {
           inPurchase: Boolean(item.inPurchase ?? false)
         } as Item
       })
-      console.log('Productos actuales:', items.value)
       loading.value = false
     },
     err => {
-      error.value = err?.message ?? String(err)
+      console.error('Error al recuperar los items:', err)
       loading.value = false
     }
   )
 }
-// Devolveremos el item en minusculas y sin tildes
-const normalize = (s: string) => {
-  return s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-}
 
-// Almacenamos en una lista todas las claves de propiedades
-const keys = Object.keys(productsMap) as Array<keyof typeof productsMap>
-
-/**
- * Obtenemos la imagen mas adecuada del item.
- * Normalizaremos nuestras claves e items para comprobar que clave coincide mejor con el item seleccionado.
- * Una vez obtenida la clave con mas coincidencia devolveremos el valor del nombre de la imagen a asociar.
- */
-const findImageForName = (name: string): string | null => {
-  const n = normalize(name)
-  let bestKey: keyof typeof productsMap | null = null
-  let bestLen = -1
-  for (const key of keys) {
-    const nk = normalize(String(key))
-    if (n.includes(nk) && nk.length > bestLen) {
-      bestKey = key
-      bestLen = nk.length
+// Añadir a compra desde la card
+async function addItemToPurchase(idItem: string) {
+  if (!idItem || adding.value[idItem]) return
+  try {
+    adding.value = { ...adding.value, [idItem]: true }
+    const ref = doc(db, 'items', idItem)
+    const snap = await getDoc(ref)
+    if (!snap.exists()) {
+      console.log('No existe el item:', idItem)
+      return
     }
+    await updateDoc(ref, { inPurchase: true })
+    // onSnapshot actualizará automáticamente el estado de la UI (badge + botón)
+  } finally {
+    adding.value = { ...adding.value, [idItem]: false }
   }
-  return bestKey ? productsMap[bestKey] : null
 }
-// Crearemos una nueva lista de Items pero le añadiremos el campo de imagen para poder mostrarlo correctamente
-const itemsWithImage = computed<ItemWithImage[]>(() =>
-  items.value.map(item => ({
-    ...item,
-    image: findImageForName(item.name) ?? 'default.png'
-  }))
-)
 </script>
 
 <style scoped>
@@ -143,28 +156,23 @@ ion-header.rounded-header {
   padding-inline: 4px;
 }
 
-ion-header.rounded-header ion-buttons ion-button {
-  --color: #fff;
-}
+ion-header.rounded-header ion-buttons ion-button { --color: #fff; }
+ion-header.rounded-header ion-icon { color: #fff; }
+ion-header.rounded-header ion-title { color: #fff; font-weight: 700; }
 
-ion-header.rounded-header ion-icon {
-  color: #fff;
-}
-
-ion-header.rounded-header ion-title {
-  color: #fff;
-  font-weight: 700;
-}
+/* Acciones (buscador) */
+.actions { display: grid; gap: 12px; margin-bottom: 8px; }
 
 /* Productos */
 .items-grid {
   margin-top: 8px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
   gap: 14px;
 }
 
 .item-card {
+  position: relative;
   text-align: center;
   padding: 10px;
   border-radius: 12px;
@@ -189,8 +197,53 @@ ion-header.rounded-header ion-title {
 }
 
 .item-units {
-  margin: 2px 0 0;
+  margin: 2px 0 8px;
   font-size: 12px;
   color: #6b7280;
 }
+
+/* Botón dentro de la card */
+.card-actions {
+  display: flex;
+  justify-content: center;
+}
+
+/* Badge “En compra” */
+.badge-purchase {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #f59e0b; /* ámbar para destacar */
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 4px 6px;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0,0,0,.15);
+}
+
+/* Loading */
+.loading-box {
+  display: grid;
+  place-content: center;
+  min-height: 40vh;
+}
+
+.empty {
+  text-align: center;
+  opacity: .7;
+  padding: 24px 0;
+}
+
+/* Color personalizado para el botón de añadir a compra */
+.btn-add {
+  --background: #2ea15d;
+  --background-hover: #279150;
+  --background-activated: #228447;
+  --color: #fff;
+  border-radius: 8px;
+  font-weight: 600;
+  text-transform: none;
+}
+
 </style>
