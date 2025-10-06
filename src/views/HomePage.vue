@@ -82,7 +82,7 @@ import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, type Unsubscribe } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { Pantry } from '@/models/pantry'
-import { useRouter } from 'vue-router'
+ import { useRouter } from 'vue-router'
 
 const pantries = ref<Pantry[]>([])
 const error = ref<string | null>(null)
@@ -286,7 +286,6 @@ function deletePantryFromStorage(code: string) {
 function selectPantry(code: string, name: string) {
    router.push(`/tabs/${code}/${name}/inventory`)
 }
-
 
 </script>
 

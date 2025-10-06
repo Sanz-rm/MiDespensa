@@ -35,7 +35,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons, IonButton, IonIcon } from '@ionic/vue'
+import { IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle } from '@ionic/vue'
 import { arrowBackOutline} from 'ionicons/icons'
 import productsMap from '@/config/products.json'
 import type { Item } from '@/models/item'
@@ -75,7 +75,8 @@ async function getPantryItems(pantryCode: string) {
           name: String(item.name ?? ''),
           units: Number(item.units ?? 0),
           pantryCode: String(item.pantryCode ?? pantryCode),
-          locationId: String(item.locationId ?? 'Otro')
+          locationId: String(item.locationId ?? 'Otro'),
+          inPurchase: Boolean(item.inPurchase ?? false)
         } as Item
       })
       console.log('Productos actuales:', items.value)
