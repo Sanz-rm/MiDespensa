@@ -3,5 +3,6 @@ export interface Pantry {
   code: string
   name: string
   memberCount: number
+  totalItems: number
   creatorId: string
 }
