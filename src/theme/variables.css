@@ -23,3 +23,10 @@ http://ionicframework.com/docs/theming/ */
 
 /* Asegura que ion-content use el fondo del tema */
 ion-content { --background: var(--ion-background-color); }
+
+
+
+
+
+
+

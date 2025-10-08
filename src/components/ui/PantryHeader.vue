@@ -1,4 +1,3 @@
-<!-- PantryHeader.vue -->
 <template>
   <header class="banner" role="banner">
     <div class="left">
@@ -11,7 +10,6 @@
         ref="btnRef"
         class="menu-btn"
         @click="toggle"
-        :aria-expanded="isOpen.toString()"
         aria-haspopup="menu"
         aria-controls="header-menu"
         title="Abrir menú"
