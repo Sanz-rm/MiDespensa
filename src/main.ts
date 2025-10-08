@@ -39,6 +39,12 @@ import './theme/variables.css';
 
 initTheme();
 
+/*const app = createApp(App)
+  .use(IonicVue, {
+    animated: false
+  })
+  .use(router);*/
+
 const app = createApp(App)
   .use(IonicVue)
   .use(router);

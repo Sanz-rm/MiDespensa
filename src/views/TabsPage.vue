@@ -2,18 +2,22 @@
   <ion-page>
     <ion-tabs>
       <ion-router-outlet />
+
       <ion-tab-bar slot="bottom" class="tabs">
-        <ion-tab-button tab="inventory" :href="inventoryHref" :disabled="!selectedPantry">
+        <ion-tab-button
+          tab="inventory"
+          :href="`/tabs/${code}/${name}/inventory`"
+          routerDirection="root"
+        >
           <ion-icon :icon="cubeOutline" />
           <ion-label>Inventario</ion-label>
         </ion-tab-button>
 
-        <ion-tab-button tab="home" href="/tabs/home">
-          <ion-icon :icon="homeOutline" />
-          <ion-label>Despensas</ion-label>
-        </ion-tab-button>
-
-        <ion-tab-button tab="purchase" :href="purchaseHref" :disabled="!selectedPantry">
+        <ion-tab-button
+          tab="purchase"
+          :href="`/tabs/${code}/${name}/purchase`"
+          routerDirection="root"
+        >
           <ion-icon :icon="cartOutline" />
           <ion-label>Compra</ion-label>
         </ion-tab-button>
@@ -24,29 +28,25 @@
 
 <script setup lang="ts">
 import { IonPage, IonTabs, IonRouterOutlet, IonTabBar, IonTabButton, IonIcon, IonLabel } from '@ionic/vue'
-import { homeOutline, cubeOutline, cartOutline } from 'ionicons/icons'
-import { ref, computed, onMounted } from 'vue'
+import { cubeOutline, cartOutline } from 'ionicons/icons'
+import { computed } from 'vue'
+import { useRoute } from 'vue-router'
 
-const selectedPantry = ref<string | null>(null)
-
-onMounted(() => {
-  selectedPantry.value = localStorage.getItem('selectedPantry')
-})
-
-const inventoryHref = computed(() =>
-  selectedPantry.value ? `/tabs/inventory/${selectedPantry.value}` : undefined
-)
-
-const purchaseHref = computed(() =>
-  selectedPantry.value ? `/tabs/purchase/${selectedPantry.value}` : undefined
-)
+const route = useRoute()
+const code = computed(() => String(route.params.code ?? ''))
+const name = computed(() => String(route.params.name ?? ''))
 </script>
+
 
 <style scoped>
 .tabs {
   --background: #fff;
   --color: #000;
   --color-selected: #2ea15d;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, .06);
+  box-shadow: 0 -2px 8px rgba(0,0,0,.06);
+}
+.tabs :deep(ion-tab-button.tab-selected),
+.tabs :deep(ion-tab-button.tab-selected ion-label) {
+  font-weight: 700;
 }
 </style>

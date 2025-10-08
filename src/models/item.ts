@@ -4,4 +4,5 @@ export interface Item {
   units: number
   pantryCode: string
   locationId: string
+  inPurchase: boolean
 }
