@@ -1,50 +1,62 @@
 <template>
   <ion-page>
+    <!-- Cabecera reutilizable start -->
     <ion-header class="rounded-header">
       <PantryHeader title="MI DESPENSA" />
     </ion-header>
+    <!-- Cabecera reutilizable end -->
 
     <ion-content class="ion-padding pantry-content">
-      <!-- Mensaje de error -->
+      <!-- Mensaje de error start -->
       <div v-if="pantryError" class="error-box">
         <span>{{ pantryError }}</span>
       </div>
+      <!-- Mensaje de error end -->
 
-      <!-- Acciones -->
+      <!-- Acciones start -->
       <div class="actions">
-        <button class="btn btn-solid">
-          <span class="material-icons">add</span>
+        <button class="btn btn-solid" @click="openCreate()">
+          <span class="material-icons" expand="block">add</span>
           Nueva Despensa
         </button>
-        <button class="btn btn-outline">
-          <span class="material-icons">group</span>
+        <button class="btn btn-outline" @click="openJoin()">
+          <span class="material-icons" expand="block">group</span>
           Unirse a Despensa
         </button>
       </div>
+      <!-- Acciones end -->
 
-      <!-- Loading -->
+      <!-- Loading start -->
       <div v-if="loading" class="loading-box">
         <ion-spinner name="crescent" style="transform:scale(2);"></ion-spinner>
       </div>
+      <!-- Loading end -->
 
-      <!-- Lista de despensas -->
+      <!-- Lista de despensas start -->
       <div v-else class="pantry-list">
-        <div v-for="(pantry, i) in pantries" :key="i" class="pantry-card" @click="selectPantry(pantry.code, pantry.name)">
-          <!-- Botón esquina derecha (solo visual) -->
-          <button class="corner-btn" :class="pantry.creatorId === deviceId ? 'danger' : 'accent'" @click.stop
-            title="Acción" aria-label="Acción">
+        <div v-for="(pantry, i) in pantries" :key="i" class="pantry-card" @click="onCardClick($event, pantry)">
+          <!-- Botón salir/elimaniar start -->
+          <button
+            type="button"
+            class="corner-btn"
+            :class="pantry.creatorId === deviceId ? 'danger' : 'accent'"
+            @click.stop="onCornerAction(pantry)"
+            title="Acción" aria-label="Acción"
+          >
             <span class="material-icons icons-red" v-if="pantry.creatorId === deviceId">delete</span>
-            <span class="material-icons icons-red" v-else>open_in_new</span>
+            <span class="material-icons icons-red" v-else>logout</span>
           </button>
+          <!-- Botón salir/elimaniar end -->
 
-          <!-- Icono -->
+          <!-- Icono despensa start -->
           <div class="icon-box">
             <div class="icon-house">
               <span class="material-icons">home</span>
             </div>
           </div>
+          <!-- Icono despensa end -->
 
-          <!-- Info -->
+          <!-- Info despensa start -->
           <div class="info">
             <div class="title-row">
               <h3 class="name">{{ pantry.name }}</h3>
@@ -73,10 +85,30 @@
               </div>
             </div>
           </div>
+          <!-- Info despensa end -->
         </div>
       </div>
+      <!-- Lista de despensas end -->
     </ion-content>
   </ion-page>
+
+  <!-- Modal reutilizable en modo CREAR start -->
+  <PantryModal
+    v-model="openCreateModal"
+    mode="create"
+    @confirm="handleCreate"
+    @close="openCreateModal = false"
+  />
+  <!-- Modal reutilizable en modo CREAR end -->
+
+  <!-- Modal reutilizable en modo UNIRSE start -->
+  <PantryModal
+    v-model="openJoinModal"
+    mode="join"
+    @confirm="handleJoin"
+    @close="openJoinModal = false"
+  />
+  <!-- Modal reutilizable en modo UNIRSE end -->
 </template>
 
 <script setup lang="ts">
@@ -86,7 +118,15 @@ import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, type Unsubscribe } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { Pantry } from '@/models/pantry'
- import { useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
+import { alertController, toastController } from '@ionic/vue'
+import PantryModal from '@/components/ui/PantryModal.vue'
+
+// Estado de apertura modal de cada modo
+const openCreateModal = ref(false)
+const openJoinModal = ref(false)
+function openCreate() { openCreateModal.value = true }
+function openJoin() { openJoinModal.value = true }
 
 const pantries = ref<Pantry[]>([])
 const error = ref<string | null>(null)
@@ -94,7 +134,7 @@ const pantryError = ref<string | null>(null)
 const loading = ref<boolean>(false)
 
 const codes: string[] = JSON.parse(localStorage.getItem('myPantries') ?? '[]');
-const pantryName = ref<string>('');
+const pantryName = ref<string>(''); //no lo se
 let stop: Unsubscribe | null = null
 
 const deviceId = getDeviceId();
@@ -104,6 +144,7 @@ const router = useRouter()
 // Recuperamos toda la información necesaria
 onMounted(() => {
   getUserPantries()
+   // Datos de ejemplo (forzadoss)
   deletePantryFromStorage('56N31A')
   deletePantryFromStorage('24S331')
   addPantryToStorage('56N31A')
@@ -128,6 +169,11 @@ function getDeviceId(): string {
 async function getUserPantries() {
   console.log('Mis despensas', codes)
   loading.value = true
+  if (!codes.length) {
+    pantries.value = []
+    loading.value = false
+    return
+  }
   const q = query(collection(db, 'pantries'), where('code', 'in', codes))
   stop = onSnapshot(
     q,
@@ -152,6 +198,33 @@ async function getUserPantries() {
     }
   )
 }
+
+/* MODAL ADAPTADO
+    El modal nos pasa:  1.handleCreate({ name })  2.handleJoin({ code })
+    Llamamos las funciones correspondientes y cerramos el modal.
+*/
+async function handleCreate(payload: { name: string } | { code: string }) {
+  try {
+    if ('name' in payload) {
+      pantryName.value = payload.name.trim()
+      await createPantry()
+      openCreateModal.value = false
+    }
+  } catch (e: any) {
+    pantryError.value = e?.message ?? 'Error al crear la despensa.'
+  }
+}
+async function handleJoin(payload: { name: string } | { code: string }) {
+  try {
+    if ('code' in payload) {
+      await joinPantry(payload.code)
+      openJoinModal.value = false
+    }
+  } catch (e: any) {
+    pantryError.value = e?.message ?? 'Error al unirse a la despensa.'
+  }
+}
+
 
 // Crearemos una nueva despensa generando un código aleatorio
 async function createPantry() {
@@ -236,7 +309,7 @@ async function deleteOrLeavePantry(joinCode: string) {
   const snap = await getDocs(q);
 
   if (snap.empty) {
-    pantryError.value = 'Despensa no encontrada.'
+    await showErrorToast(`Despensa no encontrada.`)
     return;
   }
   const pantryRef = snap.docs[0].ref;
@@ -289,11 +362,72 @@ function deletePantryFromStorage(code: string) {
   localStorage.setItem('myPantries', JSON.stringify(updated));
 }
 
+// Confirmar eliminar
+async function onCornerAction(pantry: Pantry) {
+  const isOwner = pantry.creatorId === deviceId
+  const header = isOwner ? 'Eliminar despensa' : 'Salir de la despensa'
+  const message = isOwner
+    ? `Vas a eliminar definitivamente “${pantry.name}”. Esta acción no se puede deshacer.`
+    : `Vas a salir de “${pantry.name}”. Podrás volver con su código.`
+
+  const alert = await alertController.create({
+    header,
+    message,
+    mode: 'ios',
+    backdropDismiss: false,
+    // 👇 CLASES que irá en el <ion-alert> (host)
+    cssClass: ['mds-alert', isOwner ? 'mds-danger' : 'mds-safe'],
+    buttons: [
+      { text: 'Cancelar', role: 'cancel', cssClass: 'btn-cancel' },
+      { text: isOwner ? 'Eliminar' : 'Salir',
+        role: 'confirm',
+        cssClass: isOwner ? 'btn-danger' : 'btn-confirm' }
+    ],
+  })
+  await alert.present()
+
+  const { role } = await alert.onDidDismiss()
+  if (role !== 'confirm') return
+
+  try {
+    await deleteOrLeavePantry(pantry.code)
+    ;(await toastController.create({
+      message: isOwner ? 'Despensa eliminada' : 'Has salido de la despensa',
+      duration: 1800,
+    })).present()
+  } catch (e:any) {
+    pantryError.value = e?.message ?? 'No se pudo completar la acción.'
+    ;(await toastController.create({
+      message: 'Error al procesar la acción',
+      duration: 1800,
+      color: 'danger'
+    })).present()
+  }
+}
+
 // Navegamos al inventario de nuestra despensa
 function selectPantry(code: string, name: string) {
    router.push(`/tabs/${code}/${name}/inventory`)
 }
 
+function onCardClick(e: MouseEvent, pantry: Pantry) {
+  const target = e.target as HTMLElement
+  // Si clicas en el botón (o en cualquier hijo del botón), NO navegues
+  if (target.closest('.corner-btn')) return
+  selectPantry(pantry.code, pantry.name)
+}
+
+
+// Muestra un toast rojo para errores (update o select)
+async function showErrorToast(message: string) {
+  const toast = await toastController.create({
+    message,
+    duration: 2000,
+    color: 'danger',
+    position: 'bottom'
+  })
+  await toast.present()
+}
 </script>
 
 <style scoped>
@@ -387,6 +521,7 @@ ion-header.rounded-header::after {
   gap: 14px;
 }
 
+
 /* Tarjeta de despensa */
 .pantry-card {
   position: relative;
@@ -432,6 +567,16 @@ ion-header.rounded-header::after {
 .corner-btn.accent {
   box-shadow: inset 0 0 0 2px #e5f0ff;
   color: #1f9d55;
+}
+
+/* Botón de salir/eliminar fijo en esquina de las tarjetas */
+.pantry-card { position: relative; }
+.corner-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  pointer-events: auto;
 }
 
 /* Icono izquierda */
@@ -559,6 +704,9 @@ ion-header.rounded-header::after {
 }
 
 .icons-red {
-  color: red;
+  color: #E94031;
 }
+
+
+
 </style>
