@@ -36,13 +36,8 @@
       <div v-else class="pantry-list">
         <div v-for="(pantry, i) in pantries" :key="i" class="pantry-card" @click="onCardClick($event, pantry)">
           <!-- Botón salir/elimaniar start -->
-          <button
-            type="button"
-            class="corner-btn"
-            :class="pantry.creatorId === deviceId ? 'danger' : 'accent'"
-            @click.stop="onCornerAction(pantry)"
-            title="Acción" aria-label="Acción"
-          >
+          <button type="button" class="corner-btn" :class="pantry.creatorId === deviceId ? 'danger' : 'accent'"
+            @click.stop="onCornerAction(pantry)" title="Acción" aria-label="Acción">
             <span class="material-icons icons-red" v-if="pantry.creatorId === deviceId">delete</span>
             <span class="material-icons icons-red" v-else>logout</span>
           </button>
@@ -62,22 +57,22 @@
               <h3 class="name">{{ pantry.name }}</h3>
             </div>
             <div class="meta">
-            <div class="meta-item">
-              <span class="meta-icon material-icons" aria-hidden="true">group</span>
-              <span>
-                {{ pantry.memberCount ?? 0 }}
-                {{ (pantry.memberCount ?? 0) === 1 ? 'miembro' : 'miembros' }}
-              </span>
+              <div class="meta-item">
+                <span class="meta-icon material-icons" aria-hidden="true">group</span>
+                <span>
+                  {{ pantry.memberCount ?? 0 }}
+                  {{ (pantry.memberCount ?? 0) === 1 ? 'miembro' : 'miembros' }}
+                </span>
+              </div>
+              <div class="meta-sep">•</div>
+              <div class="meta-item">
+                <span class="meta-icon material-icons" aria-hidden="true">inventory_2</span>
+                <span>
+                  {{ pantry.totalItems ?? 0 }}
+                  {{ (pantry.totalItems ?? 0) === 1 ? 'producto' : 'productos' }}
+                </span>
+              </div>
             </div>
-            <div class="meta-sep">•</div>
-            <div class="meta-item">
-              <span class="meta-icon material-icons" aria-hidden="true">inventory_2</span>
-              <span>
-                {{ pantry.totalItems ?? 0 }}
-                {{ (pantry.totalItems ?? 0) === 1 ? 'producto' : 'productos' }}
-              </span>
-            </div>
-          </div>
             <div class="footer-row">
               <div class="code-chip">
                 <span class="chip-text">{{ pantry.code }}</span>
@@ -93,21 +88,11 @@
   </ion-page>
 
   <!-- Modal reutilizable en modo CREAR start -->
-  <PantryModal
-    v-model="openCreateModal"
-    mode="create"
-    @confirm="handleCreate"
-    @close="openCreateModal = false"
-  />
+  <PantryModal v-model="openCreateModal" mode="create" @confirm="handleCreate" @close="openCreateModal = false" />
   <!-- Modal reutilizable en modo CREAR end -->
 
   <!-- Modal reutilizable en modo UNIRSE start -->
-  <PantryModal
-    v-model="openJoinModal"
-    mode="join"
-    @confirm="handleJoin"
-    @close="openJoinModal = false"
-  />
+  <PantryModal v-model="openJoinModal" mode="join" @confirm="handleJoin" @close="openJoinModal = false" />
   <!-- Modal reutilizable en modo UNIRSE end -->
 </template>
 
@@ -134,7 +119,7 @@ const pantryError = ref<string | null>(null)
 const loading = ref<boolean>(false)
 
 const codes: string[] = JSON.parse(localStorage.getItem('myPantries') ?? '[]');
-const pantryName = ref<string>(''); //no lo se
+const pantryName = ref<string>('');
 let stop: Unsubscribe | null = null
 
 const deviceId = getDeviceId();
@@ -144,7 +129,7 @@ const router = useRouter()
 // Recuperamos toda la información necesaria
 onMounted(() => {
   getUserPantries()
-   // Datos de ejemplo (forzadoss)
+  // Datos de ejemplo (forzadoss)
   deletePantryFromStorage('56N31A')
   deletePantryFromStorage('24S331')
   addPantryToStorage('56N31A')
@@ -243,14 +228,28 @@ async function createPantry() {
 
   try {
     const code = await generatePantryCode()
-    await addDoc(collection(db, 'pantries'), {
+
+    const docRef = await addDoc(collection(db, 'pantries'), {
       name,
       code,
       memberCount: 1,
       totalItems: 0,
       creatorId: deviceId
-    })
+    });
+
+    const newPantry = {
+      id: docRef.id,
+      name,
+      code,
+      memberCount: 1,
+      totalItems: 0,
+      creatorId: deviceId
+    };
+
+    pantries.value.push(newPantry)
     addPantryToStorage(code)
+    console.log('Despensa creada', newPantry)
+
     pantryError.value = null
   } catch (e: any) {
     pantryError.value = e?.message ?? 'Error al crear la despensa.'
@@ -292,6 +291,7 @@ async function joinPantry(joinCode: string) {
     creatorId: pantry.creatorId
   }
   pantries.value.push(newPantry)
+  console.log('Despensa agregada: ', newPantry)
 
   // Sumamos 1 al contador de miembros
   await updateDoc(pantryRef, {
@@ -379,9 +379,11 @@ async function onCornerAction(pantry: Pantry) {
     cssClass: ['mds-alert', isOwner ? 'mds-danger' : 'mds-safe'],
     buttons: [
       { text: 'Cancelar', role: 'cancel', cssClass: 'btn-cancel' },
-      { text: isOwner ? 'Eliminar' : 'Salir',
+      {
+        text: isOwner ? 'Eliminar' : 'Salir',
         role: 'confirm',
-        cssClass: isOwner ? 'btn-danger' : 'btn-confirm' }
+        cssClass: isOwner ? 'btn-danger' : 'btn-confirm'
+      }
     ],
   })
   await alert.present()
@@ -391,23 +393,23 @@ async function onCornerAction(pantry: Pantry) {
 
   try {
     await deleteOrLeavePantry(pantry.code)
-    ;(await toastController.create({
-      message: isOwner ? 'Despensa eliminada' : 'Has salido de la despensa',
-      duration: 1800,
-    })).present()
-  } catch (e:any) {
+      ; (await toastController.create({
+        message: isOwner ? 'Despensa eliminada' : 'Has salido de la despensa',
+        duration: 1800,
+      })).present()
+  } catch (e: any) {
     pantryError.value = e?.message ?? 'No se pudo completar la acción.'
-    ;(await toastController.create({
-      message: 'Error al procesar la acción',
-      duration: 1800,
-      color: 'danger'
-    })).present()
+      ; (await toastController.create({
+        message: 'Error al procesar la acción',
+        duration: 1800,
+        color: 'danger'
+      })).present()
   }
 }
 
 // Navegamos al inventario de nuestra despensa
 function selectPantry(code: string, name: string) {
-   router.push(`/tabs/${code}/${name}/inventory`)
+  router.push(`/tabs/${code}/${name}/inventory`)
 }
 
 function onCardClick(e: MouseEvent, pantry: Pantry) {
@@ -570,7 +572,10 @@ ion-header.rounded-header::after {
 }
 
 /* Botón de salir/eliminar fijo en esquina de las tarjetas */
-.pantry-card { position: relative; }
+.pantry-card {
+  position: relative;
+}
+
 .corner-btn {
   position: absolute;
   top: 8px;
@@ -706,7 +711,4 @@ ion-header.rounded-header::after {
 .icons-red {
   color: #E94031;
 }
-
-
-
 </style>
