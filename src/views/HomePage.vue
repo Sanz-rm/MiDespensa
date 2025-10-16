@@ -85,7 +85,7 @@
       </div>
       <!-- Lista de despensas end -->
     </ion-content>
-    
+
     <!-- Modal reutilizable en modo CREAR start -->
     <PantryModal v-model="openCreateModal" mode="create" @confirm="handleCreate" @close="openCreateModal = false" />
     <!-- Modal reutilizable en modo CREAR end -->
@@ -129,12 +129,12 @@ const router = useRouter()
 
 // Recuperamos toda la información necesaria
 onMounted(() => {
-  getUserPantries()
   // Datos de ejemplo (forzadoss)
   deletePantryFromStorage('56N31A')
   deletePantryFromStorage('24S331')
   addPantryToStorage('56N31A')
   addPantryToStorage('24S331')
+  getUserPantries()
 })
 
 // Al cerrar la ventana dejaremos de escuchar a firestore
