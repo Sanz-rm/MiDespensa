@@ -101,7 +101,7 @@
 import PantryHeader from '@/components/ui/PantryHeader.vue'
 import { IonPage, IonHeader, IonContent, IonSpinner } from '@ionic/vue'
 import { onMounted, onBeforeUnmount, ref } from 'vue'
-import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, type Unsubscribe } from 'firebase/firestore'
+import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, type Unsubscribe, increment } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { Pantry } from '@/models/pantry'
 import { useRouter } from 'vue-router'
@@ -296,7 +296,7 @@ async function joinPantry(joinCode: string) {
 
   // Sumamos 1 al contador de miembros
   await updateDoc(pantryRef, {
-    memberCount: pantry.memberCount + 1
+    memberCount: increment(1)
   });
 }
 
@@ -320,7 +320,7 @@ async function deleteOrLeavePantry(joinCode: string) {
     await deleteDoc(pantryRef);
   } else {
     await updateDoc(pantryRef, {
-      memberCount: pantry.memberCount - 1
+      memberCount: increment(-1)
     });
   }
   pantries.value = pantries.value.filter(p => p.code !== code);
