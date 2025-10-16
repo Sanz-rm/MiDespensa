@@ -85,15 +85,16 @@
       </div>
       <!-- Lista de despensas end -->
     </ion-content>
+    
+    <!-- Modal reutilizable en modo CREAR start -->
+    <PantryModal v-model="openCreateModal" mode="create" @confirm="handleCreate" @close="openCreateModal = false" />
+    <!-- Modal reutilizable en modo CREAR end -->
+
+    <!-- Modal reutilizable en modo UNIRSE start -->
+    <PantryModal v-model="openJoinModal" mode="join" @confirm="handleJoin" @close="openJoinModal = false" />
+    <!-- Modal reutilizable en modo UNIRSE end -->
   </ion-page>
 
-  <!-- Modal reutilizable en modo CREAR start -->
-  <PantryModal v-model="openCreateModal" mode="create" @confirm="handleCreate" @close="openCreateModal = false" />
-  <!-- Modal reutilizable en modo CREAR end -->
-
-  <!-- Modal reutilizable en modo UNIRSE start -->
-  <PantryModal v-model="openJoinModal" mode="join" @confirm="handleJoin" @close="openJoinModal = false" />
-  <!-- Modal reutilizable en modo UNIRSE end -->
 </template>
 
 <script setup lang="ts">
