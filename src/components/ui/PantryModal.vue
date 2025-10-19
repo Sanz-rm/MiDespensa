@@ -115,6 +115,12 @@ function reset() {
 }
 
 function close() {
+  // Ensure nothing inside the modal keeps focus before hiding it.
+  try {
+    const active = document.activeElement as HTMLElement | null
+    if (active && typeof active.blur === 'function') active.blur()
+  } catch {}
+
   modelOpen.value = false
   emit('close')
   setTimeout(reset, 120)

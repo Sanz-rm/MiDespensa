@@ -111,8 +111,22 @@ import PantryModal from '@/components/ui/PantryModal.vue'
 // Estado de apertura modal de cada modo
 const openCreateModal = ref(false)
 const openJoinModal = ref(false)
-function openCreate() { openCreateModal.value = true }
-function openJoin() { openJoinModal.value = true }
+// Utility: blur focused element (avoid aria-hidden / autofocus conflicts when opening modals)
+function blurActiveElement() {
+  try {
+    const el = document.activeElement as HTMLElement | null
+    if (el && typeof el.blur === 'function') el.blur()
+  } catch {}
+}
+
+function openCreate() {
+  blurActiveElement()
+  openCreateModal.value = true
+}
+function openJoin() {
+  blurActiveElement()
+  openJoinModal.value = true
+}
 
 const pantries = ref<Pantry[]>([])
 const error = ref<string | null>(null)
