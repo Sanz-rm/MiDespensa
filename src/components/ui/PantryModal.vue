@@ -225,7 +225,7 @@ async function onConfirm() {
   --background: #fff;
   --inner-padding-end: 0;
   --inner-padding-start: 0;
-  --padding-start: 0;
+  --padding-start: 10px;
   --padding-end: 0;
   border-radius: 12px;
   box-shadow: 0 4px 14px rgba(0,0,0,.08);
