@@ -37,9 +37,9 @@
         <div v-for="(pantry, i) in pantries" :key="i" class="pantry-card" @click="onCardClick($event, pantry)">
           <!-- Botón salir/elimaniar start -->
           <button type="button" class="corner-btn" :class="pantry.creatorId === deviceId ? 'danger' : 'accent'"
-            @click.stop="onCornerAction(pantry)" title="Acción" aria-label="Acción">
-            <span class="material-icons icons-red" v-if="pantry.creatorId === deviceId">delete</span>
-            <span class="material-icons icons-red" v-else>logout</span>
+            @click.stop="onCornerAction(pantry)"  >
+            <span class="material-icons icons-red" v-if="pantry.creatorId === deviceId" title="Eliminar despensa" aria-label="Eliminar despensa">delete</span>
+            <span class="material-icons icons-red" v-else title="Salir de despensa" aria-label="Salir de despensa">logout</span>
           </button>
           <!-- Botón salir/elimaniar end -->
 
@@ -458,9 +458,14 @@ async function copyPantryCode(code: string) {
 
 // Muestra un toast con su color correspondiente
 async function showToast(message: string, color: string) {
+  let duration = 2000;
+  if (color === 'danger' || color === 'warning') {
+    duration = 4000;
+  } 
+
   const toast = await toastController.create({
     message,
-    duration: 2000,
+    duration: duration,
     color: color,
     position: 'bottom'
   })
