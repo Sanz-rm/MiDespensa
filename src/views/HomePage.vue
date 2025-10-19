@@ -74,10 +74,13 @@
               </div>
             </div>
             <div class="footer-row">
-              <div class="code-chip">
+              <!-- NUEVO: botón de copiar código (sustituye al chip visual) -->
+              <button type="button" class="code-chip copy-btn" @click.stop="copyPantryCode(pantry.code)"
+                :aria-label="`Copiar código ${pantry.code}`" title="Copiar código">
                 <span class="chip-text">{{ pantry.code }}</span>
-                <span class="chip-copy material-icons">content_copy</span>
-              </div>
+                <span class="chip-copy material-icons" aria-hidden="true">content_copy</span>
+              </button>
+              <!-- FIN NUEVO -->
             </div>
           </div>
           <!-- Info despensa end -->
@@ -116,7 +119,7 @@ function blurActiveElement() {
   try {
     const el = document.activeElement as HTMLElement | null
     if (el && typeof el.blur === 'function') el.blur()
-  } catch {}
+  } catch { }
 }
 
 function openCreate() {
@@ -233,11 +236,12 @@ async function createPantry() {
   const name = pantryName.value?.trim() ?? ''
 
   if (name === '') {
-    pantryError.value = 'El nombre de la despensa es obligatorio.'
+    //pantryError.value = 'El nombre de la despensa es obligatorio.'
+    showToast('El nombre de la despensa es obligatorio.', 'danger')
     return
   }
   if (name.length > 25) {
-    pantryError.value = 'El nombre de la despensa es muy largo.'
+    showToast('El nombre de la despensa es muy largo.', 'danger')
     return
   }
 
@@ -273,18 +277,18 @@ async function createPantry() {
 
 // Unirse a despensa por codigo
 async function joinPantry(joinCode: string) {
-  pantryError.value = null
+
 
   const code = joinCode?.trim().toUpperCase()
   if (!code) {
-    pantryError.value = 'Introduce un código válido.'
+    showToast('Introduce un código válido.', 'danger')
     return
   }
 
   const q = query(collection(db, 'pantries'), where('code', '==', code));
   const snap = await getDocs(q);
   if (snap.empty) {
-    pantryError.value = 'Despensa no encontrada.'
+    showToast('Despensa no encontrada.', 'danger')
     return;
   }
 
@@ -292,7 +296,7 @@ async function joinPantry(joinCode: string) {
   const pantry = snap.docs[0].data();
 
   if (pantries.value.some(p => p.id === pantryRef.id)) {
-    pantryError.value = 'Ya estás unido a esta despensa.'
+    showToast('Ya estás unido a esta despensa.', 'danger')
     return
   }
 
@@ -324,7 +328,7 @@ async function deleteOrLeavePantry(joinCode: string) {
   const snap = await getDocs(q);
 
   if (snap.empty) {
-    await showErrorToast(`Despensa no encontrada.`)
+    await showToast(`Despensa no encontrada.`, 'danger');
     return;
   }
   const pantryRef = snap.docs[0].ref;
@@ -390,7 +394,6 @@ async function onCornerAction(pantry: Pantry) {
     message,
     mode: 'ios',
     backdropDismiss: false,
-    // 👇 CLASES que irá en el <ion-alert> (host)
     cssClass: ['mds-alert', isOwner ? 'mds-danger' : 'mds-safe'],
     buttons: [
       { text: 'Cancelar', role: 'cancel', cssClass: 'btn-cancel' },
@@ -408,17 +411,13 @@ async function onCornerAction(pantry: Pantry) {
 
   try {
     await deleteOrLeavePantry(pantry.code)
-      ; (await toastController.create({
-        message: isOwner ? 'Despensa eliminada' : 'Has salido de la despensa',
-        duration: 1800,
-      })).present()
+    await showToast(
+      isOwner ? 'Despensa eliminada' : 'Has salido de la despensa', 'success'
+    )
   } catch (e: any) {
-    pantryError.value = e?.message ?? 'No se pudo completar la acción.'
-      ; (await toastController.create({
-        message: 'Error al procesar la acción',
-        duration: 1800,
-        color: 'danger'
-      })).present()
+    await showToast(
+      isOwner ? 'Error al eliminar despensa.' : 'Error al abandonar despensa.', 'danger'
+    )
   }
 }
 
@@ -434,13 +433,35 @@ function onCardClick(e: MouseEvent, pantry: Pantry) {
   selectPantry(pantry.code, pantry.name)
 }
 
+// NUEVO: copiar el código de la despensa al portapapeles (con fallback y toast)
+async function copyPantryCode(code: string) {
+  try {
+    if (navigator?.clipboard?.writeText) {
+      await navigator.clipboard.writeText(code)
+    } else {
+      const ta = document.createElement('textarea')
+      ta.value = code
+      ta.setAttribute('readonly', '')
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    try { navigator.vibrate?.(15) } catch { }
+    await showToast(`Código copiado: ${code}`, 'success')
+  } catch {
+    await showToast('No se pudo copiar el código', 'danger')
+  }
+}
 
-// Muestra un toast rojo para errores (update o select)
-async function showErrorToast(message: string) {
+// Muestra un toast con su color correspondiente
+async function showToast(message: string, color: string) {
   const toast = await toastController.create({
     message,
     duration: 2000,
-    color: 'danger',
+    color: color,
     position: 'bottom'
   })
   await toast.present()
@@ -676,6 +697,22 @@ ion-header.rounded-header::after {
   color: #1f2937;
   font-size: 13px;
 }
+
+/* NUEVO: botón con estilos del chip para copiar */
+.copy-btn {
+  cursor: pointer;
+  border: none;
+  background: none;
+  /* mantiene el aspecto del chip */
+}
+
+.copy-btn:focus-visible {
+  outline: 2px solid #1f9d55;
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
+/* FIN NUEVO */
 
 .chip-text {
   letter-spacing: .5px;
