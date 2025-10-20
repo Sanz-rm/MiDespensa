@@ -1,8 +1,12 @@
 <template>
   <ion-modal
-    :is-open="modelOpen"
-    css-class="mds-modal"
-    @didDismiss="close()"
+  ref="modalRef"
+  :is-open="modelOpen"
+  css-class="mds-modal"
+  @willPresent="onWillPresent"
+  @didPresent="onDidPresent"
+  @willDismiss="onWillDismiss"
+  @didDismiss="onDidDismiss"
   >
     <ion-content class="ion-padding">
 
@@ -31,10 +35,10 @@
             <label class="field-label">Nombre de la despensa</label>
             <ion-item lines="none" class="field-item">
               <ion-input
+                ref="nameInputRef"
                 v-model="name"
                 :disabled="submitting"
                 placeholder="Ej: Despensa 1"
-                autofocus
               />
             </ion-item>
           </template>
@@ -108,6 +112,63 @@ const isDisabled = computed(() =>
   isCreate.value ? name.value.trim().length < 2 : code.value.trim().length < 4
 )
 
+// Modal refs & accessibility helpers
+const modalRef = ref<HTMLElement | null>(null)
+const nameInputRef = ref<HTMLElement | null>(null)
+
+function setInertOnOutlet(enabled: boolean) {
+  try {
+    const outlet = document.querySelector('ion-router-outlet') as HTMLElement | null
+    if (outlet) {
+      if (enabled) outlet.setAttribute('inert', 'true')
+      else outlet.removeAttribute('inert')
+      return
+    }
+
+    // Fallback: apply inert to body children except overlays
+    const children = Array.from(document.body.children) as HTMLElement[]
+    children.forEach(c => {
+      const isOverlay = c.hasAttribute('ion-overlay') || c.getAttribute('role') === 'dialog'
+      if (isOverlay) return
+      if (enabled) c.setAttribute('inert', 'true')
+      else c.removeAttribute('inert')
+    })
+  } catch {}
+}
+
+function onWillPresent() {
+  setInertOnOutlet(true)
+}
+
+function onDidPresent() {
+  try {
+    if (isCreate.value && nameInputRef.value && typeof (nameInputRef.value as any).setFocus === 'function') {
+      ;(nameInputRef.value as any).setFocus()
+    } else if (isCreate.value && nameInputRef.value) {
+      const native = (nameInputRef.value as HTMLElement).querySelector?.('input') as HTMLInputElement | null
+      native?.focus()
+    }
+  } catch {}
+}
+
+function onWillDismiss() {
+  // Blur any active element inside the modal before the dismiss animation applies aria-hidden
+  try {
+    const active = document.activeElement as HTMLElement | null
+    if (active && typeof active.blur === 'function') active.blur()
+  } catch {}
+}
+
+function onDidDismiss() {
+  try {
+    setInertOnOutlet(false)
+    const active = document.activeElement as HTMLElement | null
+    if (active && typeof active.blur === 'function') active.blur()
+  } catch {}
+  reset()
+  emit('close')
+}
+
 function reset() {
   name.value = ''
   code.value = ''
@@ -115,6 +176,12 @@ function reset() {
 }
 
 function close() {
+  // Ensure nothing inside the modal keeps focus before hiding it.
+  try {
+    const active = document.activeElement as HTMLElement | null
+    if (active && typeof active.blur === 'function') active.blur()
+  } catch {}
+
   modelOpen.value = false
   emit('close')
   setTimeout(reset, 120)
@@ -151,6 +218,12 @@ async function onConfirm() {
 .mds-modal::part(backdrop) {
   background: rgba(0,0,0,.4);
   opacity: 1;
+}
+
+/* Force the overlay backdrop to cover the entire viewport (defensive) */
+.mds-modal::part(backdrop) {
+  position: fixed;
+  inset: 0;
 }
 
 /* Dejar el content transparente (el “card” pone el blanco) */
