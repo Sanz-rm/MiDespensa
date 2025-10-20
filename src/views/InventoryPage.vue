@@ -22,18 +22,18 @@
         <ion-spinner name="crescent" style="transform:scale(2);" />
       </div>
 
+
+      <ion-button expand="block" @click="showItemsProps">
+        Crear Producto
+      </ion-button>
+
       <!-- Productos de la despensa seleccionada -->
       <div v-if="!loading && filteredItemsWithImage.length" class="items-grid">
         <div v-for="item in filteredItemsWithImage" :key="item.id" class="item-card">
-        <ion-button
-          class="delete-btn"
-          fill="clear"
-          size="small"
-          aria-label="Eliminar producto"
-          @click="deleteItemFromPantry(item)"
-        >
-          <ion-icon :icon="trashOutline" />
-        </ion-button>
+          <ion-button class="delete-btn" fill="clear" size="small" aria-label="Eliminar producto"
+            @click="deleteItemFromPantry(item)">
+            <ion-icon :icon="trashOutline" />
+          </ion-button>
           <img :src="`/img/products/${item.image}`" :alt="item.name" />
           <p class="item-name">{{ item.name }}</p>
           <p class="item-units">Cantidad: {{ item.units }}</p>
@@ -65,7 +65,7 @@ import type { Item } from '@/models/item'
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe } from 'firebase/firestore'
 import { db } from '@/firebase'
-import { showItem } from '@/composables/showItem'
+import { showItem, showItemsNews } from '@/composables/showItem'
 
 const props = defineProps<{ code: string; name: string }>()
 console.log('Codigo y nombre de la despensa:', props.code, props.name)
@@ -80,6 +80,7 @@ const items = ref<Item[]>([])
 const { filteredItemsWithImage } = showItem(items, search)
 const pantryDocId = ref<string | null>(null)
 
+const newItemsMap = ref<Record<string, string>>({})
 onMounted(() => {
   getPantryItems(props.code)
 })
@@ -126,6 +127,14 @@ async function togglePurchaseState(item: Item) {
     await showErrorToast(`No se pudo actualizar el estado de ${item.name}.`)
   }
 }
+
+// Mostramos los items disponibles para agregar
+function showItemsProps() {
+  newItemsMap.value = showItemsNews(items)
+   console.log('Productos a mostrar JSON: ', newItemsMap.value)
+   //addItemFromPantry('Sal')
+}
+
 
 // Añade un nuevo item a la despensa
 async function addItemFromPantry(nameItem: string) {
@@ -319,7 +328,7 @@ ion-header.rounded-header ion-title {
   --padding-top: 6px;
   --padding-bottom: 6px;
   --background: transparent;
-  --color: #ef4444;           
+  --color: #ef4444;
   z-index: 2;
 }
 
