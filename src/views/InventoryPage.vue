@@ -51,6 +51,13 @@
       <div v-else-if="!loading" class="empty">
         <p>No hay productos.</p>
       </div>
+
+      <!-- Botón flotante para crear producto (abajo a la derecha) -->
+      <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+        <ion-fab-button @click="showItemsProps" aria-label="Crear producto" class="add-button">
+          <ion-icon :icon="addOutline" />
+        </ion-fab-button>
+      </ion-fab>
     </ion-content>
   </ion-page>
 </template>
@@ -58,9 +65,9 @@
 <script setup lang="ts">
 import {
   IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons,
-  IonButton, IonIcon, IonTitle, IonSearchbar, toastController
+  IonButton, IonIcon, IonTitle, IonSearchbar, toastController, IonFab, IonFabButton
 } from '@ionic/vue'
-import { arrowBackOutline, cartOutline, trashOutline } from 'ionicons/icons'
+import { arrowBackOutline, cartOutline, trashOutline, addOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe } from 'firebase/firestore'
@@ -376,5 +383,9 @@ ion-header.rounded-header ion-title {
   border-radius: 8px;
   font-weight: 600;
   text-transform: none;
+}
+
+.add-button{
+  --background: #2ea15d;
 }
 </style>
