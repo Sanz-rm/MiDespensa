@@ -109,6 +109,12 @@
               >
                 <img :src="`/img/products/${img}`" :alt="name" class="suggested-img" />
                 <p class="suggested-name">{{ name }}</p>
+
+                <!-- NUEVO: botón para añadir al inventario -->
+                <ion-button size="small" class="btn-add" @click="addItemFromPantry(name)">
+                  <ion-icon :icon="addOutline" slot="start" />
+                  Añadir
+                </ion-button>
               </div>
             </div>
             <!-- Render directo del mapa de los productos que no estan en la despensa END -->
@@ -512,12 +518,7 @@ ion-header.rounded-header ion-title {
 .suggested-name{
   font-weight: 600;
   font-size: 14px;
-  margin: 0 0 4px 0;
-}
-.suggested-note{
-  font-size: 12px;
-  opacity: .8;
-  margin: 0;
+  margin: 0 0 8px 0;
 }
 .empty-suggested{
   opacity: .7;
