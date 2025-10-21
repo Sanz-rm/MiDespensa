@@ -137,7 +137,7 @@ import {
 import { arrowBackOutline, cartOutline, trashOutline, addOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
 import { onMounted, onBeforeUnmount, ref, watch, computed   } from 'vue'
-import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe } from 'firebase/firestore'
+import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe, orderBy } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showItem, showItemsNews } from '@/composables/showItem'
 import { showToast } from '@/composables/showToast'
@@ -207,13 +207,30 @@ const filteredNewItemsMap = computed<Record<string, string>>(() => {
     const n = norm(name)
 
     if (tokens.length === 1) {
-      // Si solo hay una palabra, busca que empiece por ella
-      if (n.startsWith(tokens[0])) out[name] = img
+      // 1 palabra: si el nombre tiene una palabra que empiece igual o contiene el texto
+      const palabra = tokens[0];
+      const palabrasDelNombre = n.split(' ')
+      const empiezaIgual = palabrasDelNombre.some(p => p.startsWith(palabra))
+      const contiene = n.includes(palabra)
+
+      if (empiezaIgual || contiene) {
+        out[name] = img
+      }
     } else {
-      // Si hay varias palabras, busca todos los productos que contengan esa palabra
-      const includesAll = tokens.every(t => n.includes(t))
-      if (includesAll) out[name] = img
+      // Varias palabras: todas deben aparecer en cualquier parte del nombre
+      let todasExisten = true
+      for (const palabra of tokens) {
+        if (!n.includes(palabra)) {
+          todasExisten = false
+          break
+        }
+      }
+
+      if (todasExisten) {
+        out[name] = img
+      }
     }
+    
   }
   return out
 })
