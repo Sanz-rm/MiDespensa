@@ -97,16 +97,21 @@
             <h3 class="suggested-title">Añade productos a tu despensa</h3>
 
             <!-- Render directo del mapa de los productos que no estan en la despensa START -->
-            <div v-if="Object.keys(newItemsMap).length" class="suggested-grid">
-              <div v-for="(img, name) in newItemsMap" :key="name" class="suggested-card">
+            <div v-if="Object.keys(filteredNewItemsMap).length" class="suggested-grid">
+              <div
+                v-for="(img, name) in filteredNewItemsMap"
+                :key="name"
+                class="suggested-card"
+              >
                 <img :src="`/img/products/${img}`" :alt="name" class="suggested-img" />
                 <p class="suggested-name">{{ name }}</p>
 
-                <!-- NUEVO: botón para añadir al inventario -->
+                <!-- Botón para añadir al inventario START -->
                 <ion-button size="small" class="btn-add" @click="addItemFromPantry(name)">
                   <ion-icon :icon="addOutline" slot="start" />
                   Añadir
                 </ion-button>
+                <!-- Botón para añadir al inventario END -->
               </div>
             </div>
             <!-- Render directo del mapa de los productos que no estan en la despensa END -->
@@ -131,8 +136,8 @@ import {
 } from '@ionic/vue'
 import { arrowBackOutline, cartOutline, trashOutline, addOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
-import { onMounted, onBeforeUnmount, ref } from 'vue'
-import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe, orderBy } from 'firebase/firestore'
+import { onMounted, onBeforeUnmount, ref, watch, computed   } from 'vue'
+import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showItem, showItemsNews } from '@/composables/showItem'
 import { showToast } from '@/composables/showToast'
@@ -185,6 +190,36 @@ async function confirmCreate() {
   }
 }
 
+
+// Filtro en tiempo real para las sugerencias del modal
+const filteredNewItemsMap = computed<Record<string, string>>(() => {
+  const map = newItemsMap.value
+  const raw = (newProductName.value ?? '').trim()
+  if (!raw) return map
+
+  // normaliza: minúsculas y sin tildes
+  const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  const q = norm(raw)
+  const tokens = q.split(/\s+/).filter(Boolean)
+
+  const out: Record<string, string> = {}
+  for (const [name, img] of Object.entries(map)) {
+    const n = norm(name)
+
+    if (tokens.length === 1) {
+      // Si solo hay una palabra, busca que empiece por ella
+      if (n.startsWith(tokens[0])) out[name] = img
+    } else {
+      // Si hay varias palabras, busca todos los productos que contengan esa palabra
+      const includesAll = tokens.every(t => n.includes(t))
+      if (includesAll) out[name] = img
+    }
+  }
+  return out
+})
+
+
+
 // Recuperamos los items de la despensa seleccionada
 async function getPantryItems(pantryCode: string) {
   loading.value = true
@@ -233,6 +268,20 @@ function showItemsProps() {
   newItemsMap.value = showItemsNews(items)
 }
 
+// Al abrir/cerrar el modal, refrescamos sugerencias
+watch(isCreateOpen, (open) => {
+  if (open) {
+    showItemsProps()
+  }
+})
+
+// Cada vez que Firestore actualice 'items', si el modal está abierto refrescamos
+watch(items, () => {
+  if (isCreateOpen.value) {
+    showItemsProps()
+  }
+}, { deep: true })
+
 
 // Añade un nuevo item a la despensa
 async function addItemFromPantry(nameItem: string) {
@@ -270,7 +319,10 @@ async function addItemFromPantry(nameItem: string) {
     batch.update(pantryRef, { totalItems: increment(1) })
 
     await batch.commit()
+
     await showToast(`Producto ${name} añadido.`, 'success')
+    //await showSuccessToast(`Producto ${name} añadido.`) ME HA DADO CONFILCTO NO SE QUE ES LO CORRECTO
+
   } catch (err) {
     console.error('Error al añadir producto:', err)
     await showToast(`No se pudo añadir el producto ${name}.`, 'danger')
@@ -502,6 +554,8 @@ ion-header.rounded-header ion-title {
 
 .empty-suggested {
   opacity: .7;
-  margin-top: 8px;
+  margin-top: 10vh;
+  text-align: center;
+  align-items: center;
 }
 </style>
