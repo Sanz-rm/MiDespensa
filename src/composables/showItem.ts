@@ -3,14 +3,17 @@ import productsMap from "@/config/products.json";
 import type { Item } from "@/models/item";
 import type { ItemWithImage } from "@/models/itemWithImage";
 
+// Almacenamos las claves de los productos de props
+const keys = Object.keys(productsMap) as Array<keyof typeof productsMap>;
+
+// Convertimos en minusculas y eliminamos tildes
 const normalize = (s: string) =>
   s
     .toLowerCase()
     .normalize("NFD")
     .replace(/[\u0300-\u036f]/g, "");
 
-const keys = Object.keys(productsMap) as Array<keyof typeof productsMap>;
-
+// Buscamos la imagen del producto introducido con mas similitud
 export const findImageForName = (name: string): string | null => {
   const n = normalize(name);
   let bestKey: keyof typeof productsMap | null = null;
@@ -25,7 +28,7 @@ export const findImageForName = (name: string): string | null => {
   return bestKey ? productsMap[bestKey] : null;
 };
 
-/** 👇 Exportación nombrada: showItem */
+// Exportación nombrada: showItem
 export function showItem(items: Ref<Item[]>, search: Ref<string>) {
   const itemsWithImage = computed<ItemWithImage[]>(() =>
     items.value.map((item) => ({

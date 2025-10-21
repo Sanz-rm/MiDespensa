@@ -12,22 +12,19 @@
     </ion-header>
 
     <ion-content class="ion-padding pantry-content">
-      <!-- Buscador -->
+      <!-- Buscador START -->
       <div class="actions">
         <ion-searchbar v-model="search" placeholder="Buscar producto…" :debounce="150" show-clear-button="focus" />
       </div>
+      <!-- Buscador END -->
 
-      <!-- Loading -->
+      <!-- Loading START -->
       <div v-if="loading" class="loading-box">
         <ion-spinner name="crescent" style="transform:scale(2);" />
       </div>
+      <!-- Loading END -->
 
-
-      <ion-button expand="block" @click="showItemsProps">
-        Crear Producto
-      </ion-button>
-
-      <!-- Productos de la despensa seleccionada -->
+      <!-- Productos de la despensa seleccionada START -->
       <div v-if="!loading && filteredItemsWithImage.length" class="items-grid">
         <div v-for="item in filteredItemsWithImage" :key="item.id" class="item-card">
           <ion-button class="delete-btn" fill="clear" size="small" aria-label="Eliminar producto"
@@ -47,10 +44,89 @@
           </div>
         </div>
       </div>
+      <!-- Productos de la despensa seleccionada END -->
 
+      <!-- Sin productos de la despensa seleccionada START -->
       <div v-else-if="!loading" class="empty">
         <p>No hay productos.</p>
       </div>
+      <!-- Sin productos de la despensa seleccionada END -->
+
+      <!-- Botón flotante START -->
+      <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+        <ion-fab-button @click="openCreateModal" aria-label="Crear producto" class="add-button">
+          <ion-icon :icon="addOutline" />
+        </ion-fab-button>
+      </ion-fab>
+      <!-- Botón flotante END -->
+
+      <!-- Modal crear producto START -->
+      <ion-modal :is-open="isCreateOpen" @didDismiss="closeCreateModal">
+        <!-- Header modal START -->
+        <ion-header>
+          <ion-toolbar>
+            <ion-title>Crear producto</ion-title>
+            <ion-buttons slot="end">
+              <ion-button @click="closeCreateModal">Cerrar</ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <!-- Header modal END -->
+
+        <!-- Contenido modal START -->
+        <ion-content class="ion-padding">
+          <ion-list>
+            <ion-item>
+              <ion-label position="stacked">Nombre del producto</ion-label>
+              <ion-input
+                v-model="newProductName"
+                placeholder="Ej. Leche, Huevos, Arroz"
+                @keyup.enter="confirmCreate"
+                autofocus
+              />
+            </ion-item>
+          </ion-list>
+
+          <div style="display:flex; gap:10px; margin-top:16px;">
+            <ion-button expand="block" fill="clear" @click="closeCreateModal">
+              Cancelar
+            </ion-button>
+            <ion-button expand="block" @click="confirmCreate">
+              Crear
+            </ion-button>
+          </div>
+
+          <!-- PRODUCTOS CREADOS PARA AÑADIR AL INVENTARIO START -->
+          <div class="suggested-wrapper">
+            <h3 class="suggested-title">Añade productos a tu despensa</h3>
+
+            <!-- Render directo del mapa de los productos que no estan en la despensa START -->
+            <div v-if="Object.keys(newItemsMap).length" class="suggested-grid">
+              <div
+                v-for="(img, name) in newItemsMap"
+                :key="name"
+                class="suggested-card"
+              >
+                <img :src="`/img/products/${img}`" :alt="name" class="suggested-img" />
+                <p class="suggested-name">{{ name }}</p>
+
+                <!-- NUEVO: botón para añadir al inventario -->
+                <ion-button size="small" class="btn-add" @click="addItemFromPantry(name)">
+                  <ion-icon :icon="addOutline" slot="start" />
+                  Añadir
+                </ion-button>
+              </div>
+            </div>
+            <!-- Render directo del mapa de los productos que no estan en la despensa END -->
+
+            <p v-else class="empty-suggested">No hay productos disponibles</p>
+          </div>
+          <!-- PRODUCTOS CREADOS PARA AÑADIR AL INVENTARIO END -->
+        </ion-content>
+        <!-- Contenido modal END -->
+      </ion-modal>
+      <!-- Modal crear producto START -->
+
     </ion-content>
   </ion-page>
 </template>
@@ -58,9 +134,10 @@
 <script setup lang="ts">
 import {
   IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons,
-  IonButton, IonIcon, IonTitle, IonSearchbar, toastController
+  IonButton, IonIcon, IonTitle, IonSearchbar, toastController, IonFab, IonFabButton,
+  IonModal, IonInput, IonItem, IonList, IonLabel
 } from '@ionic/vue'
-import { arrowBackOutline, cartOutline, trashOutline } from 'ionicons/icons'
+import { arrowBackOutline, cartOutline, trashOutline, addOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe } from 'firebase/firestore'
@@ -87,6 +164,33 @@ onMounted(() => {
 
 // Al cerrar la ventana dejaremos de escuchar a firestore
 onBeforeUnmount(() => stop?.())
+
+// Estado del modal de creación
+const isCreateOpen = ref(false)
+// Modelo del input del modal
+const newProductName = ref('')
+
+// Abrimos el modal (y opcionalmente preparamos sugerencias)
+function openCreateModal() {
+  // Si quieres preparar sugerencias/pre-cargar datos, reaprovechamos tu función
+  showItemsProps()
+  isCreateOpen.value = true
+}
+
+// Cerramos el modal y limpiamos
+function closeCreateModal() {
+  isCreateOpen.value = false
+  newProductName.value = ''
+}
+
+// Confirmamos creación desde el modal
+async function confirmCreate() {
+  await addItemFromPantry(newProductName.value)
+  // Si la creación fue válida, cerramos (addItemFromPantry ya muestra toasts)
+  if (newProductName.value.trim()) {
+    closeCreateModal()
+  }
+}
 
 // Recuperamos los items de la despensa seleccionada
 async function getPantryItems(pantryCode: string) {
@@ -376,5 +480,48 @@ ion-header.rounded-header ion-title {
   border-radius: 8px;
   font-weight: 600;
   text-transform: none;
+}
+
+.add-button{
+  --background: #2ea15d;
+}
+
+/* Estilos del listado informativo en el modal */
+.suggested-wrapper{
+  margin-top: 24px;
+}
+.suggested-title{
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+.suggested-grid{
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 12px;
+}
+.suggested-card{
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  padding: 12px;
+  border: 1px solid #eef2f4;
+  border-radius: 12px;
+  background: #fff;
+}
+.suggested-img{
+  width: 80px;
+  height: 80px;
+  object-fit: contain;
+  margin-bottom: 8px;
+}
+.suggested-name{
+  font-weight: 600;
+  font-size: 14px;
+  margin: 0 0 8px 0;
+}
+.empty-suggested{
+  opacity: .7;
+  margin-top: 8px;
 }
 </style>
