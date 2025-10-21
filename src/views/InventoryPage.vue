@@ -542,7 +542,7 @@ ion-header.rounded-header ion-title {
 
 .suggested-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
   gap: 12px;
 }
 
@@ -554,6 +554,9 @@ ion-header.rounded-header ion-title {
   border: 1px solid #eef2f4;
   border-radius: 12px;
   background: #fff;
+}
+.suggested-card p{
+  font-size: 18px;
 }
 
 .suggested-img {
