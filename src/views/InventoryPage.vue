@@ -78,12 +78,8 @@
           <ion-list>
             <ion-item>
               <ion-label position="stacked">Nombre del producto</ion-label>
-              <ion-input
-                v-model="newProductName"
-                placeholder="Ej. Leche, Huevos, Arroz"
-                @keyup.enter="confirmCreate"
-                autofocus
-              />
+              <ion-input v-model="newProductName" placeholder="Ej. Leche, Huevos, Arroz" @keyup.enter="confirmCreate"
+                autofocus />
             </ion-item>
           </ion-list>
 
@@ -102,11 +98,7 @@
 
             <!-- Render directo del mapa de los productos que no estan en la despensa START -->
             <div v-if="Object.keys(newItemsMap).length" class="suggested-grid">
-              <div
-                v-for="(img, name) in newItemsMap"
-                :key="name"
-                class="suggested-card"
-              >
+              <div v-for="(img, name) in newItemsMap" :key="name" class="suggested-card">
                 <img :src="`/img/products/${img}`" :alt="name" class="suggested-img" />
                 <p class="suggested-name">{{ name }}</p>
 
@@ -140,9 +132,10 @@ import {
 import { arrowBackOutline, cartOutline, trashOutline, addOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
 import { onMounted, onBeforeUnmount, ref } from 'vue'
-import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe } from 'firebase/firestore'
+import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe, orderBy } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showItem, showItemsNews } from '@/composables/showItem'
+import { showToast } from '@/composables/showToast'
 
 const props = defineProps<{ code: string; name: string }>()
 console.log('Codigo y nombre de la despensa:', props.code, props.name)
@@ -195,7 +188,11 @@ async function confirmCreate() {
 // Recuperamos los items de la despensa seleccionada
 async function getPantryItems(pantryCode: string) {
   loading.value = true
-  const q = query(collection(db, 'items'), where('pantryCode', '==', pantryCode))
+  const q = query(
+    collection(db, 'items'),
+    where('pantryCode', '==', pantryCode),
+    orderBy('name', 'asc') // o 'desc'
+  );
   stop = onSnapshot(
     q,
     snap => {
@@ -210,13 +207,12 @@ async function getPantryItems(pantryCode: string) {
           inPurchase: Boolean(item.inPurchase ?? false)
         } as Item
       })
-      items.value = items.value.sort((a, b) => a.name.localeCompare(b.name))
       loading.value = false
     },
     async err => {
       console.error('Error al recuperar los items:', err)
       loading.value = false
-      await showErrorToast('Error al cargar los productos de la despensa.')
+      await showToast('Error al cargar los productos de la despensa.', 'danger')
     }
   )
 }
@@ -228,15 +224,13 @@ async function togglePurchaseState(item: Item) {
     await updateDoc(ref, { inPurchase: !item.inPurchase })
   } catch (err) {
     console.error('Error al actualizar inPurchase:', err)
-    await showErrorToast(`No se pudo actualizar el estado de ${item.name}.`)
+    await showToast(`No se pudo actualizar el estado de ${item.name}.`, 'danger')
   }
 }
 
 // Mostramos los items disponibles para agregar
 function showItemsProps() {
   newItemsMap.value = showItemsNews(items)
-   console.log('Productos a mostrar JSON: ', newItemsMap.value)
-   //addItemFromPantry('Sal')
 }
 
 
@@ -244,7 +238,7 @@ function showItemsProps() {
 async function addItemFromPantry(nameItem: string) {
   const name = (nameItem ?? '').trim()
   if (!name) {
-    await showErrorToast('Escribe un nombre de producto.')
+    await showToast('Escribe un nombre de producto.', 'danger')
     return
   }
 
@@ -258,7 +252,7 @@ async function addItemFromPantry(nameItem: string) {
     )
     const dupSnap = await getDocs(dupQ)
     if (!dupSnap.empty) {
-      await showErrorToast(`El producto ${name} ya existe en la despensa.`)
+      await showToast(`El producto ${name} ya existe en la despensa.`, 'danger')
       return
     }
     // Agregamos el item y actualizamos el totalItems de la despensa
@@ -276,10 +270,10 @@ async function addItemFromPantry(nameItem: string) {
     batch.update(pantryRef, { totalItems: increment(1) })
 
     await batch.commit()
-    await showSuccessToast(`Producto ${name} añadido.`)
+    await showToast(`Producto ${name} añadido.`, 'success')
   } catch (err) {
     console.error('Error al añadir producto:', err)
-    await showErrorToast(`No se pudo añadir el producto ${name}.`)
+    await showToast(`No se pudo añadir el producto ${name}.`, 'danger')
   } finally {
     loading.value = false
   }
@@ -298,10 +292,10 @@ async function deleteItemFromPantry(item: Item) {
     batch.update(pantryRef, { totalItems: increment(-1) })
 
     await batch.commit()
-    await showSuccessToast(`Producto ${item.name} eliminado.`)
+    await showToast(`Producto ${item.name} eliminado.`, 'success')
   } catch (err) {
     console.error('Error al eliminar producto:', err)
-    await showErrorToast(`No se pudo eliminar el producto ${item.name}.`)
+    await showToast(`No se pudo eliminar el producto ${item.name}.`, 'danger')
   }
 }
 
@@ -321,27 +315,7 @@ async function getPantryRefByCode() {
   return snap.docs[0].ref
 }
 
-// Muestra un toast verde para confirmaciones
-async function showSuccessToast(message: string) {
-  const toast = await toastController.create({
-    message,
-    duration: 1800,
-    color: 'success',
-    position: 'bottom'
-  })
-  await toast.present()
-}
 
-// Muestra un toast rojo para errores (update o select)
-async function showErrorToast(message: string) {
-  const toast = await toastController.create({
-    message,
-    duration: 2000,
-    color: 'danger',
-    position: 'bottom'
-  })
-  await toast.present()
-}
 </script>
 
 <style scoped>
@@ -482,25 +456,28 @@ ion-header.rounded-header ion-title {
   text-transform: none;
 }
 
-.add-button{
+.add-button {
   --background: #2ea15d;
 }
 
 /* Estilos del listado informativo en el modal */
-.suggested-wrapper{
+.suggested-wrapper {
   margin-top: 24px;
 }
-.suggested-title{
+
+.suggested-title {
   margin: 0 0 10px 0;
   font-size: 16px;
   font-weight: 700;
 }
-.suggested-grid{
+
+.suggested-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
   gap: 12px;
 }
-.suggested-card{
+
+.suggested-card {
   display: grid;
   justify-items: center;
   text-align: center;
@@ -509,18 +486,21 @@ ion-header.rounded-header ion-title {
   border-radius: 12px;
   background: #fff;
 }
-.suggested-img{
+
+.suggested-img {
   width: 80px;
   height: 80px;
   object-fit: contain;
   margin-bottom: 8px;
 }
-.suggested-name{
+
+.suggested-name {
   font-weight: 600;
   font-size: 14px;
   margin: 0 0 8px 0;
 }
-.empty-suggested{
+
+.empty-suggested {
   opacity: .7;
   margin-top: 8px;
 }

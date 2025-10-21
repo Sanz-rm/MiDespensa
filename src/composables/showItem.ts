@@ -52,7 +52,7 @@ export function showItem(items: Ref<Item[]>, search: Ref<string>) {
 }
 
 // Devuelve un mapa con los productos del products.json que no existan aun
-export function showItemsNews(items: Ref<Item[]>): Partial<typeof productsMap> {
+export function showItemsNews(items: Ref<Item[]>): Record<string, string> {
   // Normalizamos los nombres de los items a minúsculas y sin espacios
   const itemNames = new Set(
     items.value
@@ -68,5 +68,8 @@ export function showItemsNews(items: Ref<Item[]>): Partial<typeof productsMap> {
       newItemsMap[key] = productsMap[key];
     }
   }
-  return newItemsMap;
+  // Ordenamos el resultado por clave
+  return Object.fromEntries(
+    Object.entries(newItemsMap).sort(([a], [b]) => a.localeCompare(b))
+  );
 }

@@ -37,9 +37,11 @@
         <div v-for="(pantry, i) in pantries" :key="i" class="pantry-card" @click="onCardClick($event, pantry)">
           <!-- Botón salir/elimaniar start -->
           <button type="button" class="corner-btn" :class="pantry.creatorId === deviceId ? 'danger' : 'accent'"
-            @click.stop="onCornerAction(pantry)"  >
-            <span class="material-icons icons-red" v-if="pantry.creatorId === deviceId" title="Eliminar despensa" aria-label="Eliminar despensa">delete</span>
-            <span class="material-icons icons-red" v-else title="Salir de despensa" aria-label="Salir de despensa">logout</span>
+            @click.stop="onCornerAction(pantry)">
+            <span class="material-icons icons-red" v-if="pantry.creatorId === deviceId" title="Eliminar despensa"
+              aria-label="Eliminar despensa">delete</span>
+            <span class="material-icons icons-red" v-else title="Salir de despensa"
+              aria-label="Salir de despensa">logout</span>
           </button>
           <!-- Botón salir/elimaniar end -->
 
@@ -104,11 +106,12 @@
 import PantryHeader from '@/components/ui/PantryHeader.vue'
 import { IonPage, IonHeader, IonContent, IonSpinner } from '@ionic/vue'
 import { onMounted, onBeforeUnmount, ref } from 'vue'
-import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, type Unsubscribe, increment } from 'firebase/firestore'
+import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, type Unsubscribe, increment, orderBy } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { Pantry } from '@/models/pantry'
 import { useRouter } from 'vue-router'
-import { alertController, toastController } from '@ionic/vue'
+import { alertController } from '@ionic/vue'
+import { showToast } from '@/composables/showToast'
 import PantryModal from '@/components/ui/PantryModal.vue'
 
 // Estado de apertura modal de cada modo
@@ -177,7 +180,7 @@ async function getUserPantries() {
     loading.value = false
     return
   }
-  const q = query(collection(db, 'pantries'), where('code', 'in', codes))
+  const q = query(collection(db, 'pantries'), where('code', 'in', codes), orderBy('name', 'asc'))
   stop = onSnapshot(
     q,
     snap => {
@@ -266,6 +269,8 @@ async function createPantry() {
     };
 
     pantries.value.push(newPantry)
+    pantries.value = pantries.value.sort((a, b) => a.name.localeCompare(b.name))
+
     addPantryToStorage(code)
     console.log('Despensa creada', newPantry)
 
@@ -277,8 +282,6 @@ async function createPantry() {
 
 // Unirse a despensa por codigo
 async function joinPantry(joinCode: string) {
-
-
   const code = joinCode?.trim().toUpperCase()
   if (!code) {
     showToast('Introduce un código válido.', 'danger')
@@ -310,6 +313,8 @@ async function joinPantry(joinCode: string) {
     creatorId: pantry.creatorId
   }
   pantries.value.push(newPantry)
+  pantries.value = pantries.value.sort((a, b) => a.name.localeCompare(b.name))
+
   console.log('Despensa agregada: ', newPantry)
 
   // Sumamos 1 al contador de miembros
@@ -454,22 +459,6 @@ async function copyPantryCode(code: string) {
   } catch {
     await showToast('No se pudo copiar el código', 'danger')
   }
-}
-
-// Muestra un toast con su color correspondiente
-async function showToast(message: string, color: string) {
-  let duration = 2000;
-  if (color === 'danger' || color === 'warning') {
-    duration = 4000;
-  } 
-
-  const toast = await toastController.create({
-    message,
-    duration: duration,
-    color: color,
-    position: 'bottom'
-  })
-  await toast.present()
 }
 </script>
 
