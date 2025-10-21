@@ -101,9 +101,9 @@
             <h3 class="suggested-title">Añade productos a tu despensa</h3>
 
             <!-- Render directo del mapa de los productos que no estan en la despensa START -->
-            <div v-if="Object.keys(newItemsMap).length" class="suggested-grid">
+            <div v-if="Object.keys(filteredNewItemsMap).length" class="suggested-grid">
               <div
-                v-for="(img, name) in newItemsMap"
+                v-for="(img, name) in filteredNewItemsMap"
                 :key="name"
                 class="suggested-card"
               >
@@ -140,7 +140,7 @@ import {
 } from '@ionic/vue'
 import { arrowBackOutline, cartOutline, trashOutline, addOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
-import { onMounted, onBeforeUnmount, ref, watch  } from 'vue'
+import { onMounted, onBeforeUnmount, ref, watch, computed   } from 'vue'
 import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showItem, showItemsNews } from '@/composables/showItem'
@@ -193,6 +193,36 @@ async function confirmCreate() {
   }
 }
 
+
+// Filtro en tiempo real para las sugerencias del modal
+const filteredNewItemsMap = computed<Record<string, string>>(() => {
+  const map = newItemsMap.value
+  const raw = (newProductName.value ?? '').trim()
+  if (!raw) return map
+
+  // normaliza: minúsculas y sin tildes
+  const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  const q = norm(raw)
+  const tokens = q.split(/\s+/).filter(Boolean)
+
+  const out: Record<string, string> = {}
+  for (const [name, img] of Object.entries(map)) {
+    const n = norm(name)
+
+    if (tokens.length === 1) {
+      // Si solo hay una palabra, busca que empiece por ella
+      if (n.startsWith(tokens[0])) out[name] = img
+    } else {
+      // Si hay varias palabras, busca todos los productos que contengan esa palabra
+      const includesAll = tokens.every(t => n.includes(t))
+      if (includesAll) out[name] = img
+    }
+  }
+  return out
+})
+
+
+
 // Recuperamos los items de la despensa seleccionada
 async function getPantryItems(pantryCode: string) {
   loading.value = true
@@ -240,14 +270,14 @@ function showItemsProps() {
    //addItemFromPantry('Sal')
 }
 
-// 👉 Al abrir/cerrar el modal, refrescamos sugerencias
+// Al abrir/cerrar el modal, refrescamos sugerencias
 watch(isCreateOpen, (open) => {
   if (open) {
     showItemsProps()
   }
 })
 
-// 👉 Cada vez que Firestore actualice 'items', si el modal está abierto refrescamos
+// Cada vez que Firestore actualice 'items', si el modal está abierto refrescamos
 watch(items, () => {
   if (isCreateOpen.value) {
     showItemsProps()
@@ -292,6 +322,7 @@ async function addItemFromPantry(nameItem: string) {
 
     await batch.commit()
     await showSuccessToast(`Producto ${name} añadido.`)
+
   } catch (err) {
     console.error('Error al añadir producto:', err)
     await showErrorToast(`No se pudo añadir el producto ${name}.`)
