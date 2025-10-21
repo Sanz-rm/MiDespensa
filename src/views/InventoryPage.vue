@@ -110,11 +110,12 @@
                 <img :src="`/img/products/${img}`" :alt="name" class="suggested-img" />
                 <p class="suggested-name">{{ name }}</p>
 
-                <!-- NUEVO: botón para añadir al inventario -->
+                <!-- Botón para añadir al inventario START -->
                 <ion-button size="small" class="btn-add" @click="addItemFromPantry(name)">
                   <ion-icon :icon="addOutline" slot="start" />
                   Añadir
                 </ion-button>
+                <!-- Botón para añadir al inventario END -->
               </div>
             </div>
             <!-- Render directo del mapa de los productos que no estan en la despensa END -->
@@ -139,7 +140,7 @@ import {
 } from '@ionic/vue'
 import { arrowBackOutline, cartOutline, trashOutline, addOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
-import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { onMounted, onBeforeUnmount, ref, watch  } from 'vue'
 import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showItem, showItemsNews } from '@/composables/showItem'
@@ -238,6 +239,20 @@ function showItemsProps() {
    console.log('Productos a mostrar JSON: ', newItemsMap.value)
    //addItemFromPantry('Sal')
 }
+
+// 👉 Al abrir/cerrar el modal, refrescamos sugerencias
+watch(isCreateOpen, (open) => {
+  if (open) {
+    showItemsProps()
+  }
+})
+
+// 👉 Cada vez que Firestore actualice 'items', si el modal está abierto refrescamos
+watch(items, () => {
+  if (isCreateOpen.value) {
+    showItemsProps()
+  }
+}, { deep: true })
 
 
 // Añade un nuevo item a la despensa
@@ -522,6 +537,8 @@ ion-header.rounded-header ion-title {
 }
 .empty-suggested{
   opacity: .7;
-  margin-top: 8px;
+  margin-top: 10vh;
+  text-align: center;
+  align-items: center;
 }
 </style>
