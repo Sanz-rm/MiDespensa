@@ -207,7 +207,6 @@ async function getPantryItems(pantryCode: string) {
           inPurchase: Boolean(item.inPurchase ?? false)
         } as Item
       })
-      //items.value = items.value.sort((a, b) => a.name.localeCompare(b.name))
       loading.value = false
     },
     async err => {
@@ -232,8 +231,6 @@ async function togglePurchaseState(item: Item) {
 // Mostramos los items disponibles para agregar
 function showItemsProps() {
   newItemsMap.value = showItemsNews(items)
-  console.log('Productos a mostrar JSON: ', newItemsMap.value)
-  //addItemFromPantry('Sal')
 }
 
 
