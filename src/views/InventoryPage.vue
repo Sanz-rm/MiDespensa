@@ -97,16 +97,21 @@
             <h3 class="suggested-title">Añade productos a tu despensa</h3>
 
             <!-- Render directo del mapa de los productos que no estan en la despensa START -->
-            <div v-if="Object.keys(newItemsMap).length" class="suggested-grid">
-              <div v-for="(img, name) in newItemsMap" :key="name" class="suggested-card">
+            <div v-if="Object.keys(filteredNewItemsMap).length" class="suggested-grid">
+              <div
+                v-for="(img, name) in filteredNewItemsMap"
+                :key="name"
+                class="suggested-card"
+              >
                 <img :src="`/img/products/${img}`" :alt="name" class="suggested-img" />
                 <p class="suggested-name">{{ name }}</p>
 
-                <!-- NUEVO: botón para añadir al inventario -->
+                <!-- Botón para añadir al inventario START -->
                 <ion-button size="small" class="btn-add" @click="addItemFromPantry(name)">
                   <ion-icon :icon="addOutline" slot="start" />
                   Añadir
                 </ion-button>
+                <!-- Botón para añadir al inventario END -->
               </div>
             </div>
             <!-- Render directo del mapa de los productos que no estan en la despensa END -->
@@ -126,12 +131,12 @@
 <script setup lang="ts">
 import {
   IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons,
-  IonButton, IonIcon, IonTitle, IonSearchbar, toastController, IonFab, IonFabButton,
+  IonButton, IonIcon, IonTitle, IonSearchbar, IonFab, IonFabButton,
   IonModal, IonInput, IonItem, IonList, IonLabel
 } from '@ionic/vue'
 import { arrowBackOutline, cartOutline, trashOutline, addOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
-import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { onMounted, onBeforeUnmount, ref, watch, computed   } from 'vue'
 import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe, orderBy } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showItem, showItemsNews } from '@/composables/showItem'
@@ -185,6 +190,53 @@ async function confirmCreate() {
   }
 }
 
+
+// Filtro en tiempo real para las sugerencias del modal
+const filteredNewItemsMap = computed<Record<string, string>>(() => {
+  const map = newItemsMap.value
+  const raw = (newProductName.value ?? '').trim()
+  if (!raw) return map
+
+  // normaliza: minúsculas y sin tildes
+  const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  const q = norm(raw)
+  const tokens = q.split(/\s+/).filter(Boolean)
+
+  const out: Record<string, string> = {}
+  for (const [name, img] of Object.entries(map)) {
+    const n = norm(name)
+
+    if (tokens.length === 1) {
+      // 1 palabra: si el nombre tiene una palabra que empiece igual o contiene el texto
+      const palabra = tokens[0];
+      const palabrasDelNombre = n.split(' ')
+      const empiezaIgual = palabrasDelNombre.some(p => p.startsWith(palabra))
+      const contiene = n.includes(palabra)
+
+      if (empiezaIgual || contiene) {
+        out[name] = img
+      }
+    } else {
+      // Varias palabras: todas deben aparecer en cualquier parte del nombre
+      let todasExisten = true
+      for (const palabra of tokens) {
+        if (!n.includes(palabra)) {
+          todasExisten = false
+          break
+        }
+      }
+
+      if (todasExisten) {
+        out[name] = img
+      }
+    }
+    
+  }
+  return out
+})
+
+
+
 // Recuperamos los items de la despensa seleccionada
 async function getPantryItems(pantryCode: string) {
   loading.value = true
@@ -233,6 +285,20 @@ function showItemsProps() {
   newItemsMap.value = showItemsNews(items)
 }
 
+// Al abrir/cerrar el modal, refrescamos sugerencias
+watch(isCreateOpen, (open) => {
+  if (open) {
+    showItemsProps()
+  }
+})
+
+// Cada vez que Firestore actualice 'items', si el modal está abierto refrescamos
+watch(items, () => {
+  if (isCreateOpen.value) {
+    showItemsProps()
+  }
+}, { deep: true })
+
 
 // Añade un nuevo item a la despensa
 async function addItemFromPantry(nameItem: string) {
@@ -270,7 +336,10 @@ async function addItemFromPantry(nameItem: string) {
     batch.update(pantryRef, { totalItems: increment(1) })
 
     await batch.commit()
+
     await showToast(`Producto ${name} añadido.`, 'success')
+    //await showSuccessToast(`Producto ${name} añadido.`) ME HA DADO CONFILCTO NO SE QUE ES LO CORRECTO
+
   } catch (err) {
     console.error('Error al añadir producto:', err)
     await showToast(`No se pudo añadir el producto ${name}.`, 'danger')
@@ -443,6 +512,7 @@ ion-header.rounded-header ion-title {
   border-radius: 8px;
   font-weight: 600;
   text-transform: none;
+  height: 33px;
 }
 
 /* Color personalizado para el botón de quitar de compra */
@@ -473,35 +543,52 @@ ion-header.rounded-header ion-title {
 
 .suggested-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
   gap: 12px;
 }
 
 .suggested-card {
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
   justify-items: center;
   text-align: center;
-  padding: 12px;
+  padding: 8px;
   border: 1px solid #eef2f4;
   border-radius: 12px;
   background: #fff;
 }
 
-.suggested-img {
-  width: 80px;
-  height: 80px;
-  object-fit: contain;
-  margin-bottom: 8px;
-}
 
+.suggested-img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 8px;
+  align-self: center;
+}
 .suggested-name {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 15px;
+  line-height: 1.2;
+  min-height: calc(2 * 1.2em);
   margin: 0 0 8px 0;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* El botón baja al fondo de la tarjeta */
+.suggested-card .btn-add {
+  margin-top: auto;
+  align-self: stretch;
 }
 
 .empty-suggested {
   opacity: .7;
-  margin-top: 8px;
+  margin-top: 10vh;
+  text-align: center;
+  align-items: center;
 }
 </style>
