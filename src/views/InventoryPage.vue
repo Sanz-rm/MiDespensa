@@ -131,7 +131,7 @@
 <script setup lang="ts">
 import {
   IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons,
-  IonButton, IonIcon, IonTitle, IonSearchbar, toastController, IonFab, IonFabButton,
+  IonButton, IonIcon, IonTitle, IonSearchbar, IonFab, IonFabButton,
   IonModal, IonInput, IonItem, IonList, IonLabel
 } from '@ionic/vue'
 import { arrowBackOutline, cartOutline, trashOutline, addOutline } from 'ionicons/icons'
@@ -512,6 +512,7 @@ ion-header.rounded-header ion-title {
   border-radius: 8px;
   font-weight: 600;
   text-transform: none;
+  height: 33px;
 }
 
 /* Color personalizado para el botón de quitar de compra */
@@ -547,29 +548,41 @@ ion-header.rounded-header ion-title {
 }
 
 .suggested-card {
-  display: grid;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
   justify-items: center;
   text-align: center;
-  padding: 12px;
+  padding: 8px;
   border: 1px solid #eef2f4;
   border-radius: 12px;
   background: #fff;
 }
-.suggested-card p{
-  font-size: 18px;
-}
+
 
 .suggested-img {
-  width: 80px;
-  height: 80px;
+  width: 60px;
+  height: 60px;
   object-fit: contain;
-  margin-bottom: 8px;
+  display: block;
+  margin: 0 auto 8px;
+  align-self: center;
 }
-
 .suggested-name {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 15px;
+  line-height: 1.2;
+  min-height: calc(2 * 1.2em);
   margin: 0 0 8px 0;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* El botón baja al fondo de la tarjeta */
+.suggested-card .btn-add {
+  margin-top: auto;
+  align-self: stretch;
 }
 
 .empty-suggested {
