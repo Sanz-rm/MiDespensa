@@ -1,92 +1,138 @@
 <template>
   <ion-page>
+    <!-- Cabecera reutilizable start -->
     <ion-header class="rounded-header">
       <PantryHeader title="MI DESPENSA" />
     </ion-header>
+    <!-- Cabecera reutilizable end -->
 
     <ion-content class="ion-padding pantry-content">
-      <!-- Mensaje de error -->
+      <!-- Mensaje de error start -->
       <div v-if="pantryError" class="error-box">
         <span>{{ pantryError }}</span>
       </div>
+      <!-- Mensaje de error end -->
 
-      <!-- Acciones -->
+      <!-- Acciones start -->
       <div class="actions">
-        <button class="btn btn-solid">
-          <span class="material-icons">add</span>
+        <button class="btn btn-solid" @click="openCreate()">
+          <span class="material-icons" expand="block">add</span>
           Nueva Despensa
         </button>
-        <button class="btn btn-outline">
-          <span class="material-icons">group</span>
+        <button class="btn btn-outline" @click="openJoin()">
+          <span class="material-icons" expand="block">group</span>
           Unirse a Despensa
         </button>
       </div>
+      <!-- Acciones end -->
 
-      <!-- Loading -->
+      <!-- Loading start -->
       <div v-if="loading" class="loading-box">
         <ion-spinner name="crescent" style="transform:scale(2);"></ion-spinner>
       </div>
+      <!-- Loading end -->
 
-      <!-- Lista de despensas -->
+      <!-- Lista de despensas start -->
       <div v-else class="pantry-list">
-        <div v-for="(pantry, i) in pantries" :key="i" class="pantry-card" @click="selectPantry(pantry.code, pantry.name)">
-          <!-- Botón esquina derecha (solo visual) -->
-          <button class="corner-btn" :class="pantry.creatorId === deviceId ? 'danger' : 'accent'" @click.stop
-            title="Acción" aria-label="Acción">
-            <span class="material-icons icons-red" v-if="pantry.creatorId === deviceId">delete</span>
-            <span class="material-icons icons-red" v-else>open_in_new</span>
+        <div v-for="(pantry, i) in pantries" :key="i" class="pantry-card" @click="onCardClick($event, pantry)">
+          <!-- Botón salir/elimaniar start -->
+          <button type="button" class="corner-btn" :class="pantry.creatorId === deviceId ? 'danger' : 'accent'"
+            @click.stop="onCornerAction(pantry)">
+            <span class="material-icons icons-red" v-if="pantry.creatorId === deviceId" title="Eliminar despensa"
+              aria-label="Eliminar despensa">delete</span>
+            <span class="material-icons icons-red" v-else title="Salir de despensa"
+              aria-label="Salir de despensa">logout</span>
           </button>
+          <!-- Botón salir/elimaniar end -->
 
-          <!-- Icono -->
+          <!-- Icono despensa start -->
           <div class="icon-box">
             <div class="icon-house">
               <span class="material-icons">home</span>
             </div>
           </div>
+          <!-- Icono despensa end -->
 
-          <!-- Info -->
+          <!-- Info despensa start -->
           <div class="info">
             <div class="title-row">
               <h3 class="name">{{ pantry.name }}</h3>
             </div>
             <div class="meta">
-            <div class="meta-item">
-              <span class="meta-icon material-icons" aria-hidden="true">group</span>
-              <span>
-                {{ pantry.memberCount ?? 0 }}
-                {{ (pantry.memberCount ?? 0) === 1 ? 'miembro' : 'miembros' }}
-              </span>
-            </div>
-            <div class="meta-sep">•</div>
-            <div class="meta-item">
-              <span class="meta-icon material-icons" aria-hidden="true">inventory_2</span>
-              <span>
-                {{ pantry.totalItems ?? 0 }}
-                {{ (pantry.totalItems ?? 0) === 1 ? 'producto' : 'productos' }}
-              </span>
-            </div>
-          </div>
-            <div class="footer-row">
-              <div class="code-chip">
-                <span class="chip-text">{{ pantry.code }}</span>
-                <span class="chip-copy material-icons">content_copy</span>
+              <div class="meta-item">
+                <span class="meta-icon material-icons" aria-hidden="true">group</span>
+                <span>
+                  {{ pantry.memberCount ?? 0 }}
+                  {{ (pantry.memberCount ?? 0) === 1 ? 'miembro' : 'miembros' }}
+                </span>
+              </div>
+              <div class="meta-sep">•</div>
+              <div class="meta-item">
+                <span class="meta-icon material-icons" aria-hidden="true">inventory_2</span>
+                <span>
+                  {{ pantry.totalItems ?? 0 }}
+                  {{ (pantry.totalItems ?? 0) === 1 ? 'producto' : 'productos' }}
+                </span>
               </div>
             </div>
+            <div class="footer-row">
+              <!-- NUEVO: botón de copiar código (sustituye al chip visual) -->
+              <button type="button" class="code-chip copy-btn" @click.stop="copyPantryCode(pantry.code)"
+                :aria-label="`Copiar código ${pantry.code}`" title="Copiar código">
+                <span class="chip-text">{{ pantry.code }}</span>
+                <span class="chip-copy material-icons" aria-hidden="true">content_copy</span>
+              </button>
+              <!-- FIN NUEVO -->
+            </div>
           </div>
+          <!-- Info despensa end -->
         </div>
       </div>
+      <!-- Lista de despensas end -->
     </ion-content>
+
+    <!-- Modal reutilizable en modo CREAR start -->
+    <PantryModal v-model="openCreateModal" mode="create" @confirm="handleCreate" @close="openCreateModal = false" />
+    <!-- Modal reutilizable en modo CREAR end -->
+
+    <!-- Modal reutilizable en modo UNIRSE start -->
+    <PantryModal v-model="openJoinModal" mode="join" @confirm="handleJoin" @close="openJoinModal = false" />
+    <!-- Modal reutilizable en modo UNIRSE end -->
   </ion-page>
+
 </template>
 
 <script setup lang="ts">
 import PantryHeader from '@/components/ui/PantryHeader.vue'
 import { IonPage, IonHeader, IonContent, IonSpinner } from '@ionic/vue'
 import { onMounted, onBeforeUnmount, ref } from 'vue'
-import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, type Unsubscribe } from 'firebase/firestore'
+import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, type Unsubscribe, increment, orderBy } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { Pantry } from '@/models/pantry'
- import { useRouter } from 'vue-router'
+import { useRouter } from 'vue-router'
+import { alertController } from '@ionic/vue'
+import { showToast } from '@/composables/showToast'
+import PantryModal from '@/components/ui/PantryModal.vue'
+
+// Estado de apertura modal de cada modo
+const openCreateModal = ref(false)
+const openJoinModal = ref(false)
+// Utility: blur focused element (avoid aria-hidden / autofocus conflicts when opening modals)
+function blurActiveElement() {
+  try {
+    const el = document.activeElement as HTMLElement | null
+    if (el && typeof el.blur === 'function') el.blur()
+  } catch { }
+}
+
+function openCreate() {
+  blurActiveElement()
+  openCreateModal.value = true
+}
+function openJoin() {
+  blurActiveElement()
+  openJoinModal.value = true
+}
 
 const pantries = ref<Pantry[]>([])
 const error = ref<string | null>(null)
@@ -103,11 +149,12 @@ const router = useRouter()
 
 // Recuperamos toda la información necesaria
 onMounted(() => {
-  getUserPantries()
+  // Datos de ejemplo (forzadoss)
   deletePantryFromStorage('56N31A')
   deletePantryFromStorage('24S331')
   addPantryToStorage('56N31A')
   addPantryToStorage('24S331')
+  getUserPantries()
 })
 
 // Al cerrar la ventana dejaremos de escuchar a firestore
@@ -128,7 +175,12 @@ function getDeviceId(): string {
 async function getUserPantries() {
   console.log('Mis despensas', codes)
   loading.value = true
-  const q = query(collection(db, 'pantries'), where('code', 'in', codes))
+  if (!codes.length) {
+    pantries.value = []
+    loading.value = false
+    return
+  }
+  const q = query(collection(db, 'pantries'), where('code', 'in', codes), orderBy('name', 'asc'))
   stop = onSnapshot(
     q,
     snap => {
@@ -153,6 +205,33 @@ async function getUserPantries() {
   )
 }
 
+/* MODAL ADAPTADO
+    El modal nos pasa:  1.handleCreate({ name })  2.handleJoin({ code })
+    Llamamos las funciones correspondientes y cerramos el modal.
+*/
+async function handleCreate(payload: { name: string } | { code: string }) {
+  try {
+    if ('name' in payload) {
+      pantryName.value = payload.name.trim()
+      await createPantry()
+      openCreateModal.value = false
+    }
+  } catch (e: any) {
+    pantryError.value = e?.message ?? 'Error al crear la despensa.'
+  }
+}
+async function handleJoin(payload: { name: string } | { code: string }) {
+  try {
+    if ('code' in payload) {
+      await joinPantry(payload.code)
+      openJoinModal.value = false
+    }
+  } catch (e: any) {
+    pantryError.value = e?.message ?? 'Error al unirse a la despensa.'
+  }
+}
+
+
 // Crearemos una nueva despensa generando un código aleatorio
 async function createPantry() {
   pantryError.value = null
@@ -160,24 +239,41 @@ async function createPantry() {
   const name = pantryName.value?.trim() ?? ''
 
   if (name === '') {
-    pantryError.value = 'El nombre de la despensa es obligatorio.'
+    //pantryError.value = 'El nombre de la despensa es obligatorio.'
+    showToast('El nombre de la despensa es obligatorio.', 'danger')
     return
   }
   if (name.length > 25) {
-    pantryError.value = 'El nombre de la despensa es muy largo.'
+    showToast('El nombre de la despensa es muy largo.', 'danger')
     return
   }
 
   try {
     const code = await generatePantryCode()
-    await addDoc(collection(db, 'pantries'), {
+
+    const docRef = await addDoc(collection(db, 'pantries'), {
       name,
       code,
       memberCount: 1,
       totalItems: 0,
       creatorId: deviceId
-    })
+    });
+
+    const newPantry = {
+      id: docRef.id,
+      name,
+      code,
+      memberCount: 1,
+      totalItems: 0,
+      creatorId: deviceId
+    };
+
+    pantries.value.push(newPantry)
+    pantries.value = pantries.value.sort((a, b) => a.name.localeCompare(b.name))
+
     addPantryToStorage(code)
+    console.log('Despensa creada', newPantry)
+
     pantryError.value = null
   } catch (e: any) {
     pantryError.value = e?.message ?? 'Error al crear la despensa.'
@@ -186,18 +282,16 @@ async function createPantry() {
 
 // Unirse a despensa por codigo
 async function joinPantry(joinCode: string) {
-  pantryError.value = null
-
   const code = joinCode?.trim().toUpperCase()
   if (!code) {
-    pantryError.value = 'Introduce un código válido.'
+    showToast('Introduce un código válido.', 'danger')
     return
   }
 
   const q = query(collection(db, 'pantries'), where('code', '==', code));
   const snap = await getDocs(q);
   if (snap.empty) {
-    pantryError.value = 'Despensa no encontrada.'
+    showToast('Despensa no encontrada.', 'danger')
     return;
   }
 
@@ -205,7 +299,7 @@ async function joinPantry(joinCode: string) {
   const pantry = snap.docs[0].data();
 
   if (pantries.value.some(p => p.id === pantryRef.id)) {
-    pantryError.value = 'Ya estás unido a esta despensa.'
+    showToast('Ya estás unido a esta despensa.', 'danger')
     return
   }
 
@@ -219,10 +313,13 @@ async function joinPantry(joinCode: string) {
     creatorId: pantry.creatorId
   }
   pantries.value.push(newPantry)
+  pantries.value = pantries.value.sort((a, b) => a.name.localeCompare(b.name))
+
+  console.log('Despensa agregada: ', newPantry)
 
   // Sumamos 1 al contador de miembros
   await updateDoc(pantryRef, {
-    memberCount: pantry.memberCount + 1
+    memberCount: increment(1)
   });
 }
 
@@ -236,7 +333,7 @@ async function deleteOrLeavePantry(joinCode: string) {
   const snap = await getDocs(q);
 
   if (snap.empty) {
-    pantryError.value = 'Despensa no encontrada.'
+    await showToast(`Despensa no encontrada.`, 'danger');
     return;
   }
   const pantryRef = snap.docs[0].ref;
@@ -246,7 +343,7 @@ async function deleteOrLeavePantry(joinCode: string) {
     await deleteDoc(pantryRef);
   } else {
     await updateDoc(pantryRef, {
-      memberCount: pantry.memberCount - 1
+      memberCount: increment(-1)
     });
   }
   pantries.value = pantries.value.filter(p => p.code !== code);
@@ -289,11 +386,80 @@ function deletePantryFromStorage(code: string) {
   localStorage.setItem('myPantries', JSON.stringify(updated));
 }
 
-// Navegamos al inventario de nuestra despensa
-function selectPantry(code: string, name: string) {
-   router.push(`/tabs/${code}/${name}/inventory`)
+// Confirmar eliminar
+async function onCornerAction(pantry: Pantry) {
+  const isOwner = pantry.creatorId === deviceId
+  const header = isOwner ? 'Eliminar despensa' : 'Salir de la despensa'
+  const message = isOwner
+    ? `Vas a eliminar definitivamente “${pantry.name}”. Esta acción no se puede deshacer.`
+    : `Vas a salir de “${pantry.name}”. Podrás volver con su código.`
+
+  const alert = await alertController.create({
+    header,
+    message,
+    mode: 'ios',
+    backdropDismiss: false,
+    cssClass: ['mds-alert', isOwner ? 'mds-danger' : 'mds-safe'],
+    buttons: [
+      { text: 'Cancelar', role: 'cancel', cssClass: 'btn-cancel' },
+      {
+        text: isOwner ? 'Eliminar' : 'Salir',
+        role: 'confirm',
+        cssClass: isOwner ? 'btn-danger' : 'btn-confirm'
+      }
+    ],
+  })
+  await alert.present()
+
+  const { role } = await alert.onDidDismiss()
+  if (role !== 'confirm') return
+
+  try {
+    await deleteOrLeavePantry(pantry.code)
+    await showToast(
+      isOwner ? 'Despensa eliminada' : 'Has salido de la despensa', 'success'
+    )
+  } catch (e: any) {
+    await showToast(
+      isOwner ? 'Error al eliminar despensa.' : 'Error al abandonar despensa.', 'danger'
+    )
+  }
 }
 
+// Navegamos al inventario de nuestra despensa
+function selectPantry(code: string, name: string) {
+  router.push(`/tabs/${code}/${name}/inventory`)
+}
+
+function onCardClick(e: MouseEvent, pantry: Pantry) {
+  const target = e.target as HTMLElement
+  // Si clicas en el botón (o en cualquier hijo del botón), NO navegues
+  if (target.closest('.corner-btn')) return
+  selectPantry(pantry.code, pantry.name)
+}
+
+// NUEVO: copiar el código de la despensa al portapapeles (con fallback y toast)
+async function copyPantryCode(code: string) {
+  try {
+    if (navigator?.clipboard?.writeText) {
+      await navigator.clipboard.writeText(code)
+    } else {
+      const ta = document.createElement('textarea')
+      ta.value = code
+      ta.setAttribute('readonly', '')
+      ta.style.position = 'fixed'
+      ta.style.opacity = '0'
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+    }
+    try { navigator.vibrate?.(15) } catch { }
+    await showToast(`Código copiado: ${code}`, 'success')
+  } catch {
+    await showToast('No se pudo copiar el código', 'danger')
+  }
+}
 </script>
 
 <style scoped>
@@ -387,6 +553,7 @@ ion-header.rounded-header::after {
   gap: 14px;
 }
 
+
 /* Tarjeta de despensa */
 .pantry-card {
   position: relative;
@@ -432,6 +599,19 @@ ion-header.rounded-header::after {
 .corner-btn.accent {
   box-shadow: inset 0 0 0 2px #e5f0ff;
   color: #1f9d55;
+}
+
+/* Botón de salir/eliminar fijo en esquina de las tarjetas */
+.pantry-card {
+  position: relative;
+}
+
+.corner-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 10;
+  pointer-events: auto;
 }
 
 /* Icono izquierda */
@@ -512,6 +692,22 @@ ion-header.rounded-header::after {
   font-size: 13px;
 }
 
+/* NUEVO: botón con estilos del chip para copiar */
+.copy-btn {
+  cursor: pointer;
+  border: none;
+  background: none;
+  /* mantiene el aspecto del chip */
+}
+
+.copy-btn:focus-visible {
+  outline: 2px solid #1f9d55;
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
+/* FIN NUEVO */
+
 .chip-text {
   letter-spacing: .5px;
 }
@@ -559,6 +755,6 @@ ion-header.rounded-header::after {
 }
 
 .icons-red {
-  color: red;
+  color: #E94031;
 }
 </style>

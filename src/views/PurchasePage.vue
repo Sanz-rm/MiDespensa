@@ -57,7 +57,8 @@ import type { Item } from '@/models/item'
 import { onMounted, onBeforeUnmount, ref } from 'vue'
 import {
   collection, query, where, updateDoc, doc, getDoc, onSnapshot, type Unsubscribe,
-  writeBatch
+  writeBatch,
+  orderBy
 } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showItem } from '@/composables/showItem'
@@ -87,7 +88,8 @@ async function getPurchaseItems(pantryCode: string) {
   const q = query(
     collection(db, 'items'),
     where('pantryCode', '==', pantryCode),
-    where('inPurchase', '==', true)
+    where('inPurchase', '==', true),
+    orderBy('name','asc')
   )
   stop = onSnapshot(
     q,

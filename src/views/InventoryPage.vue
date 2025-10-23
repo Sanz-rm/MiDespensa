@@ -12,28 +12,25 @@
     </ion-header>
 
     <ion-content class="ion-padding pantry-content">
-      <!-- Buscador -->
+      <!-- Buscador START -->
       <div class="actions">
         <ion-searchbar v-model="search" placeholder="Buscar producto…" :debounce="150" show-clear-button="focus" />
       </div>
+      <!-- Buscador END -->
 
-      <!-- Loading -->
+      <!-- Loading START -->
       <div v-if="loading" class="loading-box">
         <ion-spinner name="crescent" style="transform:scale(2);" />
       </div>
+      <!-- Loading END -->
 
-      <!-- Productos de la despensa seleccionada -->
+      <!-- Productos de la despensa seleccionada START -->
       <div v-if="!loading && filteredItemsWithImage.length" class="items-grid">
         <div v-for="item in filteredItemsWithImage" :key="item.id" class="item-card">
-        <ion-button
-          class="delete-btn"
-          fill="clear"
-          size="small"
-          aria-label="Eliminar producto"
-          @click="deleteItemFromPantry(item)"
-        >
-          <ion-icon :icon="trashOutline" />
-        </ion-button>
+          <ion-button class="delete-btn" fill="clear" size="small" aria-label="Eliminar producto"
+            @click="deleteItemFromPantry(item)">
+            <ion-icon :icon="trashOutline" />
+          </ion-button>
           <img :src="`/img/products/${item.image}`" :alt="item.name" />
           <p class="item-name">{{ item.name }}</p>
           <p class="item-units">Cantidad: {{ item.units }}</p>
@@ -47,10 +44,86 @@
           </div>
         </div>
       </div>
+      <!-- Productos de la despensa seleccionada END -->
 
+      <!-- Sin productos de la despensa seleccionada START -->
       <div v-else-if="!loading" class="empty">
         <p>No hay productos.</p>
       </div>
+      <!-- Sin productos de la despensa seleccionada END -->
+
+      <!-- Botón flotante START -->
+      <ion-fab slot="fixed" vertical="bottom" horizontal="end">
+        <ion-fab-button @click="openCreateModal" aria-label="Crear producto" class="add-button">
+          <ion-icon :icon="addOutline" />
+        </ion-fab-button>
+      </ion-fab>
+      <!-- Botón flotante END -->
+
+      <!-- Modal crear producto START -->
+      <ion-modal :is-open="isCreateOpen" @didDismiss="closeCreateModal">
+        <!-- Header modal START -->
+        <ion-header>
+          <ion-toolbar>
+            <ion-title>Crear producto</ion-title>
+            <ion-buttons slot="end">
+              <ion-button @click="closeCreateModal">Cerrar</ion-button>
+            </ion-buttons>
+          </ion-toolbar>
+        </ion-header>
+        <!-- Header modal END -->
+
+        <!-- Contenido modal START -->
+        <ion-content class="ion-padding">
+          <ion-list>
+            <ion-item>
+              <ion-label position="stacked">Nombre del producto</ion-label>
+              <ion-input v-model="newProductName" placeholder="Ej. Leche, Huevos, Arroz" @keyup.enter="confirmCreate"
+                autofocus />
+            </ion-item>
+          </ion-list>
+
+          <div style="display:flex; gap:10px; margin-top:16px;">
+            <ion-button expand="block" fill="clear" @click="closeCreateModal">
+              Cancelar
+            </ion-button>
+            <ion-button expand="block" @click="confirmCreate">
+              Crear
+            </ion-button>
+          </div>
+
+          <!-- PRODUCTOS CREADOS PARA AÑADIR AL INVENTARIO START -->
+          <div class="suggested-wrapper">
+            <h3 class="suggested-title">Añade productos a tu despensa</h3>
+
+            <!-- Render directo del mapa de los productos que no estan en la despensa START -->
+            <div v-if="Object.keys(filteredNewItemsMap).length" class="suggested-grid">
+              <div
+                v-for="(img, name) in filteredNewItemsMap"
+                :key="name"
+                class="suggested-card"
+              >
+                <img :src="`/img/products/${img}`" :alt="name" class="suggested-img" />
+                <p class="suggested-name">{{ name }}</p>
+
+                <!-- Botón para añadir al inventario START -->
+                <ion-button size="small" class="btn-add" @click="addItemFromPantry(name)">
+                  <ion-icon :icon="addOutline" slot="start" />
+                  Añadir
+                </ion-button>
+                <!-- Botón para añadir al inventario END -->
+              </div>
+            </div>
+            <!-- Render directo del mapa de los productos que no estan en la despensa END -->
+
+            <p v-else class="empty-suggested">No hay productos disponibles</p>
+          </div>
+          <!-- PRODUCTOS CREADOS PARA AÑADIR AL INVENTARIO END -->
+        </ion-content>
+        <!-- Contenido modal END -->
+      </ion-modal>
+      <!-- Modal crear producto START -->
+
     </ion-content>
   </ion-page>
 </template>
@@ -58,14 +131,16 @@
 <script setup lang="ts">
 import {
   IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons,
-  IonButton, IonIcon, IonTitle, IonSearchbar, toastController
+  IonButton, IonIcon, IonTitle, IonSearchbar, IonFab, IonFabButton,
+  IonModal, IonInput, IonItem, IonList, IonLabel
 } from '@ionic/vue'
-import { arrowBackOutline, cartOutline, trashOutline } from 'ionicons/icons'
+import { arrowBackOutline, cartOutline, trashOutline, addOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
-import { onMounted, onBeforeUnmount, ref } from 'vue'
-import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe } from 'firebase/firestore'
+import { onMounted, onBeforeUnmount, ref, watch, computed   } from 'vue'
+import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe, orderBy } from 'firebase/firestore'
 import { db } from '@/firebase'
-import { showItem } from '@/composables/showItem'
+import { showItem, showItemsNews } from '@/composables/showItem'
+import { showToast } from '@/composables/showToast'
 
 const props = defineProps<{ code: string; name: string }>()
 console.log('Codigo y nombre de la despensa:', props.code, props.name)
@@ -80,6 +155,7 @@ const items = ref<Item[]>([])
 const { filteredItemsWithImage } = showItem(items, search)
 const pantryDocId = ref<string | null>(null)
 
+const newItemsMap = ref<Record<string, string>>({})
 onMounted(() => {
   getPantryItems(props.code)
 })
@@ -87,10 +163,88 @@ onMounted(() => {
 // Al cerrar la ventana dejaremos de escuchar a firestore
 onBeforeUnmount(() => stop?.())
 
+// Estado del modal de creación
+const isCreateOpen = ref(false)
+// Modelo del input del modal
+const newProductName = ref('')
+
+// Abrimos el modal (y opcionalmente preparamos sugerencias)
+function openCreateModal() {
+  // Si quieres preparar sugerencias/pre-cargar datos, reaprovechamos tu función
+  showItemsProps()
+  isCreateOpen.value = true
+}
+
+// Cerramos el modal y limpiamos
+function closeCreateModal() {
+  isCreateOpen.value = false
+  newProductName.value = ''
+}
+
+// Confirmamos creación desde el modal
+async function confirmCreate() {
+  await addItemFromPantry(newProductName.value)
+  // Si la creación fue válida, cerramos (addItemFromPantry ya muestra toasts)
+  if (newProductName.value.trim()) {
+    closeCreateModal()
+  }
+}
+
+
+// Filtro en tiempo real para las sugerencias del modal
+const filteredNewItemsMap = computed<Record<string, string>>(() => {
+  const map = newItemsMap.value
+  const raw = (newProductName.value ?? '').trim()
+  if (!raw) return map
+
+  // normaliza: minúsculas y sin tildes
+  const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  const q = norm(raw)
+  const tokens = q.split(/\s+/).filter(Boolean)
+
+  const out: Record<string, string> = {}
+  for (const [name, img] of Object.entries(map)) {
+    const n = norm(name)
+
+    if (tokens.length === 1) {
+      // 1 palabra: si el nombre tiene una palabra que empiece igual o contiene el texto
+      const palabra = tokens[0];
+      const palabrasDelNombre = n.split(' ')
+      const empiezaIgual = palabrasDelNombre.some(p => p.startsWith(palabra))
+      const contiene = n.includes(palabra)
+
+      if (empiezaIgual || contiene) {
+        out[name] = img
+      }
+    } else {
+      // Varias palabras: todas deben aparecer en cualquier parte del nombre
+      let todasExisten = true
+      for (const palabra of tokens) {
+        if (!n.includes(palabra)) {
+          todasExisten = false
+          break
+        }
+      }
+
+      if (todasExisten) {
+        out[name] = img
+      }
+    }
+    
+  }
+  return out
+})
+
+
+
 // Recuperamos los items de la despensa seleccionada
 async function getPantryItems(pantryCode: string) {
   loading.value = true
-  const q = query(collection(db, 'items'), where('pantryCode', '==', pantryCode))
+  const q = query(
+    collection(db, 'items'),
+    where('pantryCode', '==', pantryCode),
+    orderBy('name', 'asc') // o 'desc'
+  );
   stop = onSnapshot(
     q,
     snap => {
@@ -105,13 +259,12 @@ async function getPantryItems(pantryCode: string) {
           inPurchase: Boolean(item.inPurchase ?? false)
         } as Item
       })
-      items.value = items.value.sort((a, b) => a.name.localeCompare(b.name))
       loading.value = false
     },
     async err => {
       console.error('Error al recuperar los items:', err)
       loading.value = false
-      await showErrorToast('Error al cargar los productos de la despensa.')
+      await showToast('Error al cargar los productos de la despensa.', 'danger')
     }
   )
 }
@@ -123,15 +276,35 @@ async function togglePurchaseState(item: Item) {
     await updateDoc(ref, { inPurchase: !item.inPurchase })
   } catch (err) {
     console.error('Error al actualizar inPurchase:', err)
-    await showErrorToast(`No se pudo actualizar el estado de ${item.name}.`)
+    await showToast(`No se pudo actualizar el estado de ${item.name}.`, 'danger')
   }
 }
+
+// Mostramos los items disponibles para agregar
+function showItemsProps() {
+  newItemsMap.value = showItemsNews(items)
+}
+
+// Al abrir/cerrar el modal, refrescamos sugerencias
+watch(isCreateOpen, (open) => {
+  if (open) {
+    showItemsProps()
+  }
+})
+
+// Cada vez que Firestore actualice 'items', si el modal está abierto refrescamos
+watch(items, () => {
+  if (isCreateOpen.value) {
+    showItemsProps()
+  }
+}, { deep: true })
+
 
 // Añade un nuevo item a la despensa
 async function addItemFromPantry(nameItem: string) {
   const name = (nameItem ?? '').trim()
   if (!name) {
-    await showErrorToast('Escribe un nombre de producto.')
+    await showToast('Escribe un nombre de producto.', 'danger')
     return
   }
 
@@ -145,7 +318,7 @@ async function addItemFromPantry(nameItem: string) {
     )
     const dupSnap = await getDocs(dupQ)
     if (!dupSnap.empty) {
-      await showErrorToast(`El producto ${name} ya existe en la despensa.`)
+      await showToast(`El producto ${name} ya existe en la despensa.`, 'danger')
       return
     }
     // Agregamos el item y actualizamos el totalItems de la despensa
@@ -163,10 +336,13 @@ async function addItemFromPantry(nameItem: string) {
     batch.update(pantryRef, { totalItems: increment(1) })
 
     await batch.commit()
-    await showSuccessToast(`Producto ${name} añadido.`)
+
+    await showToast(`Producto ${name} añadido.`, 'success')
+    //await showSuccessToast(`Producto ${name} añadido.`) ME HA DADO CONFILCTO NO SE QUE ES LO CORRECTO
+
   } catch (err) {
     console.error('Error al añadir producto:', err)
-    await showErrorToast(`No se pudo añadir el producto ${name}.`)
+    await showToast(`No se pudo añadir el producto ${name}.`, 'danger')
   } finally {
     loading.value = false
   }
@@ -185,10 +361,10 @@ async function deleteItemFromPantry(item: Item) {
     batch.update(pantryRef, { totalItems: increment(-1) })
 
     await batch.commit()
-    await showSuccessToast(`Producto ${item.name} eliminado.`)
+    await showToast(`Producto ${item.name} eliminado.`, 'success')
   } catch (err) {
     console.error('Error al eliminar producto:', err)
-    await showErrorToast(`No se pudo eliminar el producto ${item.name}.`)
+    await showToast(`No se pudo eliminar el producto ${item.name}.`, 'danger')
   }
 }
 
@@ -208,27 +384,7 @@ async function getPantryRefByCode() {
   return snap.docs[0].ref
 }
 
-// Muestra un toast verde para confirmaciones
-async function showSuccessToast(message: string) {
-  const toast = await toastController.create({
-    message,
-    duration: 1800,
-    color: 'success',
-    position: 'bottom'
-  })
-  await toast.present()
-}
 
-// Muestra un toast rojo para errores (update o select)
-async function showErrorToast(message: string) {
-  const toast = await toastController.create({
-    message,
-    duration: 2000,
-    color: 'danger',
-    position: 'bottom'
-  })
-  await toast.present()
-}
 </script>
 
 <style scoped>
@@ -319,7 +475,7 @@ ion-header.rounded-header ion-title {
   --padding-top: 6px;
   --padding-bottom: 6px;
   --background: transparent;
-  --color: #ef4444;           
+  --color: #ef4444;
   z-index: 2;
 }
 
@@ -356,6 +512,7 @@ ion-header.rounded-header ion-title {
   border-radius: 8px;
   font-weight: 600;
   text-transform: none;
+  height: 33px;
 }
 
 /* Color personalizado para el botón de quitar de compra */
@@ -367,5 +524,71 @@ ion-header.rounded-header ion-title {
   border-radius: 8px;
   font-weight: 600;
   text-transform: none;
+}
+
+.add-button {
+  --background: #2ea15d;
+}
+
+/* Estilos del listado informativo en el modal */
+.suggested-wrapper {
+  margin-top: 24px;
+}
+
+.suggested-title {
+  margin: 0 0 10px 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.suggested-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 12px;
+}
+
+.suggested-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  justify-items: center;
+  text-align: center;
+  padding: 8px;
+  border: 1px solid #eef2f4;
+  border-radius: 12px;
+  background: #fff;
+}
+
+
+.suggested-img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 8px;
+  align-self: center;
+}
+.suggested-name {
+  font-weight: 600;
+  font-size: 15px;
+  line-height: 1.2;
+  min-height: calc(2 * 1.2em);
+  margin: 0 0 8px 0;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* El botón baja al fondo de la tarjeta */
+.suggested-card .btn-add {
+  margin-top: auto;
+  align-self: stretch;
+}
+
+.empty-suggested {
+  opacity: .7;
+  margin-top: 10vh;
+  text-align: center;
+  align-items: center;
 }
 </style>
