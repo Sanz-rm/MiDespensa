@@ -150,10 +150,10 @@ const router = useRouter()
 // Recuperamos toda la información necesaria
 onMounted(() => {
   // Datos de ejemplo (forzadoss)
-  deletePantryFromStorage('56N31A')
-  deletePantryFromStorage('24S331')
-  addPantryToStorage('56N31A')
-  addPantryToStorage('24S331')
+  // deletePantryFromStorage('56N31A')
+  // deletePantryFromStorage('24S331')
+  // addPantryToStorage('56N31A')
+  // addPantryToStorage('24S331')
   getUserPantries()
 })
 
