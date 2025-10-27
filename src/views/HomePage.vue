@@ -150,10 +150,10 @@ const router = useRouter()
 // Recuperamos toda la información necesaria
 onMounted(() => {
   // Datos de ejemplo (forzadoss)
-  deletePantryFromStorage('56N31A')
-  deletePantryFromStorage('24S331')
-  addPantryToStorage('56N31A')
-  addPantryToStorage('24S331')
+  // deletePantryFromStorage('56N31A')
+  // deletePantryFromStorage('24S331')
+  // addPantryToStorage('56N31A')
+  // addPantryToStorage('24S331')
   getUserPantries()
 })
 
@@ -309,7 +309,7 @@ async function joinPantry(joinCode: string) {
     code: pantry.code,
     name: pantry.name,
     memberCount: pantry.memberCount + 1,
-    totalItems: 0,
+    totalItems: pantry.totalItems,
     creatorId: pantry.creatorId
   }
   pantries.value.push(newPantry)
