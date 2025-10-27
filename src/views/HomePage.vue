@@ -309,7 +309,7 @@ async function joinPantry(joinCode: string) {
     code: pantry.code,
     name: pantry.name,
     memberCount: pantry.memberCount + 1,
-    totalItems: 0,
+    totalItems: pantry.totalItems,
     creatorId: pantry.creatorId
   }
   pantries.value.push(newPantry)
