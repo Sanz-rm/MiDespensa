@@ -87,6 +87,7 @@
           </div>
           <!-- Info despensa end -->
         </div>
+         <!-- <img src="https://lh3.googleusercontent.com/d/1lnP3os6Rijt8zlK8BlTdlJSqae-y4ZYb" referrerpolicy="no-referrer" alt="Imagen"> -->
       </div>
       <!-- Lista de despensas end -->
     </ion-content>
@@ -113,6 +114,7 @@ import { useRouter } from 'vue-router'
 import { alertController } from '@ionic/vue'
 import { showToast } from '@/composables/showToast'
 import PantryModal from '@/components/ui/PantryModal.vue'
+import productsMap from "@/config/products.json";
 
 // Estado de apertura modal de cada modo
 const openCreateModal = ref(false)
@@ -146,14 +148,10 @@ let stop: Unsubscribe | null = null
 const deviceId = getDeviceId();
 const router = useRouter()
 
+const keys = Object.keys(productsMap) as Array<keyof typeof productsMap>;
 
 // Recuperamos toda la información necesaria
 onMounted(() => {
-  // Datos de ejemplo (forzadoss)
-  // deletePantryFromStorage('56N31A')
-  // deletePantryFromStorage('24S331')
-  // addPantryToStorage('56N31A')
-  // addPantryToStorage('24S331')
   getUserPantries()
 })
 
@@ -185,16 +183,23 @@ async function getUserPantries() {
     q,
     snap => {
       pantries.value = snap.docs.map(d => {
-        const pantry = d.data() as any
-        return {
+        const pantryData = d.data() as any
+        const pantry = {
           id: String(d.id),
-          code: String(pantry.code ?? ''),
-          name: String(pantry.name ?? ''),
-          memberCount: Number(pantry.memberCount ?? 1),
-          totalItems: Number(pantry.totalItems ?? 0),
-          creatorId: String(pantry.creatorId ?? '0000')
+          code: String(pantryData.code ?? ''),
+          name: String(pantryData.name ?? ''),
+          memberCount: Number(pantryData.memberCount ?? 1),
+          totalItems: Number(pantryData.totalItems ?? 0),
+          creatorId: String(pantryData.creatorId ?? '0000')
         } as Pantry
+        return pantry
       })
+      // Si alguna despensa ya no existe, la eliminamos del almacenamiento local
+      for (const code of codes) {
+        if (!pantries.value.some(p => p.code === code)) {
+          deletePantryFromStorage(code)
+        }
+      }
       console.log('Despensas actuales:', pantries.value)
       loading.value = false
     },
@@ -273,7 +278,6 @@ async function createPantry() {
 
     addPantryToStorage(code)
     console.log('Despensa creada', newPantry)
-
     pantryError.value = null
   } catch (e: any) {
     pantryError.value = e?.message ?? 'Error al crear la despensa.'
