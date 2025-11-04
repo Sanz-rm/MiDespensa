@@ -268,9 +268,6 @@ async function getComunItems() {
         }).filter(ci => !existing.has(ci.name.trim().toLowerCase()))
 
       loading.value = false
-    },
-    _err => {
-      loading.value = false
     }
   )
 }

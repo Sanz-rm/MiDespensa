@@ -106,15 +106,15 @@
 <script setup lang="ts">
 import PantryHeader from '@/components/ui/PantryHeader.vue'
 import { IonPage, IonHeader, IonContent, IonSpinner } from '@ionic/vue'
-import { onMounted, onBeforeUnmount, ref } from 'vue'
-import { collection, query, where, getDocs, addDoc, updateDoc, deleteDoc, onSnapshot, type Unsubscribe, increment, orderBy } from 'firebase/firestore'
+import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
+// ⬆️ En la línea de imports desde 'firebase/firestore', añade:
+import { collection, query, where, getDocs, addDoc, updateDoc, onSnapshot, type Unsubscribe, increment, orderBy, doc, writeBatch } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { Pantry } from '@/models/pantry'
 import { useRouter } from 'vue-router'
 import { alertController } from '@ionic/vue'
 import { showToast } from '@/composables/showToast'
 import PantryModal from '@/components/ui/PantryModal.vue'
-import productsMap from "@/config/products.json";
 
 // Estado de apertura modal de cada modo
 const openCreateModal = ref(false)
@@ -124,7 +124,7 @@ function blurActiveElement() {
   try {
     const el = document.activeElement as HTMLElement | null
     if (el && typeof el.blur === 'function') el.blur()
-  } catch { }
+  } catch (e) { console.log('[blurActiveElement] noop catch', e) }
 }
 
 function openCreate() {
@@ -141,14 +141,15 @@ const error = ref<string | null>(null)
 const pantryError = ref<string | null>(null)
 const loading = ref<boolean>(false)
 
-const codes: string[] = JSON.parse(localStorage.getItem('myPantries') ?? '[]');
+// Hacemos reactivo el listado de códigos para poder re-suscribir el snapshot cuando cambie
+const codes = ref<string[]>(JSON.parse(localStorage.getItem('myPantries') ?? '[]'))
 const pantryName = ref<string>('');
 let stop: Unsubscribe | null = null
 
 const deviceId = getDeviceId();
 const router = useRouter()
 
-const keys = Object.keys(productsMap) as Array<keyof typeof productsMap>;
+// const keys = Object.keys(productsMap) as Array<keyof typeof productsMap>;
 
 // Recuperamos toda la información necesaria
 onMounted(() => {
@@ -156,7 +157,15 @@ onMounted(() => {
 })
 
 // Al cerrar la ventana dejaremos de escuchar a firestore
-onBeforeUnmount(() => stop?.())
+onBeforeUnmount(() => {
+  try { stop?.() } catch (e) { console.log('[onBeforeUnmount] error stopping listener', e) }
+})
+
+// Re-suscribe si cambian los códigos
+watch(codes, (newCodes) => {
+  console.log('[codes] changed -> resubscribe', newCodes)
+  resubscribe(newCodes)
+}, { deep: true })
 
 // Obtenemos el Identificador de nuestro dispositivo
 function getDeviceId(): string {
@@ -169,16 +178,19 @@ function getDeviceId(): string {
   return id;
 }
 
-// Obtenemos todas las despensas que tenga guardadas nuestro
-async function getUserPantries() {
-  console.log('Mis despensas', codes)
-  loading.value = true
-  if (!codes.length) {
+// Suscripción en tiempo real según códigos
+function resubscribe(codesList: string[]) {
+  try { stop?.() } catch (e) { console.log('[resubscribe] error stopping previous listener', e) }
+
+  if (!codesList || codesList.length === 0) {
+    console.log('[resubscribe] no codes -> clear list')
     pantries.value = []
     loading.value = false
     return
   }
-  const q = query(collection(db, 'pantries'), where('code', 'in', codes), orderBy('name', 'asc'))
+
+  // Firestore limita "in" a 10 elementos; si superas, podrías trocear aquí (se mantiene la lógica y solo añadimos si fuese necesario)
+  const q = query(collection(db, 'pantries'), where('code', 'in', codesList), orderBy('name', 'asc'))
   stop = onSnapshot(
     q,
     snap => {
@@ -195,19 +207,27 @@ async function getUserPantries() {
         return pantry
       })
       // Si alguna despensa ya no existe, la eliminamos del almacenamiento local
-      for (const code of codes) {
+      for (const code of [...codesList]) {
         if (!pantries.value.some(p => p.code === code)) {
           deletePantryFromStorage(code)
         }
       }
-      console.log('Despensas actuales:', pantries.value)
+      console.log('Despensas actuales (snapshot):', pantries.value)
       loading.value = false
     },
     err => {
+      console.log('[onSnapshot] error', err)
       error.value = err?.message ?? String(err)
       loading.value = false
     }
   )
+}
+
+// Obtenemos todas las despensas que tenga guardadas nuestro
+async function getUserPantries() {
+  console.log('Mis despensas (storage):', codes.value)
+  loading.value = true
+  resubscribe(codes.value)
 }
 
 /* MODAL ADAPTADO
@@ -222,6 +242,7 @@ async function handleCreate(payload: { name: string } | { code: string }) {
       openCreateModal.value = false
     }
   } catch (e: any) {
+    console.log('[handleCreate] error', e)
     pantryError.value = e?.message ?? 'Error al crear la despensa.'
   }
 }
@@ -232,6 +253,7 @@ async function handleJoin(payload: { name: string } | { code: string }) {
       openJoinModal.value = false
     }
   } catch (e: any) {
+    console.log('[handleJoin] error', e)
     pantryError.value = e?.message ?? 'Error al unirse a la despensa.'
   }
 }
@@ -241,7 +263,7 @@ async function handleJoin(payload: { name: string } | { code: string }) {
 async function createPantry() {
   pantryError.value = null
 
-  const name = pantryName.value?.trim() ?? ''
+  let name = pantryName.value?.trim() ?? ''
 
   if (name === '') {
     //pantryError.value = 'El nombre de la despensa es obligatorio.'
@@ -253,6 +275,8 @@ async function createPantry() {
     return
   }
 
+   // Primera letra en mayúscula, resto igual
+  name = name.charAt(0).toUpperCase() + name.slice(1)
   try {
     const code = await generatePantryCode()
 
@@ -264,22 +288,13 @@ async function createPantry() {
       creatorId: deviceId
     });
 
-    const newPantry = {
-      id: docRef.id,
-      name,
-      code,
-      memberCount: 1,
-      totalItems: 0,
-      creatorId: deviceId
-    };
+    console.log('Despensa creada en Firestore:', { id: docRef.id, name, code })
 
-    pantries.value.push(newPantry)
-    pantries.value = pantries.value.sort((a, b) => a.name.localeCompare(b.name))
-
+    // NO tocamos pantries.value manualmente; el onSnapshot actualizará la UI
     addPantryToStorage(code)
-    console.log('Despensa creada', newPantry)
     pantryError.value = null
   } catch (e: any) {
+    console.log('[createPantry] error', e)
     pantryError.value = e?.message ?? 'Error al crear la despensa.'
   }
 }
@@ -300,31 +315,22 @@ async function joinPantry(joinCode: string) {
   }
 
   const pantryRef = snap.docs[0].ref;
-  const pantry = snap.docs[0].data();
 
   if (pantries.value.some(p => p.id === pantryRef.id)) {
     showToast('Ya estás unido a esta despensa.', 'danger')
     return
   }
 
-  addPantryToStorage(code);
-  const newPantry = {
-    id: pantryRef.id,
-    code: pantry.code,
-    name: pantry.name,
-    memberCount: pantry.memberCount + 1,
-    totalItems: pantry.totalItems,
-    creatorId: pantry.creatorId
-  }
-  pantries.value.push(newPantry)
-  pantries.value = pantries.value.sort((a, b) => a.name.localeCompare(b.name))
+  addPantryToStorage(code)
 
-  console.log('Despensa agregada: ', newPantry)
+  console.log('Despensa agregada a storage:', { code, pantryId: pantryRef.id })
 
   // Sumamos 1 al contador de miembros
-  await updateDoc(pantryRef, {
-    memberCount: increment(1)
-  });
+  try {
+    await updateDoc(pantryRef, { memberCount: increment(1) });
+  } catch (e) {
+    console.log('[joinPantry] error actualizando memberCount', e)
+  }
 }
 
 // Si somos creadores, eliminaremos la despensa
@@ -341,18 +347,46 @@ async function deleteOrLeavePantry(joinCode: string) {
     return;
   }
   const pantryRef = snap.docs[0].ref;
-  const pantry = snap.docs[0].data();
+  const pantry = snap.docs[0].data() as any;
 
   if (pantry.creatorId === deviceId) {
-    await deleteDoc(pantryRef);
+    // Eliminamos despensa + items asociados
+    await deletePantryAndItems(pantryRef.id, code);
   } else {
-    await updateDoc(pantryRef, {
-      memberCount: increment(-1)
-    });
+    await updateDoc(pantryRef, { memberCount: increment(-1) });
   }
-  pantries.value = pantries.value.filter(p => p.code !== code);
+
+  // No filtramos la lista manualmente; el snapshot actualizará la UI
   deletePantryFromStorage(code);
 }
+async function deletePantryAndItems(pantryRef: string, pantryCode: string) {
+  const pantryDocRef = doc(db, 'pantries', pantryRef);
+
+  // Los items están en la colección raíz 'items' con campo pantryCode
+  const itemsColRef = collection(db, 'items');
+  const itemsQ = query(itemsColRef, where('pantryCode', '==', pantryCode));
+  const itemsSnap = await getDocs(itemsQ);
+
+  // Borrado en lotes (límite ~500 operaciones por batch)
+  const toDelete = itemsSnap.docs.map(d => d.ref);
+  const chunkSize = 400; // margen de seguridad
+  for (let i = 0; i < toDelete.length; i += chunkSize) {
+    const batch = writeBatch(db);
+    toDelete.slice(i, i + chunkSize).forEach(ref => batch.delete(ref)); // borra items
+    if (i + chunkSize >= toDelete.length) {
+      batch.delete(pantryDocRef); // borra la despensa en el último batch
+    }
+    await batch.commit();
+  }
+
+  if (toDelete.length === 0) {
+    // Si no había items, borra solo la despensa
+    const batch = writeBatch(db);
+    batch.delete(pantryDocRef);
+    await batch.commit();
+  }
+}
+
 
 // Generar código aleatorio de 6 caracteres comprobando que no exista ya
 async function generatePantryCode(): Promise<string> {
@@ -371,6 +405,7 @@ async function generatePantryCode(): Promise<string> {
     exists = !snap.empty
   }
 
+  console.log('[generatePantryCode] generado', code)
   return code
 }
 
@@ -380,6 +415,9 @@ function addPantryToStorage(code: string) {
   if (!existing.includes(code)) {
     existing.push(code);
     localStorage.setItem('myPantries', JSON.stringify(existing));
+    codes.value = existing; // trigger resubscribe
+  } else {
+    console.log('[addPantryToStorage] ya existía', code)
   }
 }
 
@@ -388,6 +426,8 @@ function deletePantryFromStorage(code: string) {
   const existing: string[] = JSON.parse(localStorage.getItem('myPantries') ?? '[]');
   const updated = existing.filter(c => c !== code);
   localStorage.setItem('myPantries', JSON.stringify(updated));
+  codes.value = updated; // trigger resubscribe
+  console.log('[deletePantryFromStorage] actualizado storage', updated)
 }
 
 // Confirmar eliminar
@@ -424,6 +464,7 @@ async function onCornerAction(pantry: Pantry) {
       isOwner ? 'Despensa eliminada' : 'Has salido de la despensa', 'success'
     )
   } catch (e: any) {
+    console.log('[onCornerAction] error', e)
     await showToast(
       isOwner ? 'Error al eliminar despensa.' : 'Error al abandonar despensa.', 'danger'
     )
@@ -458,13 +499,15 @@ async function copyPantryCode(code: string) {
       document.execCommand('copy')
       document.body.removeChild(ta)
     }
-    try { navigator.vibrate?.(15) } catch { }
+    try { navigator.vibrate?.(15) } catch (e) { console.log('[copyPantryCode] vibrate noop', e) }
     await showToast(`Código copiado: ${code}`, 'success')
-  } catch {
+  } catch (e) {
+    console.log('[copyPantryCode] error', e)
     await showToast('No se pudo copiar el código', 'danger')
   }
 }
 </script>
+
 
 <style scoped>
 /* Header transparente y sin sombra */
