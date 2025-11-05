@@ -26,9 +26,9 @@
       </div>
 
       <!-- Productos de la despensa seleccionada (en compra) -->
-      <div v-if="!loading && filteredItemsWithImage.length" class="list-cards">
-        <div v-for="(item, i) in filteredItemsWithImage" :key="i" class="item-row">
-          <img class="icon" :src="`/img/products/${item.image}`" :alt="item.name" />
+      <div v-if="!loading && itemsFiltered.length" class="list-cards">
+        <div v-for="item in itemsFiltered" :key="item.id" class="item-row">
+          <img class="icon" :src="`${item.imageUrl}`" :alt="item.name" />
           <div class="info">
             <p class="name">{{ item.name }}</p>
             <p class="units">Stock: {{ item.units }}</p>
@@ -39,7 +39,6 @@
           </ion-button>
         </div>
       </div>
-
       <div v-else-if="!loading" class="empty">
         <p>No hay productos en la compra.</p>
       </div>
@@ -54,14 +53,13 @@ import {
 } from '@ionic/vue'
 import { arrowBackOutline, trashOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
-import { onMounted, onBeforeUnmount, ref } from 'vue'
+import { onMounted, onBeforeUnmount, ref, computed} from 'vue'
 import {
   collection, query, where, updateDoc, doc, getDoc, onSnapshot, type Unsubscribe,
   writeBatch,
   orderBy
 } from 'firebase/firestore'
 import { db } from '@/firebase'
-import { showItem } from '@/composables/showItem'
 
 const props = defineProps<{ code: string; name: string }>()
 console.log('Codigo y nombre de la despensa:', props.code, props.name)
@@ -70,11 +68,18 @@ const loading = ref<boolean>(false)
 const search = ref<string>('')
 
 let stop: Unsubscribe | null = null
+// Normaliza: quita acentos y pasa a minúsculas
+const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim()
+
 const items = ref<Item[]>([])
+const itemsFiltered = computed(() => {
+  const q = norm(search.value)
+  return items.value.filter(it =>
+    it.inPurchase && (!q || norm(it.name).includes(q))
+  )
+})
 
 // Lista de productos en compra con imagen y filtro por nombre
-const { filteredItemsWithImage } = showItem(items, search)
-
 onMounted(() => {
   getPurchaseItems(props.code)
 })
@@ -102,10 +107,11 @@ async function getPurchaseItems(pantryCode: string) {
           units: Number(item.units ?? 0),
           pantryCode: String(item.pantryCode ?? pantryCode),
           locationId: String(item.locationId ?? 'Otro'),
-          inPurchase: Boolean(item.inPurchase ?? false)
+          inPurchase: Boolean(item.inPurchase ?? false),
+          imageUrl: String(item.imageUrl ?? 'https://lh3.googleusercontent.com/d/1aiKcEfLA9P7YauPWq4vBex0DDTGVvpK_')
         } as Item
       })
-      items.value = items.value.sort((a, b) => a.name.localeCompare(b.name))
+      console.log("items obtenidos: ", items.value)
       loading.value = false
     },
     // ⬇️ Toast rojo si falla la suscripción/lectura
