@@ -87,7 +87,7 @@
           </div>
           <!-- Info despensa end -->
         </div>
-         <!-- <img src="https://lh3.googleusercontent.com/d/1lnP3os6Rijt8zlK8BlTdlJSqae-y4ZYb" referrerpolicy="no-referrer" alt="Imagen"> -->
+        <!-- <img src="https://lh3.googleusercontent.com/d/1lnP3os6Rijt8zlK8BlTdlJSqae-y4ZYb" referrerpolicy="no-referrer" alt="Imagen"> -->
       </div>
       <!-- Lista de despensas end -->
     </ion-content>
@@ -154,7 +154,18 @@ const router = useRouter()
 // Recuperamos toda la información necesaria
 onMounted(() => {
   getUserPantries()
+  /*
+  addComunItems("Aceite de girasol", "https://res.cloudinary.com/dpqgmi3zs/image/upload/v1762341487/aceite_de_girasol_emqm58.png")
+  */
 })
+/*
+async function addComunItems(name: string, url: string) {
+  await addDoc(collection(db, 'comun_items'), {
+    name: name,
+    imageUrl: url
+  });
+  console.log("Agregamos item: " + name + " con url: " + url)
+}*/
 
 // Al cerrar la ventana dejaremos de escuchar a firestore
 onBeforeUnmount(() => {
@@ -275,7 +286,7 @@ async function createPantry() {
     return
   }
 
-   // Primera letra en mayúscula, resto igual
+  // Primera letra en mayúscula, resto igual
   name = name.charAt(0).toUpperCase() + name.slice(1)
   try {
     const code = await generatePantryCode()

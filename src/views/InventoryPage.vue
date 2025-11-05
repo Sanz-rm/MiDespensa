@@ -194,7 +194,7 @@ function closeCreateModal() {
 
 // Confirmamos creación desde el modal
 async function confirmCreate() {
-  await addItemFromPantry(newProductName.value, "https://lh3.googleusercontent.com/d/1aiKcEfLA9P7YauPWq4vBex0DDTGVvpK_")
+  await addItemFromPantry(newProductName.value, "https://res.cloudinary.com/dpqgmi3zs/image/upload/v1762341567/default_ytyyhv.png")
   // Si la creación fue válida, cerramos (addItemFromPantry ya muestra toasts)
   if (newProductName.value.trim()) {
     closeCreateModal()
@@ -221,7 +221,7 @@ async function getPantryItems(pantryCode: string) {
           pantryCode: String(item.pantryCode ?? pantryCode),
           locationId: String(item.locationId ?? 'Otro'),
           inPurchase: Boolean(item.inPurchase ?? false),
-          imageUrl: String(item.imageUrl ?? 'https://lh3.googleusercontent.com/d/1aiKcEfLA9P7YauPWq4vBex0DDTGVvpK_')
+          imageUrl: String(item.imageUrl ?? 'https://res.cloudinary.com/dpqgmi3zs/image/upload/v1762341567/default_ytyyhv.png')
         } as Item
       })
       loading.value = false
