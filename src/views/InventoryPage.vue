@@ -236,7 +236,7 @@ async function getPantryItems(pantryCode: string) {
 
 function getImageFirstLetter(name: string): string {
   const firstLetter = name.charAt(0).toLowerCase()
-  const imageUrl = `public/img/letters/letra_${firstLetter}.png`
+  const imageUrl = `img/letters/letra_${firstLetter}.png`
   return imageUrl
 }
 
