@@ -194,7 +194,7 @@ function closeCreateModal() {
 
 // Confirmamos creación desde el modal
 async function confirmCreate() {
-  await addItemFromPantry(newProductName.value, "https://res.cloudinary.com/dpqgmi3zs/image/upload/v1762341567/default_ytyyhv.png")
+  await addItemFromPantry(newProductName.value, getImageFirstLetter(newProductName.value))
   // Si la creación fue válida, cerramos (addItemFromPantry ya muestra toasts)
   if (newProductName.value.trim()) {
     closeCreateModal()
@@ -221,7 +221,7 @@ async function getPantryItems(pantryCode: string) {
           pantryCode: String(item.pantryCode ?? pantryCode),
           locationId: String(item.locationId ?? 'Otro'),
           inPurchase: Boolean(item.inPurchase ?? false),
-          imageUrl: String(item.imageUrl ?? 'https://res.cloudinary.com/dpqgmi3zs/image/upload/v1762341567/default_ytyyhv.png')
+          imageUrl: String(item.imageUrl ?? getImageFirstLetter(String(item.name ?? '')))
         } as Item
       })
       loading.value = false
@@ -232,6 +232,12 @@ async function getPantryItems(pantryCode: string) {
       await showToast('Error al cargar los productos de la despensa.', 'danger')
     }
   )
+}
+
+function getImageFirstLetter(name: string): string {
+  const firstLetter = name.charAt(0).toLowerCase()
+  const imageUrl = `img/letters/letra_${firstLetter}.png`
+  return imageUrl
 }
 
 // Agregamos el item a la compra (o lo quitamos si ya estaba)

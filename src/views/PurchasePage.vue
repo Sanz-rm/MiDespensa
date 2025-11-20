@@ -108,7 +108,7 @@ async function getPurchaseItems(pantryCode: string) {
           pantryCode: String(item.pantryCode ?? pantryCode),
           locationId: String(item.locationId ?? 'Otro'),
           inPurchase: Boolean(item.inPurchase ?? false),
-          imageUrl: String(item.imageUrl ?? 'https://lh3.googleusercontent.com/d/1aiKcEfLA9P7YauPWq4vBex0DDTGVvpK_')
+          imageUrl: String(item.imageUrl ?? getImageFirstLetter(String(item.name ?? '')))
         } as Item
       })
       console.log("items obtenidos: ", items.value)
@@ -121,6 +121,11 @@ async function getPurchaseItems(pantryCode: string) {
       await showErrorToast('Error al cargar los productos de la compra.')
     }
   )
+}
+function getImageFirstLetter(name: string): string {
+  const firstLetter = name.charAt(0).toLowerCase()
+  const imageUrl = `img/letters/letra_${firstLetter}.png`
+  return imageUrl
 }
 
 // Quitar un item de la compra
