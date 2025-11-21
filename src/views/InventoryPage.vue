@@ -25,13 +25,13 @@
       <!-- Loading END -->
 
       <!-- Productos de la despensa seleccionada START -->
-      <div v-if="!loading && filteredItemsWithImage.length" class="items-grid">
-        <div v-for="item in filteredItemsWithImage" :key="item.id" class="item-card">
+      <div v-if="!loading && itemsFiltered.length" class="items-grid">
+        <div v-for="item in itemsFiltered" :key="item.id" class="item-card">
           <ion-button class="delete-btn" fill="clear" size="small" aria-label="Eliminar producto"
             @click="deleteItemFromPantry(item)">
             <ion-icon :icon="trashOutline" />
           </ion-button>
-          <img :src="`/img/products/${item.image}`" :alt="item.name" />
+          <img :src="`${item.imageUrl}`" :alt="item.name" />
           <p class="item-name">{{ item.name }}</p>
           <p class="item-units">Cantidad: {{ item.units }}</p>
 
@@ -96,26 +96,20 @@
           <div class="suggested-wrapper">
             <h3 class="suggested-title">Añade productos a tu despensa</h3>
 
-            <!-- Render directo del mapa de los productos que no estan en la despensa START -->
-            <div v-if="Object.keys(filteredNewItemsMap).length" class="suggested-grid">
-              <div
-                v-for="(img, name) in filteredNewItemsMap"
-                :key="name"
-                class="suggested-card"
-              >
-                <img :src="`/img/products/${img}`" :alt="name" class="suggested-img" />
-                <p class="suggested-name">{{ name }}</p>
+            <!-- Render de los items comunes -->
+            <div v-if="comunItemsFiltered && comunItemsFiltered.length" class="suggested-grid">
+              <div v-for="item in comunItemsFiltered" :key="item.id" class="suggested-card">
+                <img :src="item.imageUrl" :alt="item.name" class="suggested-img" />
+                <p class="suggested-name">{{ item.name }}</p>
 
-                <!-- Botón para añadir al inventario START -->
-                <ion-button size="small" class="btn-add" @click="addItemFromPantry(name)">
+                <!-- Botón para añadir al inventario -->
+                <ion-button size="small" class="btn-add" @click="addItemFromPantry(item.name, item.imageUrl)">
                   <ion-icon :icon="addOutline" slot="start" />
                   Añadir
                 </ion-button>
-                <!-- Botón para añadir al inventario END -->
               </div>
             </div>
-            <!-- Render directo del mapa de los productos que no estan en la despensa END -->
-
+            <!-- Render de los items comunes END -->
             <p v-else class="empty-suggested">No hay productos disponibles</p>
           </div>
           <!-- PRODUCTOS CREADOS PARA AÑADIR AL INVENTARIO END -->
@@ -136,11 +130,11 @@ import {
 } from '@ionic/vue'
 import { arrowBackOutline, cartOutline, trashOutline, addOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
-import { onMounted, onBeforeUnmount, ref, watch, computed   } from 'vue'
+import { onMounted, onBeforeUnmount, ref, watch, computed } from 'vue'
 import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe, orderBy } from 'firebase/firestore'
 import { db } from '@/firebase'
-import { showItem, showItemsNews } from '@/composables/showItem'
 import { showToast } from '@/composables/showToast'
+import { ComunItem } from '@/models/comunItem'
 
 const props = defineProps<{ code: string; name: string }>()
 console.log('Codigo y nombre de la despensa:', props.code, props.name)
@@ -151,11 +145,28 @@ const search = ref<string>('')
 let stop: Unsubscribe | null = null
 const items = ref<Item[]>([])
 
+// Normaliza: quita acentos y pasa a minúsculas
+const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim()
+
+// Lista filtrada según el texto del searchbar
+const itemsFiltered = computed(() => {
+  const q = norm(search.value)
+  if (!q) return items.value
+  return items.value.filter(it => norm(it.name).includes(q))
+})
+
+const comunItems = ref<ComunItem[]>([])
+
+const comunItemsFiltered = computed(() => {
+  const q = norm(newProductName.value)
+  if (!q) return comunItems.value
+  return comunItems.value.filter(it => norm(it.name).includes(q))
+})
+
 // Lista de productos en inventario con imagen y filtro por nombre
-const { filteredItemsWithImage } = showItem(items, search)
 const pantryDocId = ref<string | null>(null)
 
-const newItemsMap = ref<Record<string, string>>({})
+
 onMounted(() => {
   getPantryItems(props.code)
 })
@@ -171,7 +182,7 @@ const newProductName = ref('')
 // Abrimos el modal (y opcionalmente preparamos sugerencias)
 function openCreateModal() {
   // Si quieres preparar sugerencias/pre-cargar datos, reaprovechamos tu función
-  showItemsProps()
+  getComunItems()
   isCreateOpen.value = true
 }
 
@@ -183,59 +194,12 @@ function closeCreateModal() {
 
 // Confirmamos creación desde el modal
 async function confirmCreate() {
-  await addItemFromPantry(newProductName.value)
+  await addItemFromPantry(newProductName.value, getImageFirstLetter(newProductName.value))
   // Si la creación fue válida, cerramos (addItemFromPantry ya muestra toasts)
   if (newProductName.value.trim()) {
     closeCreateModal()
   }
 }
-
-
-// Filtro en tiempo real para las sugerencias del modal
-const filteredNewItemsMap = computed<Record<string, string>>(() => {
-  const map = newItemsMap.value
-  const raw = (newProductName.value ?? '').trim()
-  if (!raw) return map
-
-  // normaliza: minúsculas y sin tildes
-  const norm = (s: string) => s.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
-  const q = norm(raw)
-  const tokens = q.split(/\s+/).filter(Boolean)
-
-  const out: Record<string, string> = {}
-  for (const [name, img] of Object.entries(map)) {
-    const n = norm(name)
-
-    if (tokens.length === 1) {
-      // 1 palabra: si el nombre tiene una palabra que empiece igual o contiene el texto
-      const palabra = tokens[0];
-      const palabrasDelNombre = n.split(' ')
-      const empiezaIgual = palabrasDelNombre.some(p => p.startsWith(palabra))
-      const contiene = n.includes(palabra)
-
-      if (empiezaIgual || contiene) {
-        out[name] = img
-      }
-    } else {
-      // Varias palabras: todas deben aparecer en cualquier parte del nombre
-      let todasExisten = true
-      for (const palabra of tokens) {
-        if (!n.includes(palabra)) {
-          todasExisten = false
-          break
-        }
-      }
-
-      if (todasExisten) {
-        out[name] = img
-      }
-    }
-    
-  }
-  return out
-})
-
-
 
 // Recuperamos los items de la despensa seleccionada
 async function getPantryItems(pantryCode: string) {
@@ -256,7 +220,8 @@ async function getPantryItems(pantryCode: string) {
           units: Number(item.units ?? 0),
           pantryCode: String(item.pantryCode ?? pantryCode),
           locationId: String(item.locationId ?? 'Otro'),
-          inPurchase: Boolean(item.inPurchase ?? false)
+          inPurchase: Boolean(item.inPurchase ?? false),
+          imageUrl: String(item.imageUrl ?? getImageFirstLetter(String(item.name ?? '')))
         } as Item
       })
       loading.value = false
@@ -269,6 +234,12 @@ async function getPantryItems(pantryCode: string) {
   )
 }
 
+function getImageFirstLetter(name: string): string {
+  const firstLetter = name.charAt(0).toLowerCase()
+  const imageUrl = `img/letters/letra_${firstLetter}.png`
+  return imageUrl
+}
+
 // Agregamos el item a la compra (o lo quitamos si ya estaba)
 async function togglePurchaseState(item: Item) {
   try {
@@ -279,29 +250,50 @@ async function togglePurchaseState(item: Item) {
     await showToast(`No se pudo actualizar el estado de ${item.name}.`, 'danger')
   }
 }
+// Obtenemos todas los items comunes que aun no tenemos
+async function getComunItems() {
+  loading.value = true
 
-// Mostramos los items disponibles para agregar
-function showItemsProps() {
-  newItemsMap.value = showItemsNews(items)
+  const q = query(collection(db, 'comun_items'), orderBy('name', 'asc'))
+  stop = onSnapshot(
+    q,
+    snap => {
+      // nombres existentes en tu inventario
+      const existing = new Set(
+        (items.value ?? []).map((i: Item) => String(i?.name ?? '').trim().toLowerCase())
+      )
+      // excluir los que ya tienes por nombre
+      comunItems.value = snap.docs
+        .map(d => {
+          const data = d.data() as any
+          return {
+            id: String(d.id),
+            name: String(data?.name ?? ''),
+            imageUrl: String(data?.imageUrl ?? ''),
+          } as ComunItem
+        }).filter(ci => !existing.has(ci.name.trim().toLowerCase()))
+
+      loading.value = false
+    }
+  )
 }
 
 // Al abrir/cerrar el modal, refrescamos sugerencias
 watch(isCreateOpen, (open) => {
   if (open) {
-    showItemsProps()
+    getComunItems()
   }
 })
 
 // Cada vez que Firestore actualice 'items', si el modal está abierto refrescamos
 watch(items, () => {
   if (isCreateOpen.value) {
-    showItemsProps()
+    getComunItems()
   }
 }, { deep: true })
 
-
 // Añade un nuevo item a la despensa
-async function addItemFromPantry(nameItem: string) {
+async function addItemFromPantry(nameItem: string, imageUrl: string) {
   const name = (nameItem ?? '').trim()
   if (!name) {
     await showToast('Escribe un nombre de producto.', 'danger')
@@ -330,6 +322,7 @@ async function addItemFromPantry(nameItem: string) {
       units: 1,
       inPurchase: false,
       locationId: 'fi4aM1bw8qP44Gu6JFwl',
+      imageUrl: imageUrl
     })
 
     const pantryRef = await getPantryRefByCode()
@@ -568,6 +561,7 @@ ion-header.rounded-header ion-title {
   margin: 0 auto 8px;
   align-self: center;
 }
+
 .suggested-name {
   font-weight: 600;
   font-size: 15px;

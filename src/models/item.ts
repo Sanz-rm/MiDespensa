@@ -5,4 +5,5 @@ export interface Item {
   pantryCode: string
   locationId: string
   inPurchase: boolean
+  imageUrl: string
 }
