@@ -318,7 +318,7 @@ async function addItemFromPantry(nameItem: string, imageUrl: string) {
     const newItemRef = doc(collection(db, 'items'))
     const itemName = name.charAt(0).toUpperCase() + name.slice(1);
     batch.set(newItemRef, {
-      itemName,
+      name: itemName,
       pantryCode: props.code,
       units: 1,
       inPurchase: false,
