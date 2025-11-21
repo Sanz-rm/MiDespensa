@@ -316,9 +316,9 @@ async function addItemFromPantry(nameItem: string, imageUrl: string) {
     // Agregamos el item y actualizamos el totalItems de la despensa
     const batch = writeBatch(db)
     const newItemRef = doc(collection(db, 'items'))
-    //const itemName = name.charAt(0).toUpperCase() + name.slice(1);
+    const itemName = name.charAt(0).toUpperCase() + name.slice(1);
     batch.set(newItemRef, {
-      name,
+      name: itemName,
       pantryCode: props.code,
       units: 1,
       inPurchase: false,
