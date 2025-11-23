@@ -593,7 +593,7 @@ ion-header.rounded-header ion-title {
   line-height: 1.2;
   min-height: calc(2 * 1.2em);
   margin: 0 0 8px 0;
-  -webkit-line-clamp: 2;
+  --line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
