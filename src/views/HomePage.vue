@@ -34,62 +34,103 @@
 
       <!-- Lista de despensas start -->
       <div v-else class="pantry-list">
-        <div v-for="(pantry, i) in pantries" :key="i" class="pantry-card" @click="onCardClick($event, pantry)">
-          <!-- Botón salir/elimaniar start -->
-          <button type="button" class="corner-btn" :class="pantry.creatorId === deviceId ? 'danger' : 'accent'"
-            @click.stop="onCornerAction(pantry)">
-            <span class="material-icons icons-red" v-if="pantry.creatorId === deviceId" title="Eliminar despensa"
-              aria-label="Eliminar despensa">delete</span>
-            <span class="material-icons icons-red" v-else title="Salir de despensa"
-              aria-label="Salir de despensa">logout</span>
-          </button>
-          <!-- Botón salir/elimaniar end -->
-
-          <!-- Icono despensa start -->
-          <div class="icon-box">
-            <div class="icon-house">
-              <span class="material-icons">home</span>
-            </div>
+        <!-- Estado vacío -->
+        <div v-if="!pantries.length" class="empty-state">
+          <div class="empty-icon">
+            <span class="material-icons">home</span>
           </div>
-          <!-- Icono despensa end -->
-
-          <!-- Info despensa start -->
-          <div class="info">
-            <div class="title-row">
-              <h3 class="name">{{ pantry.name }}</h3>
-            </div>
-            <div class="meta">
-              <div class="meta-item">
-                <span class="meta-icon material-icons" aria-hidden="true">group</span>
-                <span>
-                  {{ pantry.memberCount ?? 0 }}
-                  {{ (pantry.memberCount ?? 0) === 1 ? 'miembro' : 'miembros' }}
-                </span>
-              </div>
-              <div class="meta-sep">•</div>
-              <div class="meta-item">
-                <span class="meta-icon material-icons" aria-hidden="true">inventory_2</span>
-                <span>
-                  {{ pantry.totalItems ?? 0 }}
-                  {{ (pantry.totalItems ?? 0) === 1 ? 'producto' : 'productos' }}
-                </span>
-              </div>
-            </div>
-            <div class="footer-row">
-              <!-- NUEVO: botón de copiar código (sustituye al chip visual) -->
-              <button type="button" class="code-chip copy-btn" @click.stop="copyPantryCode(pantry.code)"
-                :aria-label="`Copiar código ${pantry.code}`" title="Copiar código">
-                <span class="chip-text">{{ pantry.code }}</span>
-                <span class="chip-copy material-icons" aria-hidden="true">content_copy</span>
-              </button>
-              <!-- FIN NUEVO -->
-            </div>
-          </div>
-          <!-- Info despensa end -->
+          <p class="empty-title">No tienes despensas aún</p>
+          <p class="empty-subtitle">Crea tu primera despensa o únete a una existente</p>
         </div>
-        <!-- <img src="https://lh3.googleusercontent.com/d/1lnP3os6Rijt8zlK8BlTdlJSqae-y4ZYb" referrerpolicy="no-referrer" alt="Imagen"> -->
+
+        <!-- Lista de tarjetas -->
+        <div v-else>
+          <div
+            v-for="(pantry, i) in pantries"
+            :key="i"
+            class="pantry-card"
+            @click="onCardClick($event, pantry)"
+          >
+            <!-- Botón salir/elimaniar start -->
+            <button
+              type="button"
+              class="corner-btn"
+              :class="pantry.creatorId === deviceId ? 'danger' : 'accent'"
+              @click.stop="onCornerAction(pantry)"
+            >
+              <span
+                class="material-icons icons-red"
+                v-if="pantry.creatorId === deviceId"
+                title="Eliminar despensa"
+                aria-label="Eliminar despensa"
+                >delete</span
+              >
+              <span
+                class="material-icons icons-red"
+                v-else
+                title="Salir de despensa"
+                aria-label="Salir de despensa"
+                >logout</span
+              >
+            </button>
+            <!-- Botón salir/elimaniar end -->
+
+            <!-- Icono despensa start -->
+            <div class="icon-box">
+              <div class="icon-house">
+                <span class="material-icons">home</span>
+              </div>
+            </div>
+            <!-- Icono despensa end -->
+
+            <!-- Info despensa start -->
+            <div class="info">
+              <div class="title-row">
+                <h3 class="name">{{ pantry.name }}</h3>
+              </div>
+              <div class="meta">
+                <div class="meta-item">
+                  <span class="meta-icon material-icons" aria-hidden="true">group</span>
+                  <span>
+                    {{ pantry.memberCount ?? 0 }}
+                    {{ (pantry.memberCount ?? 0) === 1 ? 'miembro' : 'miembros' }}
+                  </span>
+                </div>
+                <div class="meta-sep">•</div>
+                <div class="meta-item">
+                  <span class="meta-icon material-icons" aria-hidden="true"
+                    >inventory_2</span
+                  >
+                  <span>
+                    {{ pantry.totalItems ?? 0 }}
+                    {{ (pantry.totalItems ?? 0) === 1 ? 'producto' : 'productos' }}
+                  </span>
+                </div>
+              </div>
+              <div class="footer-row">
+                <!-- Botón copiar código start -->
+                <button
+                  type="button"
+                  class="code-chip copy-btn"
+                  @click.stop="copyPantryCode(pantry.code)"
+                  :aria-label="`Copiar código ${pantry.code}`"
+                  title="Copiar código"
+                >
+                  <span class="chip-text">{{ pantry.code }}</span>
+                  <span class="chip-copy material-icons" aria-hidden="true"
+                    >content_copy</span
+                  >
+                </button>
+                <!-- Botón copiar código end -->
+              </div>
+            </div>
+            <!-- Info despensa end -->
+          </div>
+          <!-- <img src="https://lh3.googleusercontent.com/d/1lnP3os6Rijt8zlK8BlTdlJSqae-y4ZYb" referrerpolicy="no-referrer" alt="Imagen"> -->
+        </div>
       </div>
       <!-- Lista de despensas end -->
+
     </ion-content>
 
     <!-- Modal reutilizable en modo CREAR start -->
@@ -686,7 +727,7 @@ ion-header.rounded-header::after {
   border: 2px solid #bde8d1;
   display: grid;
   place-items: center;
-  font-size: 22px;
+  font-size: 60px;
 }
 
 /* Texto */
@@ -774,7 +815,7 @@ ion-header.rounded-header::after {
   opacity: .8;
 }
 
-/* Grid de productos */
+
 .items-grid {
   margin-top: 8px;
   display: grid;
@@ -815,4 +856,51 @@ ion-header.rounded-header::after {
 .icons-red {
   color: #E94031;
 }
+
+.pantry-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  flex: 1;
+}
+
+.empty-state {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px 16px;
+  color: #6b7280;
+}
+
+.empty-icon {
+  width: 120px;
+  height: 120px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 2px;
+}
+
+.empty-icon .material-icons {
+  font-size: 78px;
+  color: #374151;
+}
+
+.empty-title {
+  margin: 0 0 4px;
+  font-weight: 700;
+  font-size: 18px;
+  color: #111827;
+}
+
+.empty-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #3f4146;
+  font-weight: 500;
+}
+
 </style>

@@ -48,7 +48,11 @@
 
       <!-- Sin productos de la despensa seleccionada START -->
       <div v-else-if="!loading" class="empty">
-        <p>No hay productos.</p>
+        <div class="empty-icon">
+            <span class="material-icons">local_mall</span>
+          </div>
+          <p class="empty-title">No hay productos todavía</p>
+          <p class="empty-subtitle">Crea o añade tu primer producto</p>
       </div>
       <!-- Sin productos de la despensa seleccionada END -->
 
@@ -195,9 +199,9 @@ function closeCreateModal() {
 // Confirmamos creación desde el modal
 async function confirmCreate() {
   await addItemFromPantry(newProductName.value, getImageFirstLetter(newProductName.value))
-  // Si la creación fue válida, cerramos (addItemFromPantry ya muestra toasts)
+  // Si la creación fue válida, vaciamos el input
   if (newProductName.value.trim()) {
-    closeCreateModal()
+    newProductName.value = ''
   }
 }
 
@@ -462,20 +466,43 @@ ion-header.rounded-header ion-title {
 .delete-btn {
   position: absolute;
   top: 6px;
-  right: 6px;
-  --padding-start: 6px;
-  --padding-end: 6px;
-  --padding-top: 6px;
-  --padding-bottom: 6px;
-  --background: transparent;
-  --color: #ef4444;
+  right: 1px;
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --background: #ef4444;
+  --background-hover: #dc2626;
+  --background-activated: #b91c1c;
+  --color: #ffffff;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 2;
 }
 
+/* El círculo REAL debe aplicarse al elemento interno */
+.delete-btn::part(native) {
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-btn ion-icon {
+  --ionicon-stroke-width: 35px; /* hace el trazo del icono más grueso */
+}
+
+
 .delete-btn:hover,
 .delete-btn:focus {
-  --color: #dc2626;
+  --background: #dc2626;
 }
+
 
 /* Botón dentro de la card */
 .card-actions {
@@ -579,10 +606,51 @@ ion-header.rounded-header ion-title {
   align-self: stretch;
 }
 
+
+.empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px 16px;
+  color: #6b7280;
+}
+
 .empty-suggested {
   opacity: .7;
   margin-top: 10vh;
   text-align: center;
   align-items: center;
 }
+
+.empty-icon {
+  width: 120px;
+  height: 120px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 2px;
+}
+
+.empty-icon .material-icons {
+  font-size: 78px;
+  color: #374151;
+}
+
+.empty-title {
+  margin: 0 0 4px;
+  font-weight: 700;
+  font-size: 18px;
+  color: #111827;
+}
+
+.empty-subtitle {
+  margin: 0;
+  font-size: 17px;
+  color: #3f4146;
+  font-weight: 500;
+}
+
 </style>
