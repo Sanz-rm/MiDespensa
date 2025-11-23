@@ -462,20 +462,43 @@ ion-header.rounded-header ion-title {
 .delete-btn {
   position: absolute;
   top: 6px;
-  right: 6px;
-  --padding-start: 6px;
-  --padding-end: 6px;
-  --padding-top: 6px;
-  --padding-bottom: 6px;
-  --background: transparent;
-  --color: #ef4444;
+  right: 1px;
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --background: #ef4444;
+  --background-hover: #dc2626;
+  --background-activated: #b91c1c;
+  --color: #ffffff;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   z-index: 2;
 }
 
+/* El círculo REAL debe aplicarse al elemento interno */
+.delete-btn::part(native) {
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.delete-btn ion-icon {
+  --ionicon-stroke-width: 35px; /* hace el trazo del icono más grueso */
+}
+
+
 .delete-btn:hover,
 .delete-btn:focus {
-  --color: #dc2626;
+  --background: #dc2626;
 }
+
 
 /* Botón dentro de la card */
 .card-actions {
