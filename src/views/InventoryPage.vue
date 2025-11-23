@@ -199,9 +199,9 @@ function closeCreateModal() {
 // Confirmamos creación desde el modal
 async function confirmCreate() {
   await addItemFromPantry(newProductName.value, getImageFirstLetter(newProductName.value))
-  // Si la creación fue válida, cerramos (addItemFromPantry ya muestra toasts)
+  // Si la creación fue válida, vaciamos el input
   if (newProductName.value.trim()) {
-    closeCreateModal()
+    newProductName.value = ''
   }
 }
 
