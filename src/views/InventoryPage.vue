@@ -48,7 +48,11 @@
 
       <!-- Sin productos de la despensa seleccionada START -->
       <div v-else-if="!loading" class="empty">
-        <p>No hay productos.</p>
+        <div class="empty-icon">
+            <span class="material-icons">local_mall</span>
+          </div>
+          <p class="empty-title">No hay productos todavía</p>
+          <p class="empty-subtitle">Crea o añade tu primer producto</p>
       </div>
       <!-- Sin productos de la despensa seleccionada END -->
 
@@ -602,10 +606,51 @@ ion-header.rounded-header ion-title {
   align-self: stretch;
 }
 
+
+.empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px 16px;
+  color: #6b7280;
+}
+
 .empty-suggested {
   opacity: .7;
   margin-top: 10vh;
   text-align: center;
   align-items: center;
 }
+
+.empty-icon {
+  width: 120px;
+  height: 120px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 2px;
+}
+
+.empty-icon .material-icons {
+  font-size: 78px;
+  color: #374151;
+}
+
+.empty-title {
+  margin: 0 0 4px;
+  font-weight: 700;
+  font-size: 18px;
+  color: #111827;
+}
+
+.empty-subtitle {
+  margin: 0;
+  font-size: 17px;
+  color: #3f4146;
+  font-weight: 500;
+}
+
 </style>
