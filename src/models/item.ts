@@ -1,11 +1,11 @@
 export interface Item {
   id: string
   name: string
-  units: number
+  quantity: number
+  unit: string
   pantryCode: string
   locationId?: string
   inPurchase: boolean
   imageUrl: string
-  quantityValue?: number
-  quantityUnit?: string
+  notePurchase?: string
 }

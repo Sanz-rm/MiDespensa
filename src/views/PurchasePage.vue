@@ -31,7 +31,7 @@
           <img class="icon" :src="`${item.imageUrl}`" :alt="item.name" />
           <div class="info">
             <p class="name">{{ item.name }}</p>
-            <p class="units">Stock: {{ item.units }}</p>
+            <p class="units">{{ item.quantity }} {{ getMeasurementUnit(item.unit, item.quantity) }}</p>
           </div>
           <ion-button class="trash" color="danger" fill="clear" size="small" aria-label="Quitar de la compra"
             @click="deleteItemToPurchase(item.id)">
@@ -59,6 +59,7 @@ import {
   writeBatch,
   orderBy
 } from 'firebase/firestore'
+import { getImageFirstLetter, getMeasurementUnit } from '@/composables/itemUtils'
 import { db } from '@/firebase'
 
 const props = defineProps<{ code: string; name: string }>()
@@ -104,11 +105,13 @@ async function getPurchaseItems(pantryCode: string) {
         return {
           id: String(d.id),
           name: String(item.name ?? ''),
-          units: Number(item.units ?? 0),
+          quantity: Number(item.quantity ?? 1),
+          unit: String(item.unit ?? 'Unidad'),
           pantryCode: String(item.pantryCode ?? pantryCode),
-          locationId: String(item.locationId ?? 'Otro'),
+          locationId: String(item.locationId ?? null),
           inPurchase: Boolean(item.inPurchase ?? false),
-          imageUrl: String(item.imageUrl ?? getImageFirstLetter(String(item.name ?? '')))
+          imageUrl: String(item.imageUrl ?? getImageFirstLetter(String(item.name ?? ''))),
+          notePurchase: String(item.notePurchase ?? '')
         } as Item
       })
       console.log("items obtenidos: ", items.value)
@@ -121,11 +124,6 @@ async function getPurchaseItems(pantryCode: string) {
       await showErrorToast('Error al cargar los productos de la compra.')
     }
   )
-}
-function getImageFirstLetter(name: string): string {
-  const firstLetter = name.charAt(0).toLowerCase()
-  const imageUrl = `img/letters/letra_${firstLetter}.png`
-  return imageUrl
 }
 
 // Quitar un item de la compra
