@@ -33,8 +33,8 @@
       <!-- Loading end -->
 
       <!-- Lista de despensas start -->
-      <div v-else class="pantry-list">
-        <!-- Estado vacío -->
+      <div v-else>
+        <!-- Sin despensas Start -->
         <div v-if="!pantries.length" class="empty-state">
           <div class="empty-icon">
             <span class="material-icons">home</span>
@@ -42,9 +42,10 @@
           <p class="empty-title">No tienes despensas aún</p>
           <p class="empty-subtitle">Crea tu primera despensa o únete a una existente</p>
         </div>
+        <!-- Sin despensas end -->
 
-        <!-- Lista de tarjetas -->
-        <div v-else>
+        <!-- Lista de tarjetas start-->
+        <div v-else class="pantry-list">
           <div
             v-for="(pantry, i) in pantries"
             :key="i"
@@ -131,6 +132,22 @@
       </div>
       <!-- Lista de despensas end -->
 
+      <!-- Pop up confirmar salir/eliminar despensa START -->
+      <ConfirmPopup
+        v-if="selectedPantry"
+        v-model="showConfirmPantry"
+        :title="selectedPantry.creatorId === deviceId ? 'Eliminar despensa' : 'Salir de la despensa'"
+        :message="
+          selectedPantry.creatorId === deviceId
+            ? `Vas a eliminar definitivamente “${selectedPantry.name}”. Esta acción no se puede deshacer. ¿Quieres eliminarla?`
+            : `Vas a salir de “${selectedPantry.name}”. Podrás volver con su código. ¿Quieres salir?`
+        "
+        :confirmLabel="selectedPantry.creatorId === deviceId ? 'Eliminar' : 'Salir'"
+        cancelLabel="Cancelar"
+        @confirm="confirmPantry"
+      />
+      <!-- Pop up confirmar salir/eliminar despensa END -->
+
     </ion-content>
 
     <!-- Modal reutilizable en modo CREAR start -->
@@ -148,7 +165,6 @@
 import PantryHeader from '@/components/ui/PantryHeader.vue'
 import { IonPage, IonHeader, IonContent, IonSpinner } from '@ionic/vue'
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
-// ⬆️ En la línea de imports desde 'firebase/firestore', añade:
 import { collection, query, where, getDocs, addDoc, updateDoc, onSnapshot, type Unsubscribe, increment, orderBy, doc, writeBatch } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { Pantry } from '@/models/pantry'
@@ -156,10 +172,17 @@ import { useRouter } from 'vue-router'
 import { alertController } from '@ionic/vue'
 import { showToast } from '@/composables/showToast'
 import PantryModal from '@/components/ui/PantryModal.vue'
+import ConfirmPopup from '@/components/ui/ConfirmPopup.vue';
+
 
 // Estado de apertura modal de cada modo
 const openCreateModal = ref(false)
 const openJoinModal = ref(false)
+
+// Estados popup confirmación eliminar/salir despensa
+const showConfirmPantry = ref<boolean>(false)
+const selectedPantry = ref<Pantry | null>(null)
+
 // Utility: blur focused element (avoid aria-hidden / autofocus conflicts when opening modals)
 function blurActiveElement() {
   try {
@@ -483,45 +506,33 @@ function deletePantryFromStorage(code: string) {
 }
 
 // Confirmar eliminar
-async function onCornerAction(pantry: Pantry) {
+function onCornerAction(pantry: Pantry) {
+  selectedPantry.value = pantry
+  showConfirmPantry.value = true
+}
+
+async function confirmPantry() {
+  if (!selectedPantry.value) return
+  const pantry = selectedPantry.value
   const isOwner = pantry.creatorId === deviceId
-  const header = isOwner ? 'Eliminar despensa' : 'Salir de la despensa'
-  const message = isOwner
-    ? `Vas a eliminar definitivamente “${pantry.name}”. Esta acción no se puede deshacer.`
-    : `Vas a salir de “${pantry.name}”. Podrás volver con su código.`
-
-  const alert = await alertController.create({
-    header,
-    message,
-    mode: 'ios',
-    backdropDismiss: false,
-    cssClass: ['mds-alert', isOwner ? 'mds-danger' : 'mds-safe'],
-    buttons: [
-      { text: 'Cancelar', role: 'cancel', cssClass: 'btn-cancel' },
-      {
-        text: isOwner ? 'Eliminar' : 'Salir',
-        role: 'confirm',
-        cssClass: isOwner ? 'btn-danger' : 'btn-confirm'
-      }
-    ],
-  })
-  await alert.present()
-
-  const { role } = await alert.onDidDismiss()
-  if (role !== 'confirm') return
 
   try {
     await deleteOrLeavePantry(pantry.code)
     await showToast(
-      isOwner ? 'Despensa eliminada' : 'Has salido de la despensa', 'success'
+      isOwner ? 'Despensa eliminada' : 'Has salido de la despensa',
+      'success'
     )
   } catch (e: any) {
-    console.log('[onCornerAction] error', e)
+    console.log('[confirmPantry] error', e)
     await showToast(
-      isOwner ? 'Error al eliminar despensa.' : 'Error al abandonar despensa.', 'danger'
+      isOwner ? 'Error al eliminar despensa.' : 'Error al abandonar despensa.',
+      'danger'
     )
+  } finally {
+    selectedPantry.value = null
   }
 }
+
 
 // Navegamos al inventario de nuestra despensa
 function selectPantry(code: string, name: string) {
@@ -597,11 +608,10 @@ ion-header.rounded-header::after {
   font-weight: 700;
 }
 
-/* Acciones: lado a lado si caben; si no, se apilan ocupando todo el ancho */
+/* Acciones: lado a lado si caben.Si no, se apilan ocupando todo el ancho */
 .actions {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  /* 2+ columnas si caben, si no 1 columna */
   gap: 12px;
 }
 
@@ -609,7 +619,6 @@ ion-header.rounded-header::after {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* centra icono + texto */
   gap: 8px;
   border-radius: 999px;
   padding: 10px 14px;
@@ -620,7 +629,6 @@ ion-header.rounded-header::after {
   color: #1f9d55;
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
   width: 100%;
-  /* ocupa todo el ancho de su celda */
 }
 
 .btn-solid {
@@ -649,7 +657,7 @@ ion-header.rounded-header::after {
 .pantry-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 24px;
 }
 
 
@@ -673,7 +681,7 @@ ion-header.rounded-header::after {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
-/* Botón esquina (solo visual) */
+/* Botón esquina */
 .corner-btn {
   position: absolute;
   top: 10px;
@@ -687,7 +695,6 @@ ion-header.rounded-header::after {
   display: grid;
   place-items: center;
   pointer-events: none;
-  /* solo visual */
 }
 
 .corner-btn.danger {
@@ -730,7 +737,6 @@ ion-header.rounded-header::after {
   font-size: 60px;
 }
 
-/* Texto */
 .info {
   display: flex;
   flex-direction: column;
@@ -791,12 +797,10 @@ ion-header.rounded-header::after {
   font-size: 13px;
 }
 
-/* NUEVO: botón con estilos del chip para copiar */
 .copy-btn {
   cursor: pointer;
   border: none;
   background: none;
-  /* mantiene el aspecto del chip */
 }
 
 .copy-btn:focus-visible {
@@ -805,7 +809,6 @@ ion-header.rounded-header::after {
   border-radius: 12px;
 }
 
-/* FIN NUEVO */
 
 .chip-text {
   letter-spacing: .5px;

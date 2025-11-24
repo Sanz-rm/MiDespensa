@@ -203,31 +203,30 @@ async function onConfirm() {
 
 <style scoped>
 /* Dar forma al contenedor interno del modal */
-.mds-modal::part(content) {
+:global(.mds-modal::part(content)) {
   width: 92vw;
   max-width: 420px;
   height: 100vw;
   max-height: 100vh;
   border-radius: 22px;
-  box-shadow: 0 10px 30px rgba(0,0,0,.18);
   overflow: visible;
   background: transparent;
 }
 
 /* Oscurecer fondo del modal*/
-.mds-modal::part(backdrop) {
+:global(.mds-modal::part(backdrop)) {
   background: rgba(0,0,0,.4);
   opacity: 1;
 }
 
 /* Force the overlay backdrop to cover the entire viewport (defensive) */
-.mds-modal::part(backdrop) {
+:global(.mds-modal::part(backdrop)) {
   position: fixed;
   inset: 0;
 }
 
 /* Dejar el content transparente (el “card” pone el blanco) */
-.mds-modal ion-content {
+:global(.mds-modal ion-content) {
   --background: transparent;
 }
 
@@ -348,5 +347,9 @@ async function onConfirm() {
 .spinner {
   margin-right: 6px;
   --color: #fff;
+}
+
+.inner-scroll scroll-y{
+  padding: 0px;
 }
 </style>

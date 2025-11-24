@@ -12,18 +12,21 @@
     </ion-header>
 
     <ion-content class="ion-padding pantry-content">
+      <!-- Acciones START-->
       <div class="actions">
-        <ion-searchbar v-model="search" placeholder="Buscar producto…" :debounce="150" show-clear-button="focus" />
-        <ion-button color="danger" expand="block" :disabled="loading || !items.length" @click="clearPurchase()">
+        <ion-searchbar v-model="search" placeholder="Buscar producto…" :debounce="150" show-clear-button="focus"/>
+        <ion-button color="danger" expand="block" :disabled="loading || !items.length" @click="showConfirmClear = true">
           <ion-icon :icon="trashOutline" slot="start" />
           Vaciar compra
         </ion-button>
       </div>
+      <!-- Acciones END-->
 
-      <!-- Loading -->
+      <!-- Loading START-->
       <div v-if="loading" class="loading-box">
         <ion-spinner name="crescent" style="transform:scale(2);"></ion-spinner>
       </div>
+      <!-- Loading END-->
 
       <!-- Productos de la despensa seleccionada (en compra) -->
       <div v-if="!loading && itemsFiltered.length" class="list-cards">
@@ -42,15 +45,24 @@
       <div v-else-if="!loading" class="empty">
         <p>No hay productos en la compra.</p>
       </div>
+
+      <!-- Pop up confirmar salir/eliminar despensa START -->
+      <ConfirmPopup
+        v-model="showConfirmClear"
+        title="Vaciar compra"
+        message="Se eliminarán todos los productos de la lista de compra. Esta acción no se puede deshacer. ¿Quieres continuar?"
+        confirmLabel="Sí, vaciar"
+        cancelLabel="Cancelar"
+        @confirm="clearPurchase"
+      />
+      <!-- Pop up confirmar salir/eliminar despensa END -->
+
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import {
-  IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonSearchbar,
-  toastController
-} from '@ionic/vue'
+import { IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonSearchbar, toastController, alertController } from '@ionic/vue'
 import { arrowBackOutline, trashOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
 import { onMounted, onBeforeUnmount, ref, computed} from 'vue'
@@ -61,12 +73,17 @@ import {
 } from 'firebase/firestore'
 import { getImageFirstLetter, getMeasurementUnit } from '@/composables/itemUtils'
 import { db } from '@/firebase'
+import ConfirmPopup from '@/components/ui/ConfirmPopup.vue';
+
 
 const props = defineProps<{ code: string; name: string }>()
 console.log('Codigo y nombre de la despensa:', props.code, props.name)
 
 const loading = ref<boolean>(false)
 const search = ref<string>('')
+
+//Estado popup confirmación eliminar/salir despens
+const showConfirmClear = ref(false)
 
 let stop: Unsubscribe | null = null
 // Normaliza: quita acentos y pasa a minúsculas
@@ -117,7 +134,7 @@ async function getPurchaseItems(pantryCode: string) {
       console.log("items obtenidos: ", items.value)
       loading.value = false
     },
-    // ⬇️ Toast rojo si falla la suscripción/lectura
+    // Si falla suscripción/lectura
     async err => {
       console.error('Error al recuperar los items:', err)
       loading.value = false
@@ -157,6 +174,21 @@ async function clearPurchase() {
     await showErrorToast('No se pudo vaciar la compra.')
   }
 }
+
+function openConfirmClear() {
+  if (!items.value.length || loading.value) return
+  showConfirmClear.value = true
+}
+
+function cancelClear() {
+  showConfirmClear.value = false
+}
+
+async function confirmClear() {
+  showConfirmClear.value = false
+  await clearPurchase()
+}
+
 
 // Muestra un toast rojo para errores (update o select)
 async function showErrorToast(message: string) {
@@ -263,4 +295,5 @@ ion-header.rounded-header ion-title {
   place-content: center;
   min-height: 40vh;
 }
+
 </style>
