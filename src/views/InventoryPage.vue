@@ -88,7 +88,7 @@
           </ion-list>
 
           <div style="display:flex; gap:10px; margin-top:16px;">
-            <ion-button expand="block" fill="clear" @click="closeCreateModal">
+            <ion-button expand="block" fill="clear" @click="clearInput">
               Cancelar
             </ion-button>
             <ion-button expand="block" @click="confirmCreate">
@@ -205,6 +205,10 @@ async function confirmCreate() {
   if (newProductName.value.trim()) {
     newProductName.value = ''
   }
+}
+
+function clearInput() {
+  newProductName.value = ''
 }
 
 // Recuperamos los items de la despensa seleccionada
