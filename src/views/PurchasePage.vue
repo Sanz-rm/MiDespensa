@@ -13,8 +13,8 @@
 
     <ion-content class="ion-padding pantry-content">
       <div class="actions">
-        <ion-searchbar v-model="search" placeholder="Buscar producto…" :debounce="150" show-clear-button="focus" />
-        <ion-button color="danger" expand="block" :disabled="loading || !items.length" @click="clearPurchase()">
+        <ion-searchbar v-model="search" placeholder="Buscar producto…" :debounce="150" show-clear-button="focus"/>
+        <ion-button color="danger" expand="block" :disabled="loading || !items.length" @click="openConfirmClear()">
           <ion-icon :icon="trashOutline" slot="start" />
           Vaciar compra
         </ion-button>
@@ -42,15 +42,33 @@
       <div v-else-if="!loading" class="empty">
         <p>No hay productos en la compra.</p>
       </div>
+
+            <!-- Popup de confirmación para vaciar compra -->
+      <div v-if="showConfirmClear" class="confirm-overlay">
+        <div class="confirm-dialog">
+          <h2>Vaciar compra</h2>
+          <p>
+            Se eliminarán todos los productos de la lista de compra.
+            Esta acción no se puede deshacer. ¿Quieres continuar?
+          </p>
+
+          <div class="confirm-actions">
+            <button type="button" class="btn-secondary" @click="cancelClear()">
+              Cancelar
+            </button>
+            <button type="button" class="btn-danger" @click="confirmClear()">
+              Sí, vaciar
+            </button>
+          </div>
+        </div>
+      </div>
+
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import {
-  IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonSearchbar,
-  toastController
-} from '@ionic/vue'
+import { IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonSearchbar, toastController, alertController } from '@ionic/vue'
 import { arrowBackOutline, trashOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
 import { onMounted, onBeforeUnmount, ref, computed} from 'vue'
@@ -67,6 +85,8 @@ console.log('Codigo y nombre de la despensa:', props.code, props.name)
 
 const loading = ref<boolean>(false)
 const search = ref<string>('')
+const showConfirmClear = ref<boolean>(false)
+
 
 let stop: Unsubscribe | null = null
 // Normaliza: quita acentos y pasa a minúsculas
@@ -157,6 +177,21 @@ async function clearPurchase() {
     await showErrorToast('No se pudo vaciar la compra.')
   }
 }
+
+function openConfirmClear() {
+  if (!items.value.length || loading.value) return
+  showConfirmClear.value = true
+}
+
+function cancelClear() {
+  showConfirmClear.value = false
+}
+
+async function confirmClear() {
+  showConfirmClear.value = false
+  await clearPurchase()
+}
+
 
 // Muestra un toast rojo para errores (update o select)
 async function showErrorToast(message: string) {
@@ -263,4 +298,75 @@ ion-header.rounded-header ion-title {
   place-content: center;
   min-height: 40vh;
 }
+
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.45); /* fondo oscuro transparente */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+.confirm-dialog {
+  width: 90%;
+  max-width: 360px;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 18px 20px 16px;
+  box-shadow: 0 15px 40px rgba(15, 23, 42, 0.25);
+  animation: popup-in 0.18s ease-out;
+}
+
+.confirm-dialog h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.confirm-dialog p {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: #4b5563;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.confirm-actions .btn-secondary,
+.confirm-actions .btn-danger {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.confirm-actions .btn-secondary {
+  background: #ef4444 ;
+  color: #ffffff;
+}
+
+.confirm-actions .btn-danger {
+  background: #2ea15d;
+  color: #ffffff;
+}
+
+@keyframes popup-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 </style>
