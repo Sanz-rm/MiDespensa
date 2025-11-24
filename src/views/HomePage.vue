@@ -132,6 +132,21 @@
       </div>
       <!-- Lista de despensas end -->
 
+      <ConfirmPopup
+        v-if="selectedPantry"
+        v-model="showConfirmPantry"
+        :title="selectedPantry.creatorId === deviceId ? 'Eliminar despensa' : 'Salir de la despensa'"
+        :message="
+          selectedPantry.creatorId === deviceId
+            ? `Vas a eliminar definitivamente “${selectedPantry.name}”. Esta acción no se puede deshacer. ¿Quieres eliminarla?`
+            : `Vas a salir de “${selectedPantry.name}”. Podrás volver con su código. ¿Quieres salir?`
+        "
+        :confirmLabel="selectedPantry.creatorId === deviceId ? 'Eliminar' : 'Salir'"
+        cancelLabel="Cancelar"
+        @confirm="confirmPantry"
+      />
+
+
     </ion-content>
 
     <!-- Modal reutilizable en modo CREAR start -->
@@ -157,10 +172,16 @@ import { useRouter } from 'vue-router'
 import { alertController } from '@ionic/vue'
 import { showToast } from '@/composables/showToast'
 import PantryModal from '@/components/ui/PantryModal.vue'
+import ConfirmPopup from '@/components/ui/ConfirmPopup.vue';
+
 
 // Estado de apertura modal de cada modo
 const openCreateModal = ref(false)
 const openJoinModal = ref(false)
+
+const showConfirmPantry = ref<boolean>(false)
+const selectedPantry = ref<Pantry | null>(null)
+
 // Utility: blur focused element (avoid aria-hidden / autofocus conflicts when opening modals)
 function blurActiveElement() {
   try {
@@ -484,45 +505,33 @@ function deletePantryFromStorage(code: string) {
 }
 
 // Confirmar eliminar
-async function onCornerAction(pantry: Pantry) {
+function onCornerAction(pantry: Pantry) {
+  selectedPantry.value = pantry
+  showConfirmPantry.value = true
+}
+
+async function confirmPantry() {
+  if (!selectedPantry.value) return
+  const pantry = selectedPantry.value
   const isOwner = pantry.creatorId === deviceId
-  const header = isOwner ? 'Eliminar despensa' : 'Salir de la despensa'
-  const message = isOwner
-    ? `Vas a eliminar definitivamente “${pantry.name}”. Esta acción no se puede deshacer.`
-    : `Vas a salir de “${pantry.name}”. Podrás volver con su código.`
-
-  const alert = await alertController.create({
-    header,
-    message,
-    mode: 'ios',
-    backdropDismiss: false,
-    cssClass: ['mds-alert', isOwner ? 'mds-danger' : 'mds-safe'],
-    buttons: [
-      { text: 'Cancelar', role: 'cancel', cssClass: 'btn-cancel' },
-      {
-        text: isOwner ? 'Eliminar' : 'Salir',
-        role: 'confirm',
-        cssClass: isOwner ? 'btn-danger' : 'btn-confirm'
-      }
-    ],
-  })
-  await alert.present()
-
-  const { role } = await alert.onDidDismiss()
-  if (role !== 'confirm') return
 
   try {
     await deleteOrLeavePantry(pantry.code)
     await showToast(
-      isOwner ? 'Despensa eliminada' : 'Has salido de la despensa', 'success'
+      isOwner ? 'Despensa eliminada' : 'Has salido de la despensa',
+      'success'
     )
   } catch (e: any) {
-    console.log('[onCornerAction] error', e)
+    console.log('[confirmPantry] error', e)
     await showToast(
-      isOwner ? 'Error al eliminar despensa.' : 'Error al abandonar despensa.', 'danger'
+      isOwner ? 'Error al eliminar despensa.' : 'Error al abandonar despensa.',
+      'danger'
     )
+  } finally {
+    selectedPantry.value = null
   }
 }
+
 
 // Navegamos al inventario de nuestra despensa
 function selectPantry(code: string, name: string) {
