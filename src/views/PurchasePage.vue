@@ -12,6 +12,7 @@
     </ion-header>
 
     <ion-content class="ion-padding pantry-content">
+      <!-- Acciones START-->
       <div class="actions">
         <ion-searchbar v-model="search" placeholder="Buscar producto…" :debounce="150" show-clear-button="focus"/>
         <ion-button color="danger" expand="block" :disabled="loading || !items.length" @click="showConfirmClear = true">
@@ -19,11 +20,13 @@
           Vaciar compra
         </ion-button>
       </div>
+      <!-- Acciones END-->
 
-      <!-- Loading -->
+      <!-- Loading START-->
       <div v-if="loading" class="loading-box">
         <ion-spinner name="crescent" style="transform:scale(2);"></ion-spinner>
       </div>
+      <!-- Loading END-->
 
       <!-- Productos de la despensa seleccionada (en compra) -->
       <div v-if="!loading && itemsFiltered.length" class="list-cards">
@@ -43,6 +46,7 @@
         <p>No hay productos en la compra.</p>
       </div>
 
+      <!-- Pop up confirmar salir/eliminar despensa START -->
       <ConfirmPopup
         v-model="showConfirmClear"
         title="Vaciar compra"
@@ -51,6 +55,8 @@
         cancelLabel="Cancelar"
         @confirm="clearPurchase"
       />
+      <!-- Pop up confirmar salir/eliminar despensa END -->
+
     </ion-content>
   </ion-page>
 </template>
@@ -75,6 +81,8 @@ console.log('Codigo y nombre de la despensa:', props.code, props.name)
 
 const loading = ref<boolean>(false)
 const search = ref<string>('')
+
+//Estado popup confirmación eliminar/salir despens
 const showConfirmClear = ref(false)
 
 let stop: Unsubscribe | null = null
@@ -126,7 +134,7 @@ async function getPurchaseItems(pantryCode: string) {
       console.log("items obtenidos: ", items.value)
       loading.value = false
     },
-    // ⬇️ Toast rojo si falla la suscripción/lectura
+    // Si falla suscripción/lectura
     async err => {
       console.error('Error al recuperar los items:', err)
       loading.value = false
