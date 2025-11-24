@@ -43,7 +43,13 @@
         </div>
       </div>
       <div v-else-if="!loading" class="empty">
-        <p>No hay productos en la compra.</p>
+        <!-- Sin despensas Start -->
+          <div class="empty-icon">
+            <span class="material-icons">shopping_cart</span>
+          </div>
+          <p class="empty-title">No hay productos en la compra.</p>
+          <p class="empty-subtitle">¡Añade los productos que te hagan falta!</p>
+        <!-- Sin despensas end -->
       </div>
 
       <!-- Pop up confirmar salir/eliminar despensa START -->
@@ -285,9 +291,42 @@ ion-header.rounded-header ion-title {
 }
 
 .empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  opacity: .7;
-  padding: 24px 0;
+  padding: 24px 16px;
+  color: #6b7280;
+}
+
+.empty-icon {
+  width: 120px;
+  height: 120px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 2px;
+}
+
+.empty-icon .material-icons {
+  font-size: 78px;
+  color: #374151;
+}
+
+.empty-title {
+  margin: 0 0 4px;
+  font-weight: 700;
+  font-size: 18px;
+  color: #111827;
+}
+
+.empty-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #3f4146;
+  font-weight: 500;
 }
 
 .loading-box {
