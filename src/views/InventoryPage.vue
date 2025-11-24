@@ -33,7 +33,7 @@
           </ion-button>
           <img :src="`${item.imageUrl}`" :alt="item.name" />
           <p class="item-name">{{ item.name }}</p>
-          <p class="item-units">Cantidad: {{ item.units }}</p>
+          <p class="item-units">{{ item.quantity }} {{ getMeasurementUnit(item.unit, item.quantity) }}</p>
 
           <div class="card-actions">
             <ion-button size="small" :class="item.inPurchase ? 'btn-remove' : 'btn-add'"
@@ -138,6 +138,7 @@ import { onMounted, onBeforeUnmount, ref, watch, computed } from 'vue'
 import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe, orderBy } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showToast } from '@/composables/showToast'
+import { getImageFirstLetter, getMeasurementUnit } from '@/composables/itemUtils'
 import { ComunItem } from '@/models/comunItem'
 
 const props = defineProps<{ code: string; name: string }>()
@@ -161,6 +162,7 @@ const itemsFiltered = computed(() => {
 
 const comunItems = ref<ComunItem[]>([])
 
+// Lista filtrada de items comunes según el texto del input del modal
 const comunItemsFiltered = computed(() => {
   const q = norm(newProductName.value)
   if (!q) return comunItems.value
@@ -211,7 +213,7 @@ async function getPantryItems(pantryCode: string) {
   const q = query(
     collection(db, 'items'),
     where('pantryCode', '==', pantryCode),
-    orderBy('name', 'asc') // o 'desc'
+    orderBy('name', 'asc')
   );
   stop = onSnapshot(
     q,
@@ -221,14 +223,16 @@ async function getPantryItems(pantryCode: string) {
         return {
           id: String(d.id),
           name: String(item.name ?? ''),
-          units: Number(item.units ?? 0),
+          quantity: Number(item.quantity ?? 1),
+          unit: String(item.unit ?? 'Unidad'),
           pantryCode: String(item.pantryCode ?? pantryCode),
-          locationId: String(item.locationId ?? 'Otro'),
+          locationId: String(item.locationId ?? null),
           inPurchase: Boolean(item.inPurchase ?? false),
           imageUrl: String(item.imageUrl ?? getImageFirstLetter(String(item.name ?? '')))
         } as Item
       })
       loading.value = false
+      console.log("items obtenidos: ", items.value)
     },
     async err => {
       console.error('Error al recuperar los items:', err)
@@ -236,12 +240,6 @@ async function getPantryItems(pantryCode: string) {
       await showToast('Error al cargar los productos de la despensa.', 'danger')
     }
   )
-}
-
-function getImageFirstLetter(name: string): string {
-  const firstLetter = name.charAt(0).toLowerCase()
-  const imageUrl = `img/letters/letra_${firstLetter}.png`
-  return imageUrl
 }
 
 // Agregamos el item a la compra (o lo quitamos si ya estaba)
@@ -324,7 +322,8 @@ async function addItemFromPantry(nameItem: string, imageUrl: string) {
     batch.set(newItemRef, {
       name: itemName,
       pantryCode: props.code,
-      units: 1,
+      quantity: 1,
+      unit: 'Unidad',
       inPurchase: false,
       imageUrl: imageUrl
     })
@@ -380,7 +379,6 @@ async function getPantryRefByCode() {
   pantryDocId.value = snap.docs[0].id
   return snap.docs[0].ref
 }
-
 
 </script>
 
@@ -595,7 +593,7 @@ ion-header.rounded-header ion-title {
   line-height: 1.2;
   min-height: calc(2 * 1.2em);
   margin: 0 0 8px 0;
-  -webkit-line-clamp: 2;
+  --line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
