@@ -132,6 +132,7 @@
       </div>
       <!-- Lista de despensas end -->
 
+      <!-- Pop up confirmar salir/eliminar despensa START -->
       <ConfirmPopup
         v-if="selectedPantry"
         v-model="showConfirmPantry"
@@ -145,7 +146,7 @@
         cancelLabel="Cancelar"
         @confirm="confirmPantry"
       />
-
+      <!-- Pop up confirmar salir/eliminar despensa END -->
 
     </ion-content>
 
@@ -164,7 +165,6 @@
 import PantryHeader from '@/components/ui/PantryHeader.vue'
 import { IonPage, IonHeader, IonContent, IonSpinner } from '@ionic/vue'
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
-// ⬆️ En la línea de imports desde 'firebase/firestore', añade:
 import { collection, query, where, getDocs, addDoc, updateDoc, onSnapshot, type Unsubscribe, increment, orderBy, doc, writeBatch } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { Pantry } from '@/models/pantry'
@@ -179,6 +179,7 @@ import ConfirmPopup from '@/components/ui/ConfirmPopup.vue';
 const openCreateModal = ref(false)
 const openJoinModal = ref(false)
 
+// Estados popup confirmación eliminar/salir despensa
 const showConfirmPantry = ref<boolean>(false)
 const selectedPantry = ref<Pantry | null>(null)
 
@@ -607,11 +608,10 @@ ion-header.rounded-header::after {
   font-weight: 700;
 }
 
-/* Acciones: lado a lado si caben; si no, se apilan ocupando todo el ancho */
+/* Acciones: lado a lado si caben.Si no, se apilan ocupando todo el ancho */
 .actions {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  /* 2+ columnas si caben, si no 1 columna */
   gap: 12px;
 }
 
@@ -619,7 +619,6 @@ ion-header.rounded-header::after {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  /* centra icono + texto */
   gap: 8px;
   border-radius: 999px;
   padding: 10px 14px;
@@ -630,7 +629,6 @@ ion-header.rounded-header::after {
   color: #1f9d55;
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
   width: 100%;
-  /* ocupa todo el ancho de su celda */
 }
 
 .btn-solid {
@@ -683,7 +681,7 @@ ion-header.rounded-header::after {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
-/* Botón esquina (solo visual) */
+/* Botón esquina */
 .corner-btn {
   position: absolute;
   top: 10px;
@@ -697,7 +695,6 @@ ion-header.rounded-header::after {
   display: grid;
   place-items: center;
   pointer-events: none;
-  /* solo visual */
 }
 
 .corner-btn.danger {
@@ -740,7 +737,6 @@ ion-header.rounded-header::after {
   font-size: 60px;
 }
 
-/* Texto */
 .info {
   display: flex;
   flex-direction: column;
@@ -801,12 +797,10 @@ ion-header.rounded-header::after {
   font-size: 13px;
 }
 
-/* NUEVO: botón con estilos del chip para copiar */
 .copy-btn {
   cursor: pointer;
   border: none;
   background: none;
-  /* mantiene el aspecto del chip */
 }
 
 .copy-btn:focus-visible {
@@ -815,7 +809,6 @@ ion-header.rounded-header::after {
   border-radius: 12px;
 }
 
-/* FIN NUEVO */
 
 .chip-text {
   letter-spacing: .5px;
