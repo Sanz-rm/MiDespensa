@@ -33,8 +33,8 @@
       <!-- Loading end -->
 
       <!-- Lista de despensas start -->
-      <div v-else class="pantry-list">
-        <!-- Estado vacío -->
+      <div v-else>
+        <!-- Sin despensas Start -->
         <div v-if="!pantries.length" class="empty-state">
           <div class="empty-icon">
             <span class="material-icons">home</span>
@@ -42,9 +42,10 @@
           <p class="empty-title">No tienes despensas aún</p>
           <p class="empty-subtitle">Crea tu primera despensa o únete a una existente</p>
         </div>
+        <!-- Sin despensas end -->
 
-        <!-- Lista de tarjetas -->
-        <div v-else>
+        <!-- Lista de tarjetas start-->
+        <div v-else class="pantry-list">
           <div
             v-for="(pantry, i) in pantries"
             :key="i"
@@ -649,7 +650,7 @@ ion-header.rounded-header::after {
 .pantry-list {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 24px;
 }
 
 
