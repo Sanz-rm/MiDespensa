@@ -755,11 +755,7 @@ ion-header.rounded-header ion-title {
   text-transform: uppercase;
 }
 
-.btn-cancel-outline:hover {
-  --background: #ffffff00;
-  --color: #af3434;
-  font-weight: 700;
-}
+
 
 .btn-create-solid {
   flex: 1;
@@ -770,6 +766,7 @@ ion-header.rounded-header ion-title {
   font-weight: 600;
   text-transform: uppercase;
   border-radius: 8px;
+  
 }
 /* MODAL CREAR O AÑADIR PRODUCTO END */
 
