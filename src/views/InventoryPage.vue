@@ -68,46 +68,80 @@
       <ion-modal :is-open="isCreateOpen" @didDismiss="closeCreateModal">
         <!-- Header modal START -->
         <ion-header>
-          <ion-toolbar>
-            <ion-title>Crear producto</ion-title>
+          <ion-toolbar class="create-modal-toolbar">
+            <ion-title class="create-modal-title">Crear producto</ion-title>
             <ion-buttons slot="end">
-              <ion-button @click="closeCreateModal">Cerrar</ion-button>
+              <ion-button class="create-modal-close-btn" @click="closeCreateModal">
+                CERRAR
+              </ion-button>
             </ion-buttons>
           </ion-toolbar>
         </ion-header>
         <!-- Header modal END -->
 
         <!-- Contenido modal START -->
-        <ion-content class="ion-padding">
+        <ion-content class="ion-padding create-modal-content">
           <ion-list>
-            <ion-item>
-              <ion-label position="stacked">Nombre del producto</ion-label>
-              <ion-input v-model="newProductName" placeholder="Ej. Leche, Huevos, Arroz" @keyup.enter="confirmCreate"
-                autofocus />
+            <ion-item lines="none" class="create-modal-item">
+              <ion-label position="stacked" class="create-modal-label">
+                Nombre del producto
+              </ion-label>
+              <ion-input
+                v-model="newProductName"
+                class="create-modal-input"
+                placeholder="Ej. Leche, Huevos, Arroz"
+                @keyup.enter="confirmCreate"
+                autofocus
+              />
             </ion-item>
-          </ion-list>
-
-          <div style="display:flex; gap:10px; margin-top:16px;">
-            <ion-button expand="block" fill="clear" @click="clearInput">
-              Cancelar
+            <div class="create-modal-actions">
+            <ion-button
+              expand="block"
+              fill="clear"
+              class="btn-cancel-outline"
+              @click="clearInput"
+            >
+              CANCELAR
             </ion-button>
-            <ion-button expand="block" @click="confirmCreate">
-              Crear
+            <ion-button
+              expand="block"
+              class="btn-create-solid"
+              @click="confirmCreate"
+            >
+              CREAR
             </ion-button>
           </div>
+          </ion-list>
+
+          
 
           <!-- PRODUCTOS CREADOS PARA AÑADIR AL INVENTARIO START -->
           <div class="suggested-wrapper">
             <h3 class="suggested-title">Añade productos a tu despensa</h3>
 
             <!-- Render de los items comunes -->
-            <div v-if="comunItemsFiltered && comunItemsFiltered.length" class="suggested-grid">
-              <div v-for="item in comunItemsFiltered" :key="item.id" class="suggested-card">
-                <img :src="item.imageUrl" :alt="item.name" class="suggested-img" />
+            <div
+              v-if="comunItemsFiltered && comunItemsFiltered.length"
+              class="suggested-grid"
+            >
+              <div
+                v-for="item in comunItemsFiltered"
+                :key="item.id"
+                class="suggested-card"
+              >
+                <img
+                  :src="item.imageUrl"
+                  :alt="item.name"
+                  class="suggested-img"
+                />
                 <p class="suggested-name">{{ item.name }}</p>
 
                 <!-- Botón para añadir al inventario -->
-                <ion-button size="small" class="btn-add" @click="addItemFromPantry(item.name, item.imageUrl)">
+                <ion-button
+                  size="small"
+                  class="btn-add"
+                  @click="addItemFromPantry(item.name, item.imageUrl)"
+                >
                   <ion-icon :icon="addOutline" slot="start" />
                   Añadir
                 </ion-button>
@@ -120,7 +154,7 @@
         </ion-content>
         <!-- Contenido modal END -->
       </ion-modal>
-      <!-- Modal crear producto START -->
+      <!-- Modal crear producto END -->
 
     </ion-content>
   </ion-page>
@@ -654,5 +688,86 @@ ion-header.rounded-header ion-title {
   color: #3f4146;
   font-weight: 500;
 }
+
+
+/* MODAL CREAR O AÑADIR PRODUCTO START */
+.create-modal-toolbar {
+  --background: #2ea15d;
+  --border-width: 0;
+}
+
+.create-modal-title {
+  --color: #ffffff;
+  font-weight: 700;
+  font-size: 18px;
+}
+
+.create-modal-close-btn {
+  --color: #ffffff;
+  font-weight: 600;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
+.create-modal-content {
+  --background: #f5faf7;
+}
+
+.create-modal-item {
+  margin-top: 12px;
+
+  padding-inline: 5px;
+}
+
+.create-modal-label {
+  font-weight: 700;
+  font-size: 16px;
+  color: #111827;
+  margin-left: 2%;
+}
+
+.create-modal-input {
+  margin-top: 3%;
+  border-radius: 5%;
+  --background: #ffffff;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --padding-top: 10px;
+  --padding-bottom: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  border: 1px solid #d1d5db36;
+}
+
+.create-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 16px;
+  margin-left: 16px;
+  margin-right: 16px;
+}
+
+.btn-cancel-outline {
+  flex: 1;
+  --background: transparent;
+  --box-shadow: none;
+  --color: #2ea15d;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+
+
+.btn-create-solid {
+  flex: 1;
+  --background: #2ea15d;
+  --background-hover: #27663f;
+  --background-activated: #228447;
+  --color: #ffffff;
+  font-weight: 600;
+  text-transform: uppercase;
+  border-radius: 8px;
+  
+}
+/* MODAL CREAR O AÑADIR PRODUCTO END */
 
 </style>
