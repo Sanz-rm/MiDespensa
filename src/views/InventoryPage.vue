@@ -26,9 +26,19 @@
 
       <!-- Productos de la despensa seleccionada START -->
       <div v-if="!loading && itemsFiltered.length" class="items-grid">
-        <div v-for="item in itemsFiltered" :key="item.id" class="item-card">
-          <ion-button class="delete-btn" fill="clear" size="small" aria-label="Eliminar producto"
-            @click="deleteItemFromPantry(item)">
+        <div
+          v-for="item in itemsFiltered"
+          :key="item.id"
+          class="item-card"
+          @click="openInfoModal(item)"
+        >
+          <ion-button
+            class="delete-btn"
+            fill="clear"
+            size="small"
+            aria-label="Eliminar producto"
+            @click.stop="deleteItemFromPantry(item)"
+          >
             <ion-icon :icon="trashOutline" />
           </ion-button>
           <img :src="`${item.imageUrl}`" :alt="item.name" />
@@ -36,8 +46,11 @@
           <p class="item-units">{{ item.quantity }} {{ getMeasurementUnit(item.unit, item.quantity) }}</p>
 
           <div class="card-actions">
-            <ion-button size="small" :class="item.inPurchase ? 'btn-remove' : 'btn-add'"
-              @click="togglePurchaseState(item)">
+            <ion-button
+              size="small"
+              :class="item.inPurchase ? 'btn-remove' : 'btn-add'"
+              @click.stop="togglePurchaseState(item)"
+            >
               <ion-icon :icon="cartOutline" slot="start" />
               {{ item.inPurchase ? 'Quitar de compra' : 'Añadir a compra' }}
             </ion-button>
@@ -49,10 +62,10 @@
       <!-- Sin productos de la despensa seleccionada START -->
       <div v-else-if="!loading" class="empty">
         <div class="empty-icon">
-            <span class="material-icons">local_mall</span>
-          </div>
-          <p class="empty-title">No hay productos todavía</p>
-          <p class="empty-subtitle">Crea o añade tu primer producto</p>
+          <span class="material-icons">local_mall</span>
+        </div>
+        <p class="empty-title">No hay productos todavía</p>
+        <p class="empty-subtitle">Crea o añade tu primer producto</p>
       </div>
       <!-- Sin productos de la despensa seleccionada END -->
 
@@ -95,25 +108,23 @@
               />
             </ion-item>
             <div class="create-modal-actions">
-            <ion-button
-              expand="block"
-              fill="clear"
-              class="btn-cancel-outline"
-              @click="clearInput"
-            >
-              CANCELAR
-            </ion-button>
-            <ion-button
-              expand="block"
-              class="btn-create-solid"
-              @click="confirmCreate"
-            >
-              CREAR
-            </ion-button>
-          </div>
+              <ion-button
+                expand="block"
+                fill="clear"
+                class="btn-cancel-outline"
+                @click="clearInput"
+              >
+                CANCELAR
+              </ion-button>
+              <ion-button
+                expand="block"
+                class="btn-create-solid"
+                @click="confirmCreate"
+              >
+                CREAR
+              </ion-button>
+            </div>
           </ion-list>
-
-          
 
           <!-- PRODUCTOS CREADOS PARA AÑADIR AL INVENTARIO START -->
           <div class="suggested-wrapper">
@@ -155,6 +166,75 @@
         <!-- Contenido modal END -->
       </ion-modal>
       <!-- Modal crear producto END -->
+
+            <!-- Modal info producto START -->
+      <ion-modal
+        :is-open="isInfoOpen"
+        css-class="product-info-modal"
+        @didDismiss="closeInfoModal"
+      >
+        <ion-content class="product-info-content" v-if="selectedItem">
+          <div class="product-info-wrapper">
+            <h3 class="info-title">Información de:</h3>
+
+            <div class="info-product-block">
+              <img :src="selectedItem.imageUrl" :alt="selectedItem.name" />
+              <span class="info-product-name">{{ selectedItem.name }}</span>
+            </div>
+
+            <div class="info-form">
+              <div class="info-row">
+                <div class="info-field">
+                  <label class="info-label">Cantidad</label>
+                  <ion-input
+                    type="number"
+                    inputmode="numeric"
+                    v-model.number="editQuantity"
+                    class="info-input"
+                  />
+                </div>
+
+                <div class="info-field">
+                  <label class="info-label">Unidad</label>
+                  <ion-select
+                    interface="popover"
+                    v-model="editUnit"
+                    class="info-select"
+                  >
+                    <ion-select-option
+                      v-for="u in unitOptions"
+                      :key="u"
+                      :value="u"
+                    >
+                      {{ u }}
+                    </ion-select-option>
+                  </ion-select>
+                </div>
+              </div>
+
+              <div class="info-actions">
+                <ion-button
+                  expand="block"
+                  fill="outline"
+                  class="btn-info-cancel"
+                  @click="closeInfoModal"
+                >
+                  ✕ Cancelar
+                </ion-button>
+                <ion-button
+                  expand="block"
+                  class="btn-info-save"
+                  @click="saveItemInfo"
+                >
+                  Guardar
+                </ion-button>
+              </div>
+            </div>
+          </div>
+        </ion-content>
+      </ion-modal>
+      <!-- Modal info producto END -->
+
 
     </ion-content>
   </ion-page>
@@ -206,7 +286,6 @@ const comunItemsFiltered = computed(() => {
 // Lista de productos en inventario con imagen y filtro por nombre
 const pantryDocId = ref<string | null>(null)
 
-
 onMounted(() => {
   getPantryItems(props.code)
 })
@@ -219,18 +298,61 @@ const isCreateOpen = ref(false)
 // Modelo del input del modal
 const newProductName = ref('')
 
-// Abrimos el modal (y opcionalmente preparamos sugerencias)
+// Estado del modal de información
+const isInfoOpen = ref(false)
+const selectedItem = ref<Item | null>(null)
+
+// Campos editables del modal
+const editQuantity = ref<number | null>(null)
+const editUnit = ref<string>('Unidad')
+const unitOptions = ['Unidad', 'Kg', 'g', 'L', 'ml']
+
+// Modal info producto
+function openInfoModal(item: Item) {
+  selectedItem.value = item
+  editQuantity.value = item.quantity
+  editUnit.value = item.unit || 'Unidad'
+  isInfoOpen.value = true
+}
+
+function closeInfoModal() {
+  isInfoOpen.value = false
+  selectedItem.value = null
+  editQuantity.value = null
+  editUnit.value = 'Unidad'
+}
+
+async function saveItemInfo() {
+  if (!selectedItem.value || editQuantity.value == null) {
+    await showToast('Rellena la cantidad antes de guardar.', 'danger')
+    return
+  }
+
+  try {
+    const refItem = doc(db, 'items', selectedItem.value.id)
+    await updateDoc(refItem, {
+      quantity: editQuantity.value,
+      unit: editUnit.value
+    })
+    await showToast('Producto actualizado.', 'success')
+    closeInfoModal()
+  } catch (err) {
+    console.error('Error al actualizar producto:', err)
+    await showToast('No se pudo actualizar el producto.', 'danger')
+  }
+}
+
+// Modal crear producto
 function openCreateModal() {
-  // Si quieres preparar sugerencias/pre-cargar datos, reaprovechamos tu función
   getComunItems()
   isCreateOpen.value = true
 }
 
-// Cerramos el modal y limpiamos
 function closeCreateModal() {
   isCreateOpen.value = false
   newProductName.value = ''
 }
+
 
 // Confirmamos creación desde el modal
 async function confirmCreate() {
@@ -290,6 +412,7 @@ async function togglePurchaseState(item: Item) {
     await showToast(`No se pudo actualizar el estado de ${item.name}.`, 'danger')
   }
 }
+
 // Obtenemos todas los items comunes que aun no tenemos
 async function getComunItems() {
   loading.value = true
@@ -372,8 +495,6 @@ async function addItemFromPantry(nameItem: string, imageUrl: string) {
     await batch.commit()
 
     await showToast(`Producto ${name} añadido.`, 'success')
-    //await showSuccessToast(`Producto ${name} añadido.`) ME HA DADO CONFILCTO NO SE QUE ES LO CORRECTO
-
   } catch (err) {
     console.error('Error al añadir producto:', err)
     await showToast(`No se pudo añadir el producto ${name}.`, 'danger')
@@ -417,7 +538,6 @@ async function getPantryRefByCode() {
   pantryDocId.value = snap.docs[0].id
   return snap.docs[0].ref
 }
-
 </script>
 
 <style scoped>
@@ -530,15 +650,13 @@ ion-header.rounded-header ion-title {
 }
 
 .delete-btn ion-icon {
-  --ionicon-stroke-width: 35px; /* hace el trazo del icono más grueso */
+  --ionicon-stroke-width: 35px;
 }
-
 
 .delete-btn:hover,
 .delete-btn:focus {
   --background: #dc2626;
 }
-
 
 /* Botón dentro de la card */
 .card-actions {
@@ -615,7 +733,6 @@ ion-header.rounded-header ion-title {
   background: #fff;
 }
 
-
 .suggested-img {
   width: 60px;
   height: 60px;
@@ -641,7 +758,6 @@ ion-header.rounded-header ion-title {
   margin-top: auto;
   align-self: stretch;
 }
-
 
 .empty {
   flex: 1;
@@ -689,7 +805,6 @@ ion-header.rounded-header ion-title {
   font-weight: 500;
 }
 
-
 /* MODAL CREAR O AÑADIR PRODUCTO START */
 .create-modal-toolbar {
   --background: #2ea15d;
@@ -715,7 +830,6 @@ ion-header.rounded-header ion-title {
 
 .create-modal-item {
   margin-top: 12px;
-
   padding-inline: 5px;
 }
 
@@ -755,8 +869,6 @@ ion-header.rounded-header ion-title {
   text-transform: uppercase;
 }
 
-
-
 .btn-create-solid {
   flex: 1;
   --background: #2ea15d;
@@ -766,8 +878,121 @@ ion-header.rounded-header ion-title {
   font-weight: 600;
   text-transform: uppercase;
   border-radius: 8px;
-  
 }
 /* MODAL CREAR O AÑADIR PRODUCTO END */
+
+/* MODAL INFO PRODUCTO */
+.product-info-modal::part(content) {
+  position: absolute;
+  top: 20%;
+  transform: translate(-50%, -50%);
+  width: 90%;
+  max-width: 360px;
+  max-height: 310px;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  background: #ffffff;
+}
+
+.product-info-content {
+  --background: #ffffff;
+}
+
+.product-info-wrapper {
+  padding: 18px 16px 20px;
+}
+
+.info-title {
+  margin: 0 0 10px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: 700;
+  color: #111827;
+}
+
+.info-product-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.info-product-block img {
+  width: 68px;
+  height: 68px;
+  object-fit: contain;
+  margin-bottom: 6px;
+}
+
+.info-product-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #111827;
+}
+
+.info-form {
+  margin-top: 4px;
+}
+
+.info-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.info-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.info-input,
+.info-select {
+  --background: #f9fafb;
+  --padding-start: 8px;
+  --padding-end: 8px;
+  --padding-top: 6px;
+  --padding-bottom: 6px;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  font-size: 14px;
+}
+
+/* Botones inferiores */
+.info-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-info-cancel {
+  flex: 1;
+  --background: #ffffff;
+  --border-color: #16a34a;
+  --color: #16a34a;
+  --border-width: 1px;
+  --box-shadow: none;
+  font-weight: 600;
+  text-transform: none;
+  border-radius: 999px;
+}
+
+.btn-info-save {
+  flex: 1;
+  --background: #16a34a;
+  --background-hover: #15803d;
+  --background-activated: #166534;
+  --color: #ffffff;
+  font-weight: 600;
+  text-transform: none;
+  border-radius: 999px;
+}
 
 </style>
