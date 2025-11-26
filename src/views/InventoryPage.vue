@@ -235,13 +235,9 @@ async function pickImage(item: Item) {
     const blob = await response.blob();
 
     // Nombre "limpio" para el public_id: leche_543D1
-    const safeName = item.name
-      .toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quita tildes
-      .replace(/[^a-z0-9]+/g, '_')                     // espacios -> _
-      .replace(/^_+|_+$/g, '');                        // quita _ al inicio/fin
+    const safeName = norm(item.name)
 
-    const publicId = `${safeName}_${item.pantryCode}`;
+    const publicId = `${safeName}_${item.pantryCode}_${Date.now()}`;
 
     const file = new File([blob], `${publicId}.jpg`, {
       type: blob.type || 'image/jpeg',
@@ -250,9 +246,21 @@ async function pickImage(item: Item) {
     // Subir a Cloudinary
     const url = await uploadToCloudinary(file, publicId);
 
-    // Guardar SOLO la URL de Cloudinary
-    item.imageUrl = url;
+    if (url) {
+      // Actualizar el item con la nueva URL
+      try {
+        const itemRef = doc(db, 'items', item.id);
+        await updateDoc(itemRef, { imageUrl: url });
+        console.log(`Imagen del item ${item.name} actualizada correctamente.`);
+        await showToast(`Imagen del producto ${item.name} actualizada.`, 'success');
+      } catch (err) {
+        console.error('Error al actualizar la imagen del item en Firestore:', err);
+        await showToast(`No se pudo actualizar la imagen del producto ${item.name}.`, 'danger');
+      }
+    }
+    
   } catch (err) {
+    await showToast('Cancelado o error al elegir imagen', 'danger');
     console.error('Cancelado o error al elegir imagen', err);
   }
 }
@@ -261,10 +269,10 @@ async function pickImage(item: Item) {
 async function uploadToCloudinary(file: File, publicId: string): Promise<string> {
   const formData = new FormData();
   formData.append('file', file);
-  formData.append('upload_preset', 'Productos'); // ← nombre del preset
-  formData.append('folder', 'productos');        // opcional, ya lo pone el preset
-  formData.append('public_id', publicId);        // leche_543D1
-  formData.append('api_key', '962198993815698'); // tu API Key    
+  formData.append('upload_preset', 'Productos_Galeria');
+  formData.append('folder', 'productos_galeria');
+  formData.append('public_id', publicId);
+  formData.append('api_key', '962198993815698');
 
   const res = await fetch('https://api.cloudinary.com/v1_1/dpgqmi3zs/image/upload', {
     method: 'POST',
@@ -273,14 +281,15 @@ async function uploadToCloudinary(file: File, publicId: string): Promise<string>
 
   const data = await res.json();
 
-  if (!res.ok) {
-    alert('Error al subir la imagen a Cloudinary: ' + data.error?.message);
-    console.error('Error Cloudinary:', data);
-    throw new Error(`Error Cloudinary: ${data.error?.message ?? 'Error desconocido'}`);
+  if (!res.ok || !data.secure_url) {
+    showToast('Error al subir la imagen a Cloudinary: ' + (data.error?.message || res.statusText), 'danger');
+    return '';
   }
+  showToast('Imagen subida correctamente a Cloudinary: ' + data.secure_url, 'success');
 
   return data.secure_url;
 }
+
 
 // Recuperamos los items de la despensa seleccionada
 async function getPantryItems(pantryCode: string) {
