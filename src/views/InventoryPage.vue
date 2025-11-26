@@ -31,7 +31,7 @@
             @click="deleteItemFromPantry(item)">
             <ion-icon :icon="trashOutline" />
           </ion-button>
-          <img :src="`${item.imageUrl}`" :alt="item.name" />
+          <img :src="`${item.imageUrl}`" :alt="item.name" @click="pickImage(item)" />
           <p class="item-name">{{ item.name }}</p>
           <p class="item-units">{{ item.quantity }} {{ getMeasurementUnit(item.unit, item.quantity) }}</p>
 
@@ -140,6 +140,8 @@ import { db } from '@/firebase'
 import { showToast } from '@/composables/showToast'
 import { getImageFirstLetter, getMeasurementUnit } from '@/composables/itemUtils'
 import { ComunItem } from '@/models/comunItem'
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+
 
 const props = defineProps<{ code: string; name: string }>()
 console.log('Codigo y nombre de la despensa:', props.code, props.name)
@@ -207,8 +209,77 @@ async function confirmCreate() {
   }
 }
 
+// Limpiamos
 function clearInput() {
   newProductName.value = ''
+}
+
+async function pickImage(item: Item) {
+  try {
+    console.log('Abriendo cámara o galería para seleccionar imagen…');
+    const photo = await Camera.getPhoto({
+      quality: 80,
+      allowEditing: false,
+      resultType: CameraResultType.DataUrl,
+      source: CameraSource.Prompt,
+      promptLabelHeader: 'Seleccionar imagen',
+      promptLabelPhoto: 'Galería',
+      promptLabelPicture: 'Cámara',
+      promptLabelCancel: 'Cancelar',
+    });
+
+    if (!photo.dataUrl) return;
+
+    // Pasar la foto a File
+    const response = await fetch(photo.dataUrl);
+    const blob = await response.blob();
+
+    // Nombre "limpio" para el public_id: leche_543D1
+    const safeName = item.name
+      .toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '') // quita tildes
+      .replace(/[^a-z0-9]+/g, '_')                     // espacios -> _
+      .replace(/^_+|_+$/g, '');                        // quita _ al inicio/fin
+
+    const publicId = `${safeName}_${item.pantryCode}`;
+
+    const file = new File([blob], `${publicId}.jpg`, {
+      type: blob.type || 'image/jpeg',
+    });
+
+    // Subir a Cloudinary
+    const url = await uploadToCloudinary(file, publicId);
+
+    // Guardar SOLO la URL de Cloudinary
+    item.imageUrl = url;
+  } catch (err) {
+    console.error('Cancelado o error al elegir imagen', err);
+  }
+}
+
+// Subida genérica a Cloudinary
+async function uploadToCloudinary(file: File, publicId: string): Promise<string> {
+  const formData = new FormData();
+  formData.append('file', file);
+  formData.append('upload_preset', 'Productos'); // ← nombre del preset
+  formData.append('folder', 'productos');        // opcional, ya lo pone el preset
+  formData.append('public_id', publicId);        // leche_543D1
+  formData.append('api_key', '962198993815698'); // tu API Key    
+
+  const res = await fetch('https://api.cloudinary.com/v1_1/dpgqmi3zs/image/upload', {
+    method: 'POST',
+    body: formData,
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    alert('Error al subir la imagen a Cloudinary: ' + data.error?.message);
+    console.error('Error Cloudinary:', data);
+    throw new Error(`Error Cloudinary: ${data.error?.message ?? 'Error desconocido'}`);
+  }
+
+  return data.secure_url;
 }
 
 // Recuperamos los items de la despensa seleccionada
