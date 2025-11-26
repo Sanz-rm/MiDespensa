@@ -26,31 +26,18 @@
 
       <!-- Productos de la despensa seleccionada START -->
       <div v-if="!loading && itemsFiltered.length" class="items-grid">
-        <div
-          v-for="item in itemsFiltered"
-          :key="item.id"
-          class="item-card"
-          @click="openInfoModal(item)"
-        >
-          <ion-button
-            class="delete-btn"
-            fill="clear"
-            size="small"
-            aria-label="Eliminar producto"
-            @click.stop="deleteItemFromPantry(item)"
-          >
+        <div v-for="item in itemsFiltered" :key="item.id" class="item-card" @click="openInfoModal(item)">
+          <ion-button class="delete-btn" fill="clear" size="small" aria-label="Eliminar producto"
+            @click.stop="deleteItemFromPantry(item)">
             <ion-icon :icon="trashOutline" />
           </ion-button>
-          <img :src="`${item.imageUrl}`" :alt="item.name" @click="pickImage(item)" />
+          <img :src="`${item.imageUrl}`" :alt="item.name" />
           <p class="item-name">{{ item.name }}</p>
           <p class="item-units">{{ item.quantity }} {{ getMeasurementUnit(item.unit, item.quantity) }}</p>
 
           <div class="card-actions">
-            <ion-button
-              size="small"
-              :class="item.inPurchase ? 'btn-remove' : 'btn-add'"
-              @click.stop="togglePurchaseState(item)"
-            >
+            <ion-button size="small" :class="item.inPurchase ? 'btn-remove' : 'btn-add'"
+              @click.stop="togglePurchaseState(item)">
               <ion-icon :icon="cartOutline" slot="start" />
               {{ item.inPurchase ? 'Quitar de compra' : 'Añadir a compra' }}
             </ion-button>
@@ -99,28 +86,14 @@
               <ion-label position="stacked" class="create-modal-label">
                 Nombre del producto
               </ion-label>
-              <ion-input
-                v-model="newProductName"
-                class="create-modal-input"
-                placeholder="Ej. Leche, Huevos, Arroz"
-                @keyup.enter="confirmCreate"
-                autofocus
-              />
+              <ion-input v-model="newProductName" class="create-modal-input" placeholder="Ej. Leche, Huevos, Arroz"
+                @keyup.enter="confirmCreate" autofocus />
             </ion-item>
             <div class="create-modal-actions">
-              <ion-button
-                expand="block"
-                fill="clear"
-                class="btn-cancel-outline"
-                @click="clearInput"
-              >
+              <ion-button expand="block" fill="clear" class="btn-cancel-outline" @click="clearInput">
                 CANCELAR
               </ion-button>
-              <ion-button
-                expand="block"
-                class="btn-create-solid"
-                @click="confirmCreate"
-              >
+              <ion-button expand="block" class="btn-create-solid" @click="confirmCreate">
                 CREAR
               </ion-button>
             </div>
@@ -131,28 +104,13 @@
             <h3 class="suggested-title">Añade productos a tu despensa</h3>
 
             <!-- Render de los items comunes -->
-            <div
-              v-if="comunItemsFiltered && comunItemsFiltered.length"
-              class="suggested-grid"
-            >
-              <div
-                v-for="item in comunItemsFiltered"
-                :key="item.id"
-                class="suggested-card"
-              >
-                <img
-                  :src="item.imageUrl"
-                  :alt="item.name"
-                  class="suggested-img"
-                />
+            <div v-if="comunItemsFiltered && comunItemsFiltered.length" class="suggested-grid">
+              <div v-for="item in comunItemsFiltered" :key="item.id" class="suggested-card">
+                <img :src="item.imageUrl" :alt="item.name" class="suggested-img" />
                 <p class="suggested-name">{{ item.name }}</p>
 
                 <!-- Botón para añadir al inventario -->
-                <ion-button
-                  size="small"
-                  class="btn-add"
-                  @click="addItemFromPantry(item.name, item.imageUrl)"
-                >
+                <ion-button size="small" class="btn-add" @click="addItemFromPantry(item.name, item.imageUrl)">
                   <ion-icon :icon="addOutline" slot="start" />
                   Añadir
                 </ion-button>
@@ -167,18 +125,14 @@
       </ion-modal>
       <!-- Modal crear producto END -->
 
-            <!-- Modal info producto START -->
-      <ion-modal
-        :is-open="isInfoOpen"
-        css-class="product-info-modal"
-        @didDismiss="closeInfoModal"
-      >
+      <!-- Modal info producto START -->
+      <ion-modal :is-open="isInfoOpen" css-class="product-info-modal" @didDismiss="closeInfoModal">
         <ion-content class="product-info-content" v-if="selectedItem">
           <div class="product-info-wrapper">
             <h3 class="info-title">Información de:</h3>
 
             <div class="info-product-block">
-              <img :src="selectedItem.imageUrl" :alt="selectedItem.name" />
+              <img :src="selectedItem.imageUrl" :alt="selectedItem.name" @click="pickImage(selectedItem)" />
               <span class="info-product-name">{{ selectedItem.name }}</span>
             </div>
 
@@ -186,26 +140,13 @@
               <div class="info-row">
                 <div class="info-field">
                   <label class="info-label">Cantidad</label>
-                  <ion-input
-                    type="number"
-                    inputmode="numeric"
-                    v-model.number="editQuantity"
-                    class="info-input"
-                  />
+                  <ion-input type="number" inputmode="numeric" v-model.number="editQuantity" class="info-input" />
                 </div>
 
                 <div class="info-field">
                   <label class="info-label">Unidad</label>
-                  <ion-select
-                    interface="popover"
-                    v-model="editUnit"
-                    class="info-select"
-                  >
-                    <ion-select-option
-                      v-for="u in unitOptions"
-                      :key="u"
-                      :value="u"
-                    >
+                  <ion-select interface="popover" v-model="editUnit" class="info-select">
+                    <ion-select-option v-for="u in unitOptions" :key="u" :value="u">
                       {{ u }}
                     </ion-select-option>
                   </ion-select>
@@ -213,19 +154,10 @@
               </div>
 
               <div class="info-actions">
-                <ion-button
-                  expand="block"
-                  fill="outline"
-                  class="btn-info-cancel"
-                  @click="closeInfoModal"
-                >
+                <ion-button expand="block" fill="outline" class="btn-info-cancel" @click="closeInfoModal">
                   ✕ Cancelar
                 </ion-button>
-                <ion-button
-                  expand="block"
-                  class="btn-info-save"
-                  @click="saveItemInfo"
-                >
+                <ion-button expand="block" class="btn-info-save" @click="saveItemInfo">
                   Guardar
                 </ion-button>
               </div>
@@ -307,7 +239,11 @@ const selectedItem = ref<Item | null>(null)
 // Campos editables del modal
 const editQuantity = ref<number | null>(null)
 const editUnit = ref<string>('Unidad')
-const unitOptions = ['Unidad', 'Kg', 'g', 'L', 'ml']
+const unitOptions = ['Unidad', 'Kilogramo', 'Gramo', 'Litro', 'Mililitro']
+
+// refs para manejar la imagen pendiente de guardar
+const pendingImageFile = ref<File | null>(null)
+const pendingImagePublicId = ref<string | null>(null)
 
 // Modal info producto
 function openInfoModal(item: Item) {
@@ -324,6 +260,7 @@ function closeInfoModal() {
   editUnit.value = 'Unidad'
 }
 
+// Guarda los cambios del producto y sube la imagen solo si el usuario seleccionó una nueva antes de guardar
 async function saveItemInfo() {
   if (!selectedItem.value || editQuantity.value == null) {
     await showToast('Rellena la cantidad antes de guardar.', 'danger')
@@ -331,15 +268,28 @@ async function saveItemInfo() {
   }
 
   try {
+    if (pendingImageFile.value && pendingImagePublicId.value) {
+      const url = await uploadToCloudinary(pendingImageFile.value, pendingImagePublicId.value)
+      if (!url) {
+        await showToast('Error al subir la imagen a la nube.', 'danger')
+        return
+      }
+      selectedItem.value.imageUrl = url
+    }
+
     const refItem = doc(db, 'items', selectedItem.value.id)
     await updateDoc(refItem, {
       quantity: editQuantity.value,
-      unit: editUnit.value
+      unit: editUnit.value,
+      imageUrl: selectedItem.value.imageUrl,
     })
+
+    pendingImageFile.value = null
+    pendingImagePublicId.value = null
+
     await showToast('Producto actualizado.', 'success')
     closeInfoModal()
   } catch (err) {
-    console.error('Error al actualizar producto:', err)
     await showToast('No se pudo actualizar el producto.', 'danger')
   }
 }
@@ -355,24 +305,21 @@ function closeCreateModal() {
   newProductName.value = ''
 }
 
-
 // Confirmamos creación desde el modal
 async function confirmCreate() {
   await addItemFromPantry(newProductName.value, getImageFirstLetter(newProductName.value))
-  // Si la creación fue válida, vaciamos el input
   if (newProductName.value.trim()) {
     newProductName.value = ''
   }
 }
 
-// Limpiamos
 function clearInput() {
   newProductName.value = ''
 }
 
+// Obtiene una imagen de la cámara/galería y la deja solo en memoria como preview hasta que el usuario pulse Guardar
 async function pickImage(item: Item) {
   try {
-    console.log('Abriendo cámara o galería para seleccionar imagen…');
     const photo = await Camera.getPhoto({
       quality: 80,
       allowEditing: false,
@@ -382,70 +329,45 @@ async function pickImage(item: Item) {
       promptLabelPhoto: 'Galería',
       promptLabelPicture: 'Cámara',
       promptLabelCancel: 'Cancelar',
-    });
+    })
 
-    if (!photo.dataUrl) return;
+    if (!photo.dataUrl) return
 
-    // Pasar la foto a File
-    const response = await fetch(photo.dataUrl);
-    const blob = await response.blob();
+    const response = await fetch(photo.dataUrl)
+    const blob = await response.blob()
 
-    // Nombre "limpio" para el public_id: leche_543D1
     const safeName = norm(item.name)
-
-    const publicId = `${safeName}_${item.pantryCode}_${Date.now()}`;
+    const publicId = `${safeName}_${item.pantryCode}_${Date.now()}`
 
     const file = new File([blob], `${publicId}.jpg`, {
       type: blob.type || 'image/jpeg',
-    });
+    })
 
-    // Subir a Cloudinary
-    const url = await uploadToCloudinary(file, publicId);
-
-    if (url) {
-      // Actualizar el item con la nueva URL
-      try {
-        const itemRef = doc(db, 'items', item.id);
-        await updateDoc(itemRef, { imageUrl: url });
-        console.log(`Imagen del item ${item.name} actualizada correctamente.`);
-        await showToast(`Imagen del producto ${item.name} actualizada.`, 'success');
-      } catch (err) {
-        console.error('Error al actualizar la imagen del item en Firestore:', err);
-        await showToast(`No se pudo actualizar la imagen del producto ${item.name}.`, 'danger');
-      }
-    }
-    
+    pendingImageFile.value = file
+    pendingImagePublicId.value = publicId
+    item.imageUrl = photo.dataUrl
   } catch (err) {
-    await showToast('Cancelado o error al elegir imagen', 'danger');
-    console.error('Cancelado o error al elegir imagen', err);
+    await showToast('Cancelado o error al elegir imagen', 'danger')
   }
 }
 
-// Subida genérica a Cloudinary
+// Sube la imagen a Cloudinary y devuelve la URL
 async function uploadToCloudinary(file: File, publicId: string): Promise<string> {
-  const formData = new FormData();
-  formData.append('file', file);
-  formData.append('upload_preset', 'Productos_Galeria');
-  formData.append('folder', 'productos_galeria');
-  formData.append('public_id', publicId);
-  formData.append('api_key', '962198993815698');
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('upload_preset', 'Productos_Galeria')
+  formData.append('folder', 'productos_galeria')
+  formData.append('public_id', publicId)
+  formData.append('api_key', '962198993815698')
 
   const res = await fetch('https://api.cloudinary.com/v1_1/dpgqmi3zs/image/upload', {
     method: 'POST',
     body: formData,
-  });
+  })
 
-  const data = await res.json();
-
-  if (!res.ok || !data.secure_url) {
-    showToast('Error al subir la imagen a Cloudinary: ' + (data.error?.message || res.statusText), 'danger');
-    return '';
-  }
-  showToast('Imagen subida correctamente a Cloudinary: ' + data.secure_url, 'success');
-
-  return data.secure_url;
+  const data = await res.json()
+  return data.secure_url
 }
-
 
 // Recuperamos los items de la despensa seleccionada
 async function getPantryItems(pantryCode: string) {
@@ -959,6 +881,7 @@ ion-header.rounded-header ion-title {
   text-transform: uppercase;
   border-radius: 8px;
 }
+
 /* MODAL CREAR O AÑADIR PRODUCTO END */
 
 /* MODAL INFO PRODUCTO */
@@ -1074,5 +997,4 @@ ion-header.rounded-header ion-title {
   text-transform: none;
   border-radius: 999px;
 }
-
 </style>
