@@ -176,7 +176,7 @@
 import {
   IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons,
   IonButton, IonIcon, IonTitle, IonSearchbar, IonFab, IonFabButton,
-  IonModal, IonInput, IonItem, IonList, IonLabel
+  IonModal, IonInput, IonItem, IonList, IonLabel, IonSelect, IonSelectOption
 } from '@ionic/vue'
 import { arrowBackOutline, cartOutline, trashOutline, addOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
