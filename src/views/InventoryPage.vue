@@ -129,12 +129,21 @@
       <ion-modal :is-open="isInfoOpen" css-class="product-info-modal" @didDismiss="closeInfoModal">
         <ion-content class="product-info-content" v-if="selectedItem">
           <div class="product-info-wrapper">
-            <h3 class="info-title">Información de:</h3>
+            <h3 class="info-title">INFORMACIÓN DE PRODUCTO</h3>
 
             <div class="info-product-block">
-              <img :src="selectedItem.imageUrl" :alt="selectedItem.name" @click="pickImage(selectedItem)" />
+              <div class="info-product-image-wrapper" @click="pickImage(selectedItem)">
+                <img
+                  :src="selectedItem.imageUrl"
+                  :alt="selectedItem.name"
+                />
+                <span class="material-icons info-product-icon">
+                  add_photo_alternate
+                </span>
+              </div>
               <span class="info-product-name">{{ selectedItem.name }}</span>
             </div>
+
 
             <div class="info-form">
               <div class="info-row">
@@ -941,21 +950,41 @@ ion-header.rounded-header ion-title {
   flex-direction: column;
   align-items: center;
   margin-bottom: 12%;
-  
 }
 
-.info-product-block img {
+/* wrapper de la imagen */
+.info-product-image-wrapper {
+  position: relative;
   width: 108px;
   height: 108px;
+}
+
+.info-product-image-wrapper img {
+  width: 100%;
+  height: 100%;
   object-fit: contain;
-  margin-bottom: 6px;
+}
+
+/* icono arriba a la derecha de la imagen */
+.info-product-icon {
+  position: absolute;
+  top: 85px;
+  right: 1px;
+  font-size: 25px;
+  background: #16a34a; /* opcional */
+  border-radius: 50%;
+  padding: 2px;
+  color: #fff;
+  pointer-events: none; /* para que el click vaya al div wrapper */
 }
 
 .info-product-name {
   font-size: 18px;
   font-weight: 600;
   color: #111827;
+  margin-top: 4%;
 }
+
 
 .info-form {
   margin-top: 4px;
