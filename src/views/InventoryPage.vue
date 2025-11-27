@@ -178,7 +178,6 @@
       </ion-modal>
       <!-- Modal info producto END -->
 
-
     </ion-content>
   </ion-page>
 </template>
@@ -253,6 +252,8 @@ const selectedItem = ref<Item | null>(null)
 // Campos editables del modal
 const editQuantity = ref<number | null>(null)
 const editUnit = ref<string>()
+const editLocation = ref<string>('Nevera')
+
 const unitOptions = ['Unidad', 'Kilogramo', 'Gramo', 'Litro', 'Mililitro']
 const editLocation = ref<Location | null>(null)
 
@@ -959,27 +960,29 @@ ion-header.rounded-header ion-title {
 .info-title {
   margin: 0 0 10px;
   text-align: center;
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 700;
   color: #111827;
+  margin-bottom: 6%;
 }
 
 .info-product-block {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin-bottom: 16px;
+  margin-bottom: 12%;
+  
 }
 
 .info-product-block img {
-  width: 88px;
-  height: 88px;
+  width: 108px;
+  height: 108px;
   object-fit: contain;
   margin-bottom: 6px;
 }
 
 .info-product-name {
-  font-size: 15px;
+  font-size: 18px;
   font-weight: 600;
   color: #111827;
 }
