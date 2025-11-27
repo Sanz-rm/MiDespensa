@@ -252,10 +252,9 @@ const selectedItem = ref<Item | null>(null)
 // Campos editables del modal
 const editQuantity = ref<number | null>(null)
 const editUnit = ref<string>()
-const editLocation = ref<string>('Nevera')
+const editLocation = ref<Location | null>(null)
 
 const unitOptions = ['Unidad', 'Kilogramo', 'Gramo', 'Litro', 'Mililitro']
-const editLocation = ref<Location | null>(null)
 
 // refs para manejar la imagen pendiente de guardar
 const pendingImageFile = ref<File | null>(null)
