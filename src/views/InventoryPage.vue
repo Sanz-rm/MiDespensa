@@ -153,6 +153,17 @@
                 </div>
               </div>
 
+              <div class="info-row2">
+                <div class="info-field">
+                  <label class="info-label">Localización</label>
+                  <ion-select interface="popover" v-model="editUnit" class="info-select">
+                    <ion-select-option v-for="l in locations" :key="l.id" :value="l">
+                      {{ l.name }}
+                    </ion-select-option>
+                  </ion-select>
+                </div>
+              </div>
+
               <div class="info-actions">
                 <ion-button expand="block" fill="outline" class="btn-info-cancel" @click="closeInfoModal">
                   ✕ Cancelar
@@ -180,6 +191,7 @@ import {
 } from '@ionic/vue'
 import { arrowBackOutline, cartOutline, trashOutline, addOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
+import type { Location } from '@/models/location'
 import { onMounted, onBeforeUnmount, ref, watch, computed } from 'vue'
 import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe, orderBy } from 'firebase/firestore'
 import { db } from '@/firebase'
@@ -197,6 +209,13 @@ const search = ref<string>('')
 
 let stop: Unsubscribe | null = null
 const items = ref<Item[]>([])
+
+const locations = ref<Location[]>([ 
+  { id: 'loc1', name: 'Nevera' },
+  { id: 'loc2', name: 'Despensa' },
+  { id: 'loc3', name: 'Congelador' },
+  { id: 'loc4', name: 'Fuera' },
+])
 
 // Normaliza: quita acentos y pasa a minúsculas
 const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim()
@@ -891,7 +910,7 @@ ion-header.rounded-header ion-title {
   transform: translate(-50%, -50%);
   width: 90%;
   max-width: 360px;
-  max-height: 310px;
+  max-height: 70%;
   border-radius: 18px;
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
@@ -922,8 +941,8 @@ ion-header.rounded-header ion-title {
 }
 
 .info-product-block img {
-  width: 68px;
-  height: 68px;
+  width: 88px;
+  height: 88px;
   object-fit: contain;
   margin-bottom: 6px;
 }
@@ -942,6 +961,12 @@ ion-header.rounded-header ion-title {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
+  margin-bottom: 18px;
+}
+
+.info-row2 {
+  display: grid;
+  grid-template-columns: 1fr;
   margin-bottom: 18px;
 }
 
@@ -968,6 +993,30 @@ ion-header.rounded-header ion-title {
   border: 1px solid #e5e7eb;
   font-size: 14px;
 }
+
+.info-input,
+.info-select {
+  --background: #f9fafb;
+  --padding-start: 8px;
+  --padding-end: 8px;
+  --padding-top: 6px;
+  --padding-bottom: 6px;
+
+  /* borde “normal” */
+  --border-radius: 10px;
+  --border-color: #e5e7eb;
+  --border-width: 1px;
+  --border-style: solid;
+
+  /* >>> color de la barra de enfoque (la que ahora ves azul) <<< */
+  --highlight-color-focused: #16a34a;
+  --highlight-color: #16a34a;
+  --highlight-color-valid: #16a34a;
+  --highlight-height: 2px;
+
+  font-size: 14px;
+}
+
 
 /* Botones inferiores */
 .info-actions {
