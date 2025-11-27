@@ -156,7 +156,7 @@
               <div class="info-row2">
                 <div class="info-field">
                   <label class="info-label">Localización</label>
-                  <ion-select interface="popover" v-model="editLocation" class="info-select">
+                  <ion-select interface="popover" v-model="editLocation" class="info-select" placeholder="Selecciona una localización">
                     <ion-select-option v-for="l in locations" :key="l.id" :value="l">
                       {{ l.name }}
                     </ion-select-option>
@@ -209,12 +209,7 @@ const search = ref<string>('')
 let stop: Unsubscribe | null = null
 const items = ref<Item[]>([])
 
-const locations = ref<Location[]>([ 
-  { id: 'loc1', name: 'Nevera' },
-  { id: 'loc2', name: 'Despensa' },
-  { id: 'loc3', name: 'Congelador' },
-  { id: 'loc4', name: 'Fuera' },
-])
+const locations = ref<Location[]>([])
 
 // Normaliza: quita acentos y pasa a minúsculas
 const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim()
@@ -256,31 +251,65 @@ const selectedItem = ref<Item | null>(null)
 
 // Campos editables del modal
 const editQuantity = ref<number | null>(null)
-const editUnit = ref<string>('Unidad')
+const editUnit = ref<string>()
 const editLocation = ref<string>('Nevera')
 
 const unitOptions = ['Unidad', 'Kilogramo', 'Gramo', 'Litro', 'Mililitro']
+const editLocation = ref<Location | null>(null)
 
 // refs para manejar la imagen pendiente de guardar
 const pendingImageFile = ref<File | null>(null)
 const pendingImagePublicId = ref<string | null>(null)
 
 // Modal info producto
-function openInfoModal(item: Item) {
+async function openInfoModal(item: Item) {
   selectedItem.value = item
   editQuantity.value = item.quantity
   editUnit.value = item.unit || 'Unidad'
-  //editLocation.value = item.location || 'Nevera'
+  getLocations(item.locationId || null)
   isInfoOpen.value = true
 }
 
+// Cierra el modal de información y resetea los campos
 function closeInfoModal() {
   isInfoOpen.value = false
   selectedItem.value = null
   editQuantity.value = null
   editUnit.value = 'Unidad'
+  editLocation.value = null
 }
 
+async function getLocations(locationId: string | null) {
+  loading.value = true
+  const q = query(
+    collection(db, 'locations'),
+    orderBy('name', 'asc')
+  )
+
+  stop = onSnapshot(
+    q,
+    snap => {
+      locations.value = snap.docs.map(d => {
+        const loc = d.data() as any
+        return {
+          id: String(d.id),
+          name: String(loc.name ?? ''),
+        } as Location
+      })
+
+      editLocation.value =
+        locations.value.find(l => l.id === locationId) ?? null
+
+      loading.value = false
+      console.log('locations obtenidas:', locations.value)
+    },
+    async err => {
+      console.error('Error al obtener localizaciones:', err)
+      loading.value = false
+      await showToast('Error al cargar las localizaciones.', 'danger')
+    }
+  )
+}
 // Guarda los cambios del producto y sube la imagen solo si el usuario seleccionó una nueva antes de guardar
 async function saveItemInfo() {
   if (!selectedItem.value || editQuantity.value == null) {
@@ -303,6 +332,7 @@ async function saveItemInfo() {
       quantity: editQuantity.value,
       unit: editUnit.value,
       imageUrl: selectedItem.value.imageUrl,
+      locationId: editLocation.value ? editLocation.value.id : null,
     })
 
     pendingImageFile.value = null
