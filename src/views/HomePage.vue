@@ -99,9 +99,7 @@
                 </div>
                 <div class="meta-sep">•</div>
                 <div class="meta-item">
-                  <span class="meta-icon material-icons" aria-hidden="true"
-                    >inventory_2</span
-                  >
+                  <span class="meta-icon material-icons" aria-hidden="true">inventory_2</span>
                   <span>
                     {{ pantry.totalItems ?? 0 }}
                     {{ (pantry.totalItems ?? 0) === 1 ? 'producto' : 'productos' }}
@@ -169,7 +167,6 @@ import { collection, query, where, getDocs, addDoc, updateDoc, onSnapshot, type 
 import { db } from '@/firebase'
 import { Pantry } from '@/models/pantry'
 import { useRouter } from 'vue-router'
-import { alertController } from '@ionic/vue'
 import { showToast } from '@/composables/showToast'
 import PantryModal from '@/components/ui/PantryModal.vue'
 import ConfirmPopup from '@/components/ui/ConfirmPopup.vue';

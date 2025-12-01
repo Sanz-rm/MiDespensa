@@ -46,15 +46,25 @@
       </div>
       <!-- Productos de la despensa seleccionada END -->
 
+      <!-- No hay coincidencia de productos START -->
+      <div v-else-if="items.length && search" class="empty">
+        <div class="empty-icon">
+          <span class="material-icons">local_mall</span>
+        </div>
+        <p class="empty-title">No hay productos que coincidan con la búsqueda</p>
+        <p class="empty-subtitle">¡Añádelo en tu inventario!</p>
+      </div>
+      <!-- No hay coincidencia de productos END -->
+
       <!-- Sin productos de la despensa seleccionada START -->
-      <div v-else-if="!loading" class="empty">
+      <div v-else class="empty">
         <div class="empty-icon">
           <span class="material-icons">local_mall</span>
         </div>
         <p class="empty-title">No hay productos todavía</p>
         <p class="empty-subtitle">Crea o añade tu primer producto</p>
       </div>
-      <!-- Sin productos de la despensa seleccionada END -->
+      <!-- Sin productos de la despensa seleccionada END -->  
 
       <!-- Botón flotante START -->
       <ModalAddProduct :pantry-code="props.code" :items="items" view="inventory" />

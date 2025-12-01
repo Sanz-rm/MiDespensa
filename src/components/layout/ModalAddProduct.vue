@@ -127,8 +127,7 @@
                                     ? addItemFromPantry(item.name, item.imageUrl)
                                     : addExistingToPurchase(item.id)
                                 ">
-                                <ion-icon :icon="addOutline" slot="start" />
-                                Añadir
+                                <ion-icon :icon="addOutline" slot="start" />Añadir
                             </ion-button>
                         </div>
                     </div>
