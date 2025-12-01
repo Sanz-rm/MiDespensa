@@ -51,7 +51,6 @@
                 <template v-if="view === 'inventory'">
                     <!-- Render de los items comunes -->
                     <div v-if="comunItemsFiltered && comunItemsFiltered.length">
-                        <p class="suggested-subtitle">Productos comunes</p>
                         <div class="suggested-grid">
                             <div v-for="item in comunItemsFiltered" :key="item.id" class="suggested-card">
                                 <img :src="item.imageUrl" :alt="item.name" class="suggested-img" />
@@ -73,23 +72,39 @@
                 <!-- COMPRA: comunes + inventario NO en compra, intercalados y filtrables -->
                 <template v-else>
                     <!-- Filtros radio START -->
-                    <div class="filter-radios">
-                        <ion-radio-group v-model="filterMode" class="filter-radios-group">
-                            <ion-item lines="none" class="radio-item">
-                                <ion-label>Todos</ion-label>
-                                <ion-radio slot="start" value="all" />
-                            </ion-item>
-                            <ion-item lines="none" class="radio-item">
-                                <ion-label>Comunes</ion-label>
-                                <ion-radio slot="start" value="common" />
-                            </ion-item>
-                            <ion-item lines="none" class="radio-item">
-                                <ion-label>Inventario</ion-label>
-                                <ion-radio slot="start" value="inventory" />
-                            </ion-item>
-                        </ion-radio-group>
+                    <div class="filter-radios mydict">
+                    <div>
+                        <label>
+                        <input
+                            type="radio"
+                            name="filterMode"
+                            value="all"
+                            v-model="filterMode"
+                        />
+                        <span>Todos</span>
+                        </label>
+                        <label>
+                        <input
+                            type="radio"
+                            name="filterMode"
+                            value="common"
+                            v-model="filterMode"
+                        />
+                        <span>Comunes</span>
+                        </label>
+                        <label>
+                        <input
+                            type="radio"
+                            name="filterMode"
+                            value="inventory"
+                            v-model="filterMode"
+                        />
+                        <span>Inventario</span>
+                        </label>
+                    </div>
                     </div>
                     <!-- Filtros radio END -->
+
 
                     <!-- Lista combinada comunes + inventario NO compra -->
                     <div v-if="combinedItems && combinedItems.length" class="suggested-grid">
@@ -419,13 +434,13 @@ watch(
 
 .create-modal-label {
     font-weight: 700;
-    font-size: 16px;
+    font-size: 19px;
     color: #111827;
     margin-left: 2%;
 }
 
 .create-modal-input {
-    margin-top: 3%;
+    margin-top: 4%;
     border-radius: 5%;
     --background: #ffffff;
     --padding-start: 12px;
@@ -473,13 +488,6 @@ watch(
     margin: 0 0 10px 0;
     font-size: 16px;
     font-weight: 700;
-}
-
-.suggested-subtitle {
-    margin: 10px 2px 6px;
-    font-size: 14px;
-    font-weight: 600;
-    color: #374151;
 }
 
 .suggested-grid {
@@ -545,27 +553,66 @@ watch(
     height: 33px;
 }
 
-/* Radios filtro */
+/* FILTRO RADIO BUTTONS START */
+/* Contenedor del bloque de filtros */
 .filter-radios {
-    margin: 8px 4px 12px;
+  margin: 16px 4px 22px;
 }
 
-.filter-radios-group {
-    display: flex;
-    justify-content: space-between;
-    gap: 4px;
+/* Layout del grupo de radios */
+.filter-radios.mydict > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
-.radio-item {
-    --inner-padding-end: 0;
-    --padding-start: 4px;
-    --padding-end: 4px;
-    --min-height: 32px;
+.filter-radios.mydict input[type="radio"] {
+  clip: rect(0 0 0 0);
+  clip-path: inset(100%);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  white-space: nowrap;
+  width: 1px;
 }
 
-.radio-item ion-label {
-    font-size: 13px;
+.filter-radios.mydict input[type="radio"]:focus + span {
+  outline: 0;
+  border-color: #2ea15d;
+  box-shadow: 0 0 0 4px #bcdbc9;
 }
+
+.filter-radios.mydict input[type="radio"]:checked + span {
+  box-shadow: 0 0 0 0.0625em #2ea15d;
+  background-color: #cefde2af;
+  z-index: 1;
+  color: #2ea15d;
+}
+
+.filter-radios.mydict label span {
+  display: block;
+  cursor: pointer;
+  background-color: #fff;
+  padding: 0.5em 0.9em;
+  position: relative;
+  margin-left: 0.0625em;
+  box-shadow: 0 0 0 0.0625em #b5c9af;
+  letter-spacing: 0.05em;
+  color: #7caa8f;
+  text-align: center;
+  font-size: 18px;
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.filter-radios.mydict label:first-child span {
+  border-radius: 0.375em 0 0 0.375em;
+}
+
+.filter-radios.mydict label:last-child span {
+  border-radius: 0 0.375em 0.375em 0;
+}
+/* FILTRO RADIO BUTTONS END */
+
 
 /* MODAL CREAR O AÑADIR PRODUCTO END */
 </style>
