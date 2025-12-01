@@ -57,73 +57,8 @@
       <!-- Sin productos de la despensa seleccionada END -->
 
       <!-- Botón flotante START -->
-      <ion-fab slot="fixed" vertical="bottom" horizontal="end">
-        <ion-fab-button @click="openCreateModal" aria-label="Crear producto" class="add-button">
-          <ion-icon :icon="addOutline" />
-        </ion-fab-button>
-      </ion-fab>
+      <ModalAddProduct :pantry-code="props.code" :items="items" view="inventory" />
       <!-- Botón flotante END -->
-
-      <!-- Modal crear producto START -->
-      <ion-modal :is-open="isCreateOpen" @didDismiss="closeCreateModal">
-        <!-- Header modal START -->
-        <ion-header>
-          <ion-toolbar class="create-modal-toolbar">
-            <ion-title class="create-modal-title">Crear producto</ion-title>
-            <ion-buttons slot="end">
-              <ion-button class="create-modal-close-btn" @click="closeCreateModal">
-                CERRAR
-              </ion-button>
-            </ion-buttons>
-          </ion-toolbar>
-        </ion-header>
-        <!-- Header modal END -->
-
-        <!-- Contenido modal START -->
-        <ion-content class="ion-padding create-modal-content">
-          <ion-list>
-            <ion-item lines="none" class="create-modal-item">
-              <ion-label position="stacked" class="create-modal-label">
-                Nombre del producto
-              </ion-label>
-              <ion-input v-model="newProductName" class="create-modal-input" placeholder="Ej. Leche, Huevos, Arroz"
-                @keyup.enter="confirmCreate" autofocus />
-            </ion-item>
-            <div class="create-modal-actions">
-              <ion-button expand="block" fill="clear" class="btn-cancel-outline" @click="clearInput">
-                CANCELAR
-              </ion-button>
-              <ion-button expand="block" class="btn-create-solid" @click="confirmCreate">
-                CREAR
-              </ion-button>
-            </div>
-          </ion-list>
-
-          <!-- PRODUCTOS CREADOS PARA AÑADIR AL INVENTARIO START -->
-          <div class="suggested-wrapper">
-            <h3 class="suggested-title">Añade productos a tu despensa</h3>
-
-            <!-- Render de los items comunes -->
-            <div v-if="comunItemsFiltered && comunItemsFiltered.length" class="suggested-grid">
-              <div v-for="item in comunItemsFiltered" :key="item.id" class="suggested-card">
-                <img :src="item.imageUrl" :alt="item.name" class="suggested-img" />
-                <p class="suggested-name">{{ item.name }}</p>
-
-                <!-- Botón para añadir al inventario -->
-                <ion-button size="small" class="btn-add" @click="addItemFromPantry(item.name, item.imageUrl)">
-                  <ion-icon :icon="addOutline" slot="start" />
-                  Añadir
-                </ion-button>
-              </div>
-            </div>
-            <!-- Render de los items comunes END -->
-            <p v-else class="empty-suggested">No hay productos disponibles</p>
-          </div>
-          <!-- PRODUCTOS CREADOS PARA AÑADIR AL INVENTARIO END -->
-        </ion-content>
-        <!-- Contenido modal END -->
-      </ion-modal>
-      <!-- Modal crear producto END -->
 
       <!-- Modal info producto START -->
       <ion-modal :is-open="isInfoOpen" css-class="product-info-modal" @didDismiss="closeInfoModal">
@@ -194,19 +129,19 @@
 <script setup lang="ts">
 import {
   IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons,
-  IonButton, IonIcon, IonTitle, IonSearchbar, IonFab, IonFabButton,
-  IonModal, IonInput, IonItem, IonList, IonLabel, IonSelect, IonSelectOption
+  IonButton, IonIcon, IonTitle, IonSearchbar,
+  IonModal, IonInput, IonSelect, IonSelectOption
 } from '@ionic/vue'
-import { arrowBackOutline, cartOutline, trashOutline, addOutline } from 'ionicons/icons'
+import { arrowBackOutline, cartOutline, trashOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
 import type { Location } from '@/models/location'
-import { onMounted, onBeforeUnmount, ref, watch, computed } from 'vue'
+import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
 import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe, orderBy } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showToast } from '@/composables/showToast'
-import { getImageFirstLetter, getMeasurementUnit } from '@/composables/itemUtils'
-import { ComunItem } from '@/models/comunItem'
+import { getMeasurementUnit } from '@/composables/itemUtils'
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import ModalAddProduct from '@/components/layout/ModalAddProduct.vue'
 
 
 const props = defineProps<{ code: string; name: string }>()
@@ -230,15 +165,6 @@ const itemsFiltered = computed(() => {
   return items.value.filter(it => norm(it.name).includes(q))
 })
 
-const comunItems = ref<ComunItem[]>([])
-
-// Lista filtrada de items comunes según el texto del input del modal
-const comunItemsFiltered = computed(() => {
-  const q = norm(newProductName.value)
-  if (!q) return comunItems.value
-  return comunItems.value.filter(it => norm(it.name).includes(q))
-})
-
 // Lista de productos en inventario con imagen y filtro por nombre
 const pantryDocId = ref<string | null>(null)
 
@@ -248,11 +174,6 @@ onMounted(() => {
 
 // Al cerrar la ventana dejaremos de escuchar a firestore
 onBeforeUnmount(() => stop?.())
-
-// Estado del modal de creación
-const isCreateOpen = ref(false)
-// Modelo del input del modal
-const newProductName = ref('')
 
 // Estado del modal de información
 const isInfoOpen = ref(false)
@@ -353,29 +274,6 @@ async function saveItemInfo() {
   }
 }
 
-// Modal crear producto
-function openCreateModal() {
-  getComunItems()
-  isCreateOpen.value = true
-}
-
-function closeCreateModal() {
-  isCreateOpen.value = false
-  newProductName.value = ''
-}
-
-// Confirmamos creación desde el modal
-async function confirmCreate() {
-  await addItemFromPantry(newProductName.value, getImageFirstLetter(newProductName.value))
-  if (newProductName.value.trim()) {
-    newProductName.value = ''
-  }
-}
-
-function clearInput() {
-  newProductName.value = ''
-}
-
 // Obtiene una imagen de la cámara/galería y la deja solo en memoria como preview hasta que el usuario pulse Guardar
 async function pickImage(item: Item) {
   try {
@@ -449,7 +347,7 @@ async function getPantryItems(pantryCode: string) {
           pantryCode: String(item.pantryCode ?? pantryCode),
           locationId: String(item.locationId ?? null),
           inPurchase: Boolean(item.inPurchase ?? false),
-          imageUrl: String(item.imageUrl ?? getImageFirstLetter(String(item.name ?? '')))
+          imageUrl: String(item.imageUrl ?? '')
         } as Item
       })
       loading.value = false
@@ -471,96 +369,6 @@ async function togglePurchaseState(item: Item) {
   } catch (err) {
     console.error('Error al actualizar inPurchase:', err)
     await showToast(`No se pudo actualizar el estado de ${item.name}.`, 'danger')
-  }
-}
-
-// Obtenemos todas los items comunes que aun no tenemos
-async function getComunItems() {
-  loading.value = true
-
-  const q = query(collection(db, 'comun_items'), orderBy('name', 'asc'))
-  stop = onSnapshot(
-    q,
-    snap => {
-      // nombres existentes en tu inventario
-      const existing = new Set(
-        (items.value ?? []).map((i: Item) => String(i?.name ?? '').trim().toLowerCase())
-      )
-      // excluir los que ya tienes por nombre
-      comunItems.value = snap.docs
-        .map(d => {
-          const data = d.data() as any
-          return {
-            id: String(d.id),
-            name: String(data?.name ?? ''),
-            imageUrl: String(data?.imageUrl ?? ''),
-          } as ComunItem
-        }).filter(ci => !existing.has(ci.name.trim().toLowerCase()))
-
-      loading.value = false
-    }
-  )
-}
-
-// Al abrir/cerrar el modal, refrescamos sugerencias
-watch(isCreateOpen, (open) => {
-  if (open) {
-    getComunItems()
-  }
-})
-
-// Cada vez que Firestore actualice 'items', si el modal está abierto refrescamos
-watch(items, () => {
-  if (isCreateOpen.value) {
-    getComunItems()
-  }
-}, { deep: true })
-
-// Añade un nuevo item a la despensa
-async function addItemFromPantry(nameItem: string, imageUrl: string) {
-  const name = (nameItem ?? '').trim()
-  if (!name) {
-    await showToast('Escribe un nombre de producto.', 'danger')
-    return
-  }
-
-  loading.value = true
-  try {
-    // Comprobar que no exista ya un item con ese nombre en la despensa
-    const dupQ = query(
-      collection(db, 'items'),
-      where('pantryCode', '==', props.code),
-      where('name', '==', name)
-    )
-    const dupSnap = await getDocs(dupQ)
-    if (!dupSnap.empty) {
-      await showToast(`El producto ${name} ya existe en la despensa.`, 'danger')
-      return
-    }
-    // Agregamos el item y actualizamos el totalItems de la despensa
-    const batch = writeBatch(db)
-    const newItemRef = doc(collection(db, 'items'))
-    const itemName = name.charAt(0).toUpperCase() + name.slice(1);
-    batch.set(newItemRef, {
-      name: itemName,
-      pantryCode: props.code,
-      quantity: 1,
-      unit: 'Unidad',
-      inPurchase: false,
-      imageUrl: imageUrl
-    })
-
-    const pantryRef = await getPantryRefByCode()
-    batch.update(pantryRef, { totalItems: increment(1) })
-
-    await batch.commit()
-
-    await showToast(`Producto ${name} añadido.`, 'success')
-  } catch (err) {
-    console.error('Error al añadir producto:', err)
-    await showToast(`No se pudo añadir el producto ${name}.`, 'danger')
-  } finally {
-    loading.value = false
   }
 }
 
@@ -765,61 +573,6 @@ ion-header.rounded-header ion-title {
   --background: #2ea15d;
 }
 
-/* Estilos del listado informativo en el modal */
-.suggested-wrapper {
-  margin-top: 24px;
-}
-
-.suggested-title {
-  margin: 0 0 10px 0;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.suggested-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-  gap: 12px;
-}
-
-.suggested-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  justify-items: center;
-  text-align: center;
-  padding: 8px;
-  border: 1px solid #eef2f4;
-  border-radius: 12px;
-  background: #fff;
-}
-
-.suggested-img {
-  width: 60px;
-  height: 60px;
-  object-fit: contain;
-  display: block;
-  margin: 0 auto 8px;
-  align-self: center;
-}
-
-.suggested-name {
-  font-weight: 600;
-  font-size: 15px;
-  line-height: 1.2;
-  min-height: calc(2 * 1.2em);
-  margin: 0 0 8px 0;
-  --line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* El botón baja al fondo de la tarjeta */
-.suggested-card .btn-add {
-  margin-top: auto;
-  align-self: stretch;
-}
-
 .empty {
   flex: 1;
   display: flex;
@@ -865,83 +618,6 @@ ion-header.rounded-header ion-title {
   color: #3f4146;
   font-weight: 500;
 }
-
-/* MODAL CREAR O AÑADIR PRODUCTO START */
-.create-modal-toolbar {
-  --background: #2ea15d;
-  --border-width: 0;
-}
-
-.create-modal-title {
-  --color: #ffffff;
-  font-weight: 700;
-  font-size: 18px;
-}
-
-.create-modal-close-btn {
-  --color: #ffffff;
-  font-weight: 600;
-  font-size: 14px;
-  text-transform: uppercase;
-}
-
-.create-modal-content {
-  --background: #f5faf7;
-}
-
-.create-modal-item {
-  margin-top: 12px;
-  padding-inline: 5px;
-}
-
-.create-modal-label {
-  font-weight: 700;
-  font-size: 16px;
-  color: #111827;
-  margin-left: 2%;
-}
-
-.create-modal-input {
-  margin-top: 3%;
-  border-radius: 5%;
-  --background: #ffffff;
-  --padding-start: 12px;
-  --padding-end: 12px;
-  --padding-top: 10px;
-  --padding-bottom: 10px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  border: 1px solid #d1d5db36;
-}
-
-.create-modal-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 16px;
-  margin-left: 16px;
-  margin-right: 16px;
-}
-
-.btn-cancel-outline {
-  flex: 1;
-  --background: transparent;
-  --box-shadow: none;
-  --color: #2ea15d;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.btn-create-solid {
-  flex: 1;
-  --background: #2ea15d;
-  --background-hover: #27663f;
-  --background-activated: #228447;
-  --color: #ffffff;
-  font-weight: 600;
-  text-transform: uppercase;
-  border-radius: 8px;
-}
-
-/* MODAL CREAR O AÑADIR PRODUCTO END */
 
 /* MODAL INFO PRODUCTO */
 .product-info-modal::part(content) {

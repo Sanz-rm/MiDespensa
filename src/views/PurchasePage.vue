@@ -1,3 +1,4 @@
+<!-- PurcharsePage.vue (vista de compra) -->
 <template>
   <ion-page>
     <ion-header class="rounded-header">
@@ -15,7 +16,12 @@
       <!-- Acciones START-->
       <div class="actions">
         <ion-searchbar v-model="search" placeholder="Buscar producto…" :debounce="150" show-clear-button="focus"/>
-        <ion-button color="danger" expand="block" :disabled="loading || !items.length" @click="showConfirmClear = true">
+        <ion-button
+          color="danger"
+          expand="block"
+          :disabled="loading || !hasItemsInPurchase"
+          @click="showConfirmClear = true"
+        >
           <ion-icon :icon="trashOutline" slot="start" />
           Vaciar compra
         </ion-button>
@@ -52,6 +58,10 @@
         <!-- Sin despensas end -->
       </div>
 
+      <!-- Botón flotante START -->
+      <ModalAddProduct :pantry-code="props.code" :items="items" view="purcharse" />
+      <!-- Botón flotante END -->
+
       <!-- Pop up confirmar salir/eliminar despensa START -->
       <ConfirmPopup
         v-model="showConfirmClear"
@@ -68,7 +78,7 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonSearchbar, toastController, alertController } from '@ionic/vue'
+import { IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonSearchbar, toastController } from '@ionic/vue'
 import { arrowBackOutline, trashOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
 import { onMounted, onBeforeUnmount, ref, computed} from 'vue'
@@ -80,6 +90,7 @@ import {
 import { getImageFirstLetter, getMeasurementUnit } from '@/composables/itemUtils'
 import { db } from '@/firebase'
 import ConfirmPopup from '@/components/ui/ConfirmPopup.vue';
+import ModalAddProduct from '@/components/layout/ModalAddProduct.vue'
 
 
 const props = defineProps<{ code: string; name: string }>()
@@ -103,6 +114,8 @@ const itemsFiltered = computed(() => {
   )
 })
 
+const hasItemsInPurchase = computed(() => items.value.some(it => it.inPurchase))
+
 // Lista de productos en compra con imagen y filtro por nombre
 onMounted(() => {
   getPurchaseItems(props.code)
@@ -111,13 +124,12 @@ onMounted(() => {
 // Al cerrar la ventana dejaremos de escuchar a firestore
 onBeforeUnmount(() => stop?.())
 
-// Recuperamos los items de la despensa seleccionada (solo los que están en compra)
+// Recuperamos los items de la despensa seleccionada (todos los items)
 async function getPurchaseItems(pantryCode: string) {
   loading.value = true
   const q = query(
     collection(db, 'items'),
     where('pantryCode', '==', pantryCode),
-    where('inPurchase', '==', true),
     orderBy('name','asc')
   )
   stop = onSnapshot(
@@ -169,9 +181,10 @@ async function deleteItemToPurchase(idItem: string) {
 // Vaciar compra (poner inPurchase=false a todos los productos de la compra)
 async function clearPurchase() {
   try {
-    if (!items.value.length) return
+    const toClear = items.value.filter(it => it.inPurchase)
+    if (!toClear.length) return
     const batch = writeBatch(db)
-    for (const it of items.value) {
+    for (const it of toClear) {
       batch.update(doc(db, 'items', it.id), { inPurchase: false })
     }
     await batch.commit()
@@ -179,20 +192,6 @@ async function clearPurchase() {
     console.error('Error al vaciar la compra:', err)
     await showErrorToast('No se pudo vaciar la compra.')
   }
-}
-
-function openConfirmClear() {
-  if (!items.value.length || loading.value) return
-  showConfirmClear.value = true
-}
-
-function cancelClear() {
-  showConfirmClear.value = false
-}
-
-async function confirmClear() {
-  showConfirmClear.value = false
-  await clearPurchase()
 }
 
 
