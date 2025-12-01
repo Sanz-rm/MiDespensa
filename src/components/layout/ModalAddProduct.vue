@@ -66,7 +66,16 @@
                         </div>
                     </div>
                     <!-- Render de los items comunes END -->
-                    <p v-else class="empty-suggested">No hay productos disponibles</p>
+
+                    <!-- Sin productos START -->
+                    <div v-else class="empty">
+                        <div class="empty-icon">
+                            <span class="meta-icon material-icons" aria-hidden="true">inventory_2</span>
+                        </div>
+                        <p class="empty-title">No hay resultados con la búsqueda</p>
+                        <p class="empty-subtitle">¡Crea el producto que necesites!</p>
+                    </div>
+                    <!-- Sin productos END -->
                 </template>
 
                 <!-- COMPRA: comunes + inventario NO en compra, intercalados y filtrables -->
@@ -106,7 +115,7 @@
                     <!-- Filtros radio END -->
 
 
-                    <!-- Lista combinada comunes + inventario NO compra -->
+                    <!-- Lista combinada START-->
                     <div v-if="combinedItems && combinedItems.length" class="suggested-grid">
                         <div v-for="item in combinedItems" :key="item.kind + '-' + item.id" class="suggested-card">
                             <img :src="item.imageUrl" :alt="item.name" class="suggested-img" />
@@ -123,10 +132,17 @@
                             </ion-button>
                         </div>
                     </div>
+                     <!-- Lista combinada END-->
 
-                    <p v-else class="empty-suggested">
-                        No hay productos disponibles
-                    </p>
+                    <!-- Sin productos START -->
+                    <div v-else class="empty">
+                        <div class="empty-icon">
+                            <span class="meta-icon material-icons" aria-hidden="true">inventory_2</span>
+                        </div>
+                        <p class="empty-title">No hay resultados con la búsqueda</p>
+                        <p class="empty-subtitle">¡Crea el producto que necesites!</p>
+                    </div>
+                    <!-- Sin productos END -->
                 </template>
             </div>
             <!-- PRODUCTOS CREADOS PARA AÑADIR AL INVENTARIO END -->
@@ -151,9 +167,7 @@ import {
     IonItem,
     IonInput,
     IonLabel,
-    IonIcon,
-    IonRadioGroup,
-    IonRadio,
+    IonIcon
 } from '@ionic/vue'
 import { addOutline } from 'ionicons/icons'
 import { ref, computed, watch } from 'vue'
@@ -534,12 +548,59 @@ watch(
     align-self: stretch;
 }
 
-.empty-suggested {
+/* .empty-suggested {
     opacity: 0.7;
     margin-top: 10vh;
     text-align: center;
     align-items: center;
+} */
+
+
+.empty {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px 16px;
+  color: #6b7280;
 }
+
+.empty-icon {
+  width: 120px;
+  height: 120px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 2px;
+}
+
+.empty-icon .material-icons {
+  font-size: 78px;
+  color: #374151;
+}
+
+.empty-title {
+  margin: 0 0 4px;
+  font-weight: 700;
+  font-size: 18px;
+  color: #111827;
+}
+
+.empty-subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: #3f4146;
+  font-weight: 500;
+}
+
+.loading-box {
+  display: grid;
+  place-content: center;
+  min-height: 40vh;
+}
+
 
 /* Color personalizado para el botón de añadir a compra/inventario */
 .btn-add {
