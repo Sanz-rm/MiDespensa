@@ -1,16 +1,10 @@
 <!-- PurcharsePage.vue (vista de compra) -->
 <template>
   <ion-page>
-    <ion-header class="rounded-header">
-      <ion-toolbar class="back-toolbar">
-        <ion-buttons slot="start">
-          <ion-button :routerLink="{ name: 'home' }" routerDirection="root" fill="clear">
-            <ion-icon :icon="arrowBackOutline" style="font-size:28px;" />
-          </ion-button>
-        </ion-buttons>
-        <ion-title>Compra de {{ props.name }}</ion-title>
-      </ion-toolbar>
-    </ion-header>
+    <InventoryAndPurcharseHeader
+      :title="`Compra de ${props.name}`"
+      backRouteName="home"
+    />
 
     <ion-content class="ion-padding pantry-content">
       <!-- Acciones START-->
@@ -78,20 +72,16 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons, IonButton, IonIcon, IonTitle, IonSearchbar, toastController } from '@ionic/vue'
-import { arrowBackOutline, trashOutline } from 'ionicons/icons'
+import { IonPage, IonContent, IonSpinner, IonButton, IonIcon, IonSearchbar, toastController } from '@ionic/vue'
+import { trashOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
 import { onMounted, onBeforeUnmount, ref, computed} from 'vue'
-import {
-  collection, query, where, updateDoc, doc, getDoc, onSnapshot, type Unsubscribe,
-  writeBatch,
-  orderBy
-} from 'firebase/firestore'
+import { collection, query, where, updateDoc, doc, getDoc, onSnapshot, type Unsubscribe, writeBatch, orderBy } from 'firebase/firestore'
 import { getImageFirstLetter, getMeasurementUnit } from '@/composables/itemUtils'
 import { db } from '@/firebase'
 import ConfirmPopup from '@/components/ui/ConfirmPopup.vue';
 import ModalAddProduct from '@/components/layout/ModalAddProduct.vue'
-
+import InventoryAndPurcharseHeader from '@/components/ui/InventoryAndPurcharseHeader.vue';
 
 const props = defineProps<{ code: string; name: string }>()
 console.log('Codigo y nombre de la despensa:', props.code, props.name)
@@ -208,36 +198,6 @@ async function showErrorToast(message: string) {
 </script>
 
 <style scoped>
-ion-header.rounded-header {
-  --background: #2ea15d;
-  --ion-background-color: #2ea15d;
-  --color: #fff;
-  --box-shadow: none;
-  background: #2ea15d !important;
-  box-shadow: none !important;
-  border: 0;
-  padding: 0;
-  overflow: visible;
-}
-
-.back-toolbar {
-  --background: transparent;
-  --border-width: 0;
-  padding-inline: 4px;
-}
-
-ion-header.rounded-header ion-buttons ion-button {
-  --color: #fff;
-}
-
-ion-header.rounded-header ion-icon {
-  color: #fff;
-}
-
-ion-header.rounded-header ion-title {
-  color: #fff;
-  font-weight: 700;
-}
 
 /* Acciones */
 .actions {
