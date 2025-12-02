@@ -1,15 +1,9 @@
 <template>
   <ion-page>
-    <ion-header class="rounded-header">
-      <ion-toolbar class="back-toolbar">
-        <ion-buttons slot="start">
-          <ion-button :routerLink="{ name: 'home' }" routerDirection="root" fill="clear">
-            <ion-icon :icon="arrowBackOutline" style="font-size:28px;" />
-          </ion-button>
-        </ion-buttons>
-        <ion-title>Inventario de {{ props.name }}</ion-title>
-      </ion-toolbar>
-    </ion-header>
+    <InventoryAndPurcharseHeader
+      :title="`Inventario de ${props.name}`"
+      backRouteName="home"
+    />
 
     <ion-content class="ion-padding pantry-content">
       <!-- Buscador START -->
@@ -46,15 +40,25 @@
       </div>
       <!-- Productos de la despensa seleccionada END -->
 
+      <!-- No hay coincidencia de productos START -->
+      <div v-else-if="items.length && search" class="empty">
+        <div class="empty-icon">
+          <span class="material-icons">local_mall</span>
+        </div>
+        <p class="empty-title">No hay productos que coincidan con la búsqueda</p>
+        <p class="empty-subtitle">¡Añádelo en tu inventario!</p>
+      </div>
+      <!-- No hay coincidencia de productos END -->
+
       <!-- Sin productos de la despensa seleccionada START -->
-      <div v-else-if="!loading" class="empty">
+      <div v-else class="empty">
         <div class="empty-icon">
           <span class="material-icons">local_mall</span>
         </div>
         <p class="empty-title">No hay productos todavía</p>
         <p class="empty-subtitle">Crea o añade tu primer producto</p>
       </div>
-      <!-- Sin productos de la despensa seleccionada END -->
+      <!-- Sin productos de la despensa seleccionada END -->  
 
       <!-- Botón flotante START -->
       <ModalAddProduct :pantry-code="props.code" :items="items" view="inventory" />
@@ -127,12 +131,8 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons,
-  IonButton, IonIcon, IonTitle, IonSearchbar,
-  IonModal, IonInput, IonSelect, IonSelectOption
-} from '@ionic/vue'
-import { arrowBackOutline, cartOutline, trashOutline } from 'ionicons/icons'
+import { IonPage, IonContent, IonSpinner, IonButton, IonIcon, IonSearchbar, IonModal, IonInput, IonSelect, IonSelectOption } from '@ionic/vue'
+import {  cartOutline, trashOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
 import type { Location } from '@/models/location'
 import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
@@ -142,7 +142,7 @@ import { showToast } from '@/composables/showToast'
 import { getMeasurementUnit } from '@/composables/itemUtils'
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import ModalAddProduct from '@/components/layout/ModalAddProduct.vue'
-
+import InventoryAndPurcharseHeader from '@/components/ui/InventoryAndPurcharseHeader.vue';
 
 const props = defineProps<{ code: string; name: string }>()
 console.log('Codigo y nombre de la despensa:', props.code, props.name)
@@ -410,37 +410,6 @@ async function getPantryRefByCode() {
 </script>
 
 <style scoped>
-/* Header */
-ion-header.rounded-header {
-  --background: #2ea15d;
-  --ion-background-color: #2ea15d;
-  --color: #fff;
-  --box-shadow: none;
-  background: #2ea15d !important;
-  box-shadow: none !important;
-  border: 0;
-  padding: 0;
-  overflow: visible;
-}
-
-.back-toolbar {
-  --background: transparent;
-  --border-width: 0;
-  padding-inline: 4px;
-}
-
-ion-header.rounded-header ion-buttons ion-button {
-  --color: #fff;
-}
-
-ion-header.rounded-header ion-icon {
-  color: #fff;
-}
-
-ion-header.rounded-header ion-title {
-  color: #fff;
-  font-weight: 700;
-}
 
 /* Acciones (buscador) */
 .actions {
