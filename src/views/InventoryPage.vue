@@ -25,7 +25,7 @@
             @click.stop="deleteItemFromPantry(item)">
             <ion-icon :icon="trashOutline" />
           </ion-button>
-          <img :src="`${item.imageUrl}`" :alt="item.name" />
+          <img :src="`${item.imageUrl}`" :alt="item.name" :class="{ 'img-galery': isImageGalery(item.imageUrl) }"/>
           <p class="item-name">{{ item.name }}</p>
           <p class="item-units">{{ item.quantity }} {{ getMeasurementUnit(item.unit, item.quantity) }}</p>
 
@@ -407,6 +407,13 @@ async function getPantryRefByCode() {
   pantryDocId.value = snap.docs[0].id
   return snap.docs[0].ref
 }
+
+// Función para determinar si la imagen es de galería
+function isImageGalery(imageUrl: string | null | undefined): boolean {
+  if (!imageUrl) return false;
+  return imageUrl.includes('productos_galeria');
+}
+
 </script>
 
 <style scoped>
@@ -442,6 +449,21 @@ async function getPantryRefByCode() {
   object-fit: contain;
   display: block;
   margin: 0 auto 8px;
+}
+
+.item-card .img-galery {
+  width: 50%;
+  height: 80px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 8px;
+}
+
+
+/* SOLO cuando tenga la clase img-galery */
+.item-card img.img-galery {
+  border-radius: 5%;
+  object-fit: cover;
 }
 
 .item-name {
