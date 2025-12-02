@@ -25,7 +25,7 @@
             @click.stop="deleteItemFromPantry(item)">
             <ion-icon :icon="trashOutline" />
           </ion-button>
-          <img :src="`${item.imageUrl}`" :alt="item.name" />
+          <img :src="`${item.imageUrl}`" :alt="item.name" :class="{ 'img-galery': isImageGalery(item.imageUrl) }"/>
           <p class="item-name">{{ item.name }}</p>
           <p class="item-units">{{ item.quantity }} {{ getMeasurementUnit(item.unit, item.quantity) }}</p>
 
@@ -407,6 +407,13 @@ async function getPantryRefByCode() {
   pantryDocId.value = snap.docs[0].id
   return snap.docs[0].ref
 }
+
+// Función para determinar si la imagen es de galería
+function isImageGalery(imageUrl: string | null | undefined): boolean {
+  if (!imageUrl) return false;
+  return imageUrl.includes('productos_galeria');
+}
+
 </script>
 
 <style scoped>
@@ -416,6 +423,12 @@ async function getPantryRefByCode() {
   display: grid;
   gap: 12px;
   margin-bottom: 8px;
+}
+
+.card-actions {
+  margin-top: auto;
+  display: flex;
+  justify-content: center;
 }
 
 /* Productos */
@@ -434,6 +447,9 @@ async function getPantryRefByCode() {
   border: 1px solid #eef2f4;
   background: #fff;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+
+  display: flex;
+  flex-direction: column;
 }
 
 .item-card img {
@@ -444,15 +460,37 @@ async function getPantryRefByCode() {
   margin: 0 auto 8px;
 }
 
+.item-card .img-galery {
+  width: 50%;
+  height: 80px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 8px;
+}
+
+/* SOLO CUANDO LA FOTO VENGA DE GALERIA */
+.item-card img.img-galery {
+  border-radius: 5%;
+  object-fit: cover;
+}
+
 .item-name {
   margin: 0;
   font-weight: 700;
   font-size: 14px;
   color: #111827;
+  line-height: 1.2;
+
+  /*RESERVAMOS EL ALTO DE 2 LINEAS COMO MÁXIMO */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  min-height: calc(0.8em * 2); 
 }
 
 .item-units {
-  margin: 2px 0 8px;
+  margin: 4px 0 5px;
   font-size: 12px;
   color: #6b7280;
 }
@@ -536,6 +574,7 @@ async function getPantryRefByCode() {
   border-radius: 8px;
   font-weight: 600;
   text-transform: none;
+  height: 33px;
 }
 
 .add-button {

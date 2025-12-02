@@ -653,14 +653,14 @@ watch(
   display: block;
   cursor: pointer;
   background-color: #fff;
-  padding: 0.5em 0.9em;
+  padding: 0.3em 0.8em;
   position: relative;
   margin-left: 0.0625em;
   box-shadow: 0 0 0 0.0625em #b5c9af;
   letter-spacing: 0.05em;
   color: #7caa8f;
   text-align: center;
-  font-size: 18px;
+  font-size: 17px;
   transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
