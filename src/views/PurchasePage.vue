@@ -36,10 +36,61 @@
             <p class="name">{{ item.name }}</p>
             <p class="units">{{ item.quantity }} {{ getMeasurementUnit(item.unit, item.quantity) }}</p>
           </div>
-          <ion-button class="trash" color="danger" fill="clear" size="small" aria-label="Quitar de la compra"
-            @click="deleteItemToPurchase(item.id)">
+
+          <!-- Icono para añadir nota cuando no hay nota -->
+          <ion-button
+            v-if="!item.notePurchase && editingNoteItemId !== item.id"
+            class="note-icon"
+            fill="clear"
+            size="small"
+            aria-label="Añadir nota"
+            @click="openNoteInput(item)"
+          >
+            <ion-icon :icon="readerOutline" />
+          </ion-button>
+
+          <ion-button
+            class="trash"
+            color="danger"
+            fill="clear"
+            size="small"
+            aria-label="Quitar de la compra"
+            @click="deleteItemToPurchase(item.id)"
+          >
             <ion-icon :icon="trashOutline" />
           </ion-button>
+
+          <!-- Barra de nota -->
+          <div v-if="item.notePurchase || editingNoteItemId === item.id" class="note-row">
+            <textarea
+              v-model="noteDraft[item.id]"
+              :class="['note-textarea', { 'note-textarea--center': isSingleLineNote(item) }]"
+              placeholder="Escribe una nota..."
+              rows="1"
+              :readonly="editingNoteItemId !== item.id"
+              @click="editingNoteItemId !== item.id && enableNoteEdit(item)"
+              @blur="handleBlurNote(item)"
+            ></textarea>
+
+
+            <div class="note-actions">
+              <button
+                type="button"
+                class="note note-cancel"
+                @click="cancelNote(item)"
+              >
+               <span class="material-icons">close</span>
+              </button>
+              <button
+                v-if="hasNoteChanged(item)"
+                type="button"
+                :class="['note', 'note-ok', savedNoteItemId === item.id ? 'note-ok-saved' : '']"
+                @click="saveNote(item)"
+              >
+                <span class="material-icons">check</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
       <div v-else-if="!loading" class="empty">
@@ -73,7 +124,7 @@
 
 <script setup lang="ts">
 import { IonPage, IonContent, IonSpinner, IonButton, IonIcon, IonSearchbar, toastController } from '@ionic/vue'
-import { trashOutline } from 'ionicons/icons'
+import { trashOutline, readerOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
 import { onMounted, onBeforeUnmount, ref, computed} from 'vue'
 import { collection, query, where, updateDoc, doc, getDoc, onSnapshot, type Unsubscribe, writeBatch, orderBy } from 'firebase/firestore'
@@ -105,6 +156,11 @@ const itemsFiltered = computed(() => {
 })
 
 const hasItemsInPurchase = computed(() => items.value.some(it => it.inPurchase))
+
+// control de nota en edición
+const editingNoteItemId = ref<string | null>(null)
+const noteDraft = ref<{ [key: string]: string }>({})
+const savedNoteItemId = ref<string | null>(null)
 
 // Lista de productos en compra con imagen y filtro por nombre
 onMounted(() => {
@@ -139,6 +195,16 @@ async function getPurchaseItems(pantryCode: string) {
           notePurchase: String(item.notePurchase ?? '')
         } as Item
       })
+
+      // Sincronizar drafts con notas guardadas (para que el textarea muestre siempre la nota)
+      const drafts: { [key: string]: string } = { ...noteDraft.value }
+      for (const it of items.value) {
+        if (it.notePurchase && !drafts[it.id]) {
+          drafts[it.id] = it.notePurchase
+        }
+      }
+      noteDraft.value = drafts
+
       console.log("items obtenidos: ", items.value)
       loading.value = false
     },
@@ -149,6 +215,84 @@ async function getPurchaseItems(pantryCode: string) {
       await showErrorToast('Error al cargar los productos de la compra.')
     }
   )
+}
+
+// abrir input para nueva nota
+function openNoteInput(item: Item) {
+  editingNoteItemId.value = item.id
+  savedNoteItemId.value = null
+  noteDraft.value[item.id] = item.notePurchase || ''
+}
+
+// devuelve true si el texto es corto (≈ 1 línea), false si ocupará más
+function isSingleLineNote(item: Item): boolean {
+  const text = (noteDraft.value[item.id] || '').trim() || 'Escribe una nota...'
+  // umbral aproximado para una línea en móvil
+  return text.length <= 35
+}
+
+
+// habilitar edición al pulsar sobre el textarea con nota ya guardada
+function enableNoteEdit(item: Item) {
+  editingNoteItemId.value = item.id
+  savedNoteItemId.value = null
+  noteDraft.value[item.id] = item.notePurchase || noteDraft.value[item.id] || ''
+}
+
+// comprobar si la nota ha cambiado respecto a base de datos
+function hasNoteChanged(item: Item): boolean {
+  const original = (item.notePurchase || '').trim()
+  const current = (noteDraft.value[item.id] || '').trim()
+  // no consideramos "cambio" si está vacío
+  return !!current && original !== current
+}
+
+// manejar blur del textarea
+async function handleBlurNote(item: Item) {
+  if (editingNoteItemId.value !== item.id) return
+
+  if (hasNoteChanged(item)) {
+    await saveNote(item)
+  } else {
+    editingNoteItemId.value = null
+    savedNoteItemId.value = null
+  }
+}
+
+// guardar nota (crear/actualizar)
+async function saveNote(item: Item) {
+  try {
+    const text = (noteDraft.value[item.id] || '').trim()
+    if (!text) {
+      await showErrorToast('La nota no puede estar vacía.')
+      return
+    }
+    const refItem = doc(db, 'items', item.id)
+    await updateDoc(refItem, { notePurchase: text })
+    editingNoteItemId.value = null
+    savedNoteItemId.value = item.id
+  } catch (err) {
+    console.error('Error al guardar la nota:', err)
+    await showErrorToast('No se pudo guardar la nota.')
+  }
+}
+
+
+// cancelar / borrar nota
+async function cancelNote(item: Item) {
+  try {
+    // si ya tenía nota, la borramos
+    if (item.notePurchase) {
+      const refItem = doc(db, 'items', item.id)
+      await updateDoc(refItem, { notePurchase: '' })
+    }
+    editingNoteItemId.value = null
+    savedNoteItemId.value = null
+    noteDraft.value[item.id] = ''
+  } catch (err) {
+    console.error('Error al borrar la nota:', err)
+    await showErrorToast('No se pudo borrar la nota.')
+  }
 }
 
 // Quitar un item de la compra
@@ -215,9 +359,9 @@ async function showErrorToast(message: string) {
 /* Fila de item */
 .item-row {
   display: grid;
-  grid-template-columns: 40px 1fr auto;
-  align-items: center;
-  gap: 12px;
+  grid-template-columns: 40px 1fr auto auto;
+  align-items: flex-start;
+  gap: 8px 12px;
   background: #fff;
   border-radius: 12px;
   border: 1px solid #eef2f4;
@@ -229,6 +373,10 @@ async function showErrorToast(message: string) {
   width: 36px;
   height: 36px;
   object-fit: contain;
+}
+
+.info {
+  align-self: center;
 }
 
 .info .name {
@@ -244,9 +392,90 @@ async function showErrorToast(message: string) {
   color: #6b7280;
 }
 
+.note-icon {
+  --padding-start: 6px;
+  --padding-end: 6px;
+  color: #000000;
+}
+
 .trash {
   --padding-start: 6px;
   --padding-end: 6px;
+}
+
+.note-row {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 1%;
+  padding: 0px 8px;
+  background: #f3f4f6;
+  border-radius: 8px;
+  font-size: 14px;
+  border: 1px solid #cacaca;
+}
+
+.note-text {
+  flex: 1;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 6em;
+  overflow-y: auto;
+}
+
+.note-textarea {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 14px;
+  outline: none;
+  box-sizing: border-box;
+
+  /* textarea sin redimensionar */
+  min-height: 44px;
+  max-height: 80px;
+  resize: none;
+  line-height: 1.4;
+  white-space: pre-wrap;
+  align-items: center;
+}
+
+.note-textarea--center {
+  padding-top: 4%;
+}
+
+
+.note-actions {
+  display: flex;
+  gap: 8px;
+  margin-left: 8px;
+}
+
+.note {
+  width: 22px;
+  height: 22px;
+  border-radius: 5px;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  cursor: pointer;
+}
+
+.note-cancel {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.note-ok {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.note-ok-saved {
+  background: rgba(85, 141, 106, 0.87);
 }
 
 .empty {
