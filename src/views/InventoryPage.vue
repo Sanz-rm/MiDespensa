@@ -425,6 +425,12 @@ function isImageGalery(imageUrl: string | null | undefined): boolean {
   margin-bottom: 8px;
 }
 
+.card-actions {
+  margin-top: auto;
+  display: flex;
+  justify-content: center;
+}
+
 /* Productos */
 .items-grid {
   margin-top: 8px;
@@ -441,6 +447,9 @@ function isImageGalery(imageUrl: string | null | undefined): boolean {
   border: 1px solid #eef2f4;
   background: #fff;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+
+  display: flex;
+  flex-direction: column;
 }
 
 .item-card img {
@@ -459,8 +468,7 @@ function isImageGalery(imageUrl: string | null | undefined): boolean {
   margin: 0 auto 8px;
 }
 
-
-/* SOLO cuando tenga la clase img-galery */
+/* SOLO CUANDO LA FOTO VENGA DE GALERIA */
 .item-card img.img-galery {
   border-radius: 5%;
   object-fit: cover;
@@ -471,10 +479,18 @@ function isImageGalery(imageUrl: string | null | undefined): boolean {
   font-weight: 700;
   font-size: 14px;
   color: #111827;
+  line-height: 1.2;
+
+  /*RESERVAMOS EL ALTO DE 2 LINEAS COMO MÁXIMO */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  min-height: calc(0.8em * 2); 
 }
 
 .item-units {
-  margin: 2px 0 8px;
+  margin: 4px 0 5px;
   font-size: 12px;
   color: #6b7280;
 }
@@ -558,6 +574,7 @@ function isImageGalery(imageUrl: string | null | undefined): boolean {
   border-radius: 8px;
   font-weight: 600;
   text-transform: none;
+  height: 33px;
 }
 
 .add-button {
