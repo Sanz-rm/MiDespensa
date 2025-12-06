@@ -1,21 +1,14 @@
 <!-- PurcharsePage.vue (vista de compra) -->
 <template>
   <ion-page>
-    <InventoryAndPurcharseHeader
-      :title="`Compra de ${props.name}`"
-      backRouteName="home"
-    />
+    <InventoryAndPurcharseHeader :title="`Compra de ${props.name}`" backRouteName="home" />
 
     <ion-content class="ion-padding pantry-content">
       <!-- Acciones START-->
       <div class="actions">
-        <ion-searchbar v-model="search" placeholder="Buscar producto…" :debounce="150" show-clear-button="focus"/>
-        <ion-button
-          color="danger"
-          expand="block"
-          :disabled="loading || !hasItemsInPurchase"
-          @click="showConfirmClear = true"
-        >
+        <ion-searchbar v-model="search" placeholder="Buscar producto…" :debounce="150" show-clear-button="focus" />
+        <ion-button color="danger" expand="block" :disabled="loading || !hasItemsInPurchase"
+          @click="showConfirmClear = true">
           <ion-icon :icon="trashOutline" slot="start" />
           Vaciar compra
         </ion-button>
@@ -38,55 +31,31 @@
           </div>
 
           <!-- Icono para añadir nota cuando no hay nota -->
-          <ion-button
-            v-if="!item.notePurchase && editingNoteItemId !== item.id"
-            class="note-icon"
-            fill="clear"
-            size="small"
-            aria-label="Añadir nota"
-            @click="openNoteInput(item)"
-          >
+          <ion-button v-if="!item.notePurchase && editingNoteItemId !== item.id" class="note-icon" fill="clear"
+            size="small" aria-label="Añadir nota" @click="openNoteInput(item)">
             <ion-icon :icon="readerOutline" />
           </ion-button>
 
-          <ion-button
-            class="trash"
-            color="danger"
-            fill="clear"
-            size="small"
-            aria-label="Quitar de la compra"
-            @click="deleteItemToPurchase(item.id)"
-          >
+          <ion-button class="trash" color="danger" fill="clear" size="small" aria-label="Quitar de la compra"
+            @click="deleteItemToPurchase(item.id)">
             <ion-icon :icon="trashOutline" />
           </ion-button>
 
           <!-- Barra de nota -->
           <div v-if="item.notePurchase || editingNoteItemId === item.id" class="note-row">
-            <textarea
-              v-model="noteDraft[item.id]"
+            <textarea v-model="noteDraft[item.id]"
               :class="['note-textarea', { 'note-textarea--center': isSingleLineNote(item) }]"
-              placeholder="Escribe una nota..."
-              rows="1"
-              :readonly="editingNoteItemId !== item.id"
-              @click="editingNoteItemId !== item.id && enableNoteEdit(item)"
-              @blur="handleBlurNote(item)"
-            ></textarea>
+              placeholder="Escribe una nota..." rows="1" :readonly="editingNoteItemId !== item.id"
+              @click="editingNoteItemId !== item.id && enableNoteEdit(item)" @blur="handleBlurNote(item)"></textarea>
 
 
             <div class="note-actions">
-              <button
-                type="button"
-                class="note note-cancel"
-                @click="cancelNote(item)"
-              >
-               <span class="material-icons">close</span>
+              <button type="button" class="note note-cancel" @click="cancelNote(item)">
+                <span class="material-icons">close</span>
               </button>
-              <button
-                v-if="hasNoteChanged(item)"
-                type="button"
+              <button v-if="hasNoteChanged(item)" type="button"
                 :class="['note', 'note-ok', savedNoteItemId === item.id ? 'note-ok-saved' : '']"
-                @click="saveNote(item)"
-              >
+                @click="saveNote(item)">
                 <span class="material-icons">check</span>
               </button>
             </div>
@@ -95,11 +64,11 @@
       </div>
       <div v-else-if="!loading" class="empty">
         <!-- Sin despensas Start -->
-          <div class="empty-icon">
-            <span class="material-icons">shopping_cart</span>
-          </div>
-          <p class="empty-title">No hay productos en la compra.</p>
-          <p class="empty-subtitle">¡Añade los productos que te hagan falta!</p>
+        <div class="empty-icon">
+          <span class="material-icons">shopping_cart</span>
+        </div>
+        <p class="empty-title">No hay productos en la compra.</p>
+        <p class="empty-subtitle">¡Añade los productos que te hagan falta!</p>
         <!-- Sin despensas end -->
       </div>
 
@@ -108,14 +77,9 @@
       <!-- Botón flotante END -->
 
       <!-- Pop up confirmar salir/eliminar despensa START -->
-      <ConfirmPopup
-        v-model="showConfirmClear"
-        title="Vaciar compra"
+      <ConfirmPopup v-model="showConfirmClear" title="Vaciar compra"
         message="Se eliminarán todos los productos de la lista de compra. Esta acción no se puede deshacer. ¿Quieres continuar?"
-        confirmLabel="Sí, vaciar"
-        cancelLabel="Cancelar"
-        @confirm="clearPurchase"
-      />
+        confirmLabel="Sí, vaciar" cancelLabel="Cancelar" @confirm="clearPurchase" />
       <!-- Pop up confirmar salir/eliminar despensa END -->
 
     </ion-content>
@@ -126,7 +90,7 @@
 import { IonPage, IonContent, IonSpinner, IonButton, IonIcon, IonSearchbar, toastController } from '@ionic/vue'
 import { trashOutline, readerOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
-import { onMounted, onBeforeUnmount, ref, computed} from 'vue'
+import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
 import { collection, query, where, updateDoc, doc, getDoc, onSnapshot, type Unsubscribe, writeBatch, orderBy } from 'firebase/firestore'
 import { getImageFirstLetter, getMeasurementUnit } from '@/composables/itemUtils'
 import { db } from '@/firebase'
@@ -176,7 +140,7 @@ async function getPurchaseItems(pantryCode: string) {
   const q = query(
     collection(db, 'items'),
     where('pantryCode', '==', pantryCode),
-    orderBy('name','asc')
+    orderBy('name', 'asc')
   )
   stop = onSnapshot(
     q,
@@ -284,7 +248,7 @@ async function cancelNote(item: Item) {
     // si ya tenía nota, la borramos
     if (item.notePurchase) {
       const refItem = doc(db, 'items', item.id)
-      await updateDoc(refItem, { notePurchase: '' })
+      await updateDoc(refItem, { notePurchase: null })
     }
     editingNoteItemId.value = null
     savedNoteItemId.value = null
@@ -305,7 +269,10 @@ async function deleteItemToPurchase(idItem: string) {
       console.log('No existe el item:', idItem)
       return
     }
-    await updateDoc(ref, { inPurchase: false })
+    await updateDoc(ref, {
+      inPurchase: false,
+      notePurchase: null
+    })
   } catch (err) {
     console.error('Error al quitar de la compra:', err)
     await showErrorToast('No se pudo quitar el producto de la compra.')
@@ -342,7 +309,6 @@ async function showErrorToast(message: string) {
 </script>
 
 <style scoped>
-
 /* Acciones */
 .actions {
   display: grid;
@@ -522,5 +488,4 @@ async function showErrorToast(message: string) {
   place-content: center;
   min-height: 40vh;
 }
-
 </style>
