@@ -135,7 +135,7 @@ import { IonPage, IonContent, IonSpinner, IonButton, IonIcon, IonSearchbar, IonM
 import {  cartOutline, trashOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
 import type { Location } from '@/models/location'
-import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
+import { onMounted, onBeforeUnmount, ref, computed, inject, watch, type Ref } from 'vue'
 import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe, orderBy } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showToast } from '@/composables/showToast'
@@ -167,6 +167,17 @@ const itemsFiltered = computed(() => {
 
 // Lista de productos en inventario con imagen y filtro por nombre
 const pantryDocId = ref<string | null>(null)
+const purchaseCount = inject<Ref<number> | null>('purchaseCount', null)
+
+watch(
+  items,
+  () => {
+    if (purchaseCount) {
+      purchaseCount.value = items.value.filter(it => it.inPurchase).length
+    }
+  },
+  { deep: true, immediate: true }
+)
 
 onMounted(() => {
   getPantryItems(props.code)
