@@ -1,15 +1,9 @@
 <template>
   <ion-page>
-    <ion-header class="rounded-header">
-      <ion-toolbar class="back-toolbar">
-        <ion-buttons slot="start">
-          <ion-button :routerLink="{ name: 'home' }" routerDirection="root" fill="clear">
-            <ion-icon :icon="arrowBackOutline" style="font-size:28px;" />
-          </ion-button>
-        </ion-buttons>
-        <ion-title>Inventario de {{ props.name }}</ion-title>
-      </ion-toolbar>
-    </ion-header>
+    <InventoryAndPurcharseHeader
+      :title="`Inventario de ${props.name}`"
+      backRouteName="home"
+    />
 
     <ion-content class="ion-padding pantry-content">
       <!-- Buscador START -->
@@ -26,18 +20,48 @@
 
       <!-- Productos de la despensa seleccionada START -->
       <div v-if="!loading && itemsFiltered.length" class="items-grid">
-        <div v-for="item in itemsFiltered" :key="item.id" class="item-card" @click="openInfoModal(item)">
-          <ion-button class="delete-btn" fill="clear" size="small" aria-label="Eliminar producto"
-            @click.stop="deleteItemFromPantry(item)">
+        <div
+          v-for="item in itemsFiltered"
+          :key="item.id"
+          class="item-card"
+          @click="openInfoModal(item)"
+        >
+          <!-- Botón mover -->
+          <ion-button
+            class="move-btn"
+            fill="clear"
+            size="small"
+            aria-label="Mover producto"
+            @click.stop="openMoveModal(item)"
+          >
+            <ion-icon :icon="swapHorizontalOutline" />
+          </ion-button>
+
+          <!-- Botón eliminar -->
+          <ion-button
+            class="delete-btn"
+            fill="clear"
+            size="small"
+            aria-label="Eliminar producto"
+            @click.stop="deleteItemFromPantry(item)"
+          >
             <ion-icon :icon="trashOutline" />
           </ion-button>
-          <img :src="`${item.imageUrl}`" :alt="item.name" />
+
+          <img
+            :src="`${item.imageUrl}`"
+            :alt="item.name"
+            :class="{ 'img-galery': isImageGalery(item.imageUrl) }"
+          />
           <p class="item-name">{{ item.name }}</p>
           <p class="item-units">{{ item.quantity }} {{ getMeasurementUnit(item.unit, item.quantity) }}</p>
 
           <div class="card-actions">
-            <ion-button size="small" :class="item.inPurchase ? 'btn-remove' : 'btn-add'"
-              @click.stop="togglePurchaseState(item)">
+            <ion-button
+              size="small"
+              :class="item.inPurchase ? 'btn-remove' : 'btn-add'"
+              @click.stop="togglePurchaseState(item)"
+            >
               <ion-icon :icon="cartOutline" slot="start" />
               {{ item.inPurchase ? 'Quitar de compra' : 'Añadir a compra' }}
             </ion-button>
@@ -46,84 +70,29 @@
       </div>
       <!-- Productos de la despensa seleccionada END -->
 
+      <!-- No hay coincidencia de productos START -->
+      <div v-else-if="items.length && search" class="empty">
+        <div class="empty-icon">
+          <span class="material-icons">local_mall</span>
+        </div>
+        <p class="empty-title">No hay productos que coincidan con la búsqueda</p>
+        <p class="empty-subtitle">¡Añádelo en tu inventario!</p>
+      </div>
+      <!-- No hay coincidencia de productos END -->
+
       <!-- Sin productos de la despensa seleccionada START -->
-      <div v-else-if="!loading" class="empty">
+      <div v-else class="empty">
         <div class="empty-icon">
           <span class="material-icons">local_mall</span>
         </div>
         <p class="empty-title">No hay productos todavía</p>
         <p class="empty-subtitle">Crea o añade tu primer producto</p>
       </div>
-      <!-- Sin productos de la despensa seleccionada END -->
+      <!-- Sin productos de la despensa seleccionada END -->  
 
       <!-- Botón flotante START -->
-      <ion-fab slot="fixed" vertical="bottom" horizontal="end">
-        <ion-fab-button @click="openCreateModal" aria-label="Crear producto" class="add-button">
-          <ion-icon :icon="addOutline" />
-        </ion-fab-button>
-      </ion-fab>
+      <ModalAddProduct :pantry-code="props.code" :items="items" view="inventory" />
       <!-- Botón flotante END -->
-
-      <!-- Modal crear producto START -->
-      <ion-modal :is-open="isCreateOpen" @didDismiss="closeCreateModal">
-        <!-- Header modal START -->
-        <ion-header>
-          <ion-toolbar class="create-modal-toolbar">
-            <ion-title class="create-modal-title">Crear producto</ion-title>
-            <ion-buttons slot="end">
-              <ion-button class="create-modal-close-btn" @click="closeCreateModal">
-                CERRAR
-              </ion-button>
-            </ion-buttons>
-          </ion-toolbar>
-        </ion-header>
-        <!-- Header modal END -->
-
-        <!-- Contenido modal START -->
-        <ion-content class="ion-padding create-modal-content">
-          <ion-list>
-            <ion-item lines="none" class="create-modal-item">
-              <ion-label position="stacked" class="create-modal-label">
-                Nombre del producto
-              </ion-label>
-              <ion-input v-model="newProductName" class="create-modal-input" placeholder="Ej. Leche, Huevos, Arroz"
-                @keyup.enter="confirmCreate" autofocus />
-            </ion-item>
-            <div class="create-modal-actions">
-              <ion-button expand="block" fill="clear" class="btn-cancel-outline" @click="clearInput">
-                CANCELAR
-              </ion-button>
-              <ion-button expand="block" class="btn-create-solid" @click="confirmCreate">
-                CREAR
-              </ion-button>
-            </div>
-          </ion-list>
-
-          <!-- PRODUCTOS CREADOS PARA AÑADIR AL INVENTARIO START -->
-          <div class="suggested-wrapper">
-            <h3 class="suggested-title">Añade productos a tu despensa</h3>
-
-            <!-- Render de los items comunes -->
-            <div v-if="comunItemsFiltered && comunItemsFiltered.length" class="suggested-grid">
-              <div v-for="item in comunItemsFiltered" :key="item.id" class="suggested-card">
-                <img :src="item.imageUrl" :alt="item.name" class="suggested-img" />
-                <p class="suggested-name">{{ item.name }}</p>
-
-                <!-- Botón para añadir al inventario -->
-                <ion-button size="small" class="btn-add" @click="addItemFromPantry(item.name, item.imageUrl)">
-                  <ion-icon :icon="addOutline" slot="start" />
-                  Añadir
-                </ion-button>
-              </div>
-            </div>
-            <!-- Render de los items comunes END -->
-            <p v-else class="empty-suggested">No hay productos disponibles</p>
-          </div>
-          <!-- PRODUCTOS CREADOS PARA AÑADIR AL INVENTARIO END -->
-        </ion-content>
-        <!-- Contenido modal END -->
-      </ion-modal>
-      <!-- Modal crear producto END -->
 
       <!-- Modal info producto START -->
       <ion-modal :is-open="isInfoOpen" css-class="product-info-modal" @didDismiss="closeInfoModal">
@@ -144,12 +113,16 @@
               <span class="info-product-name">{{ selectedItem.name }}</span>
             </div>
 
-
             <div class="info-form">
               <div class="info-row">
                 <div class="info-field">
                   <label class="info-label">Cantidad</label>
-                  <ion-input type="number" inputmode="numeric" v-model.number="editQuantity" class="info-input" />
+                  <ion-input
+                    type="number"
+                    inputmode="numeric"
+                    v-model.number="editQuantity"
+                    class="info-input"
+                  />
                 </div>
 
                 <div class="info-field">
@@ -165,7 +138,12 @@
               <div class="info-row2">
                 <div class="info-field">
                   <label class="info-label">Localización</label>
-                  <ion-select interface="popover" v-model="editLocation" class="info-select" placeholder="Selecciona una localización">
+                  <ion-select
+                    interface="popover"
+                    v-model="editLocation"
+                    class="info-select"
+                    placeholder="Selecciona una localización"
+                  >
                     <ion-select-option v-for="l in locations" :key="l.id" :value="l">
                       {{ l.name }}
                     </ion-select-option>
@@ -174,10 +152,19 @@
               </div>
 
               <div class="info-actions">
-                <ion-button expand="block" fill="outline" class="btn-info-cancel" @click="closeInfoModal">
+                <ion-button
+                  expand="block"
+                  fill="outline"
+                  class="btn-info-cancel"
+                  @click="closeInfoModal"
+                >
                   ✕ Cancelar
                 </ion-button>
-                <ion-button expand="block" class="btn-info-save" @click="saveItemInfo">
+                <ion-button
+                  expand="block"
+                  class="btn-info-save"
+                  @click="saveItemInfo"
+                >
                   Guardar
                 </ion-button>
               </div>
@@ -187,27 +174,140 @@
       </ion-modal>
       <!-- Modal info producto END -->
 
+      <!-- Modal mover producto START -->
+      <ion-modal :is-open="isMoveOpen" css-class="move-product-modal" @didDismiss="closeMoveModal">
+        <ion-content class="product-info-content" v-if="moveItem">
+          <div class="product-info-wrapper">
+            <h3 class="info-title">MOVER PRODUCTO</h3>
+
+            <div class="info-product-block">
+              <div class="info-product-image-wrapper">
+                <img
+                  :src="moveItem.imageUrl"
+                  :alt="moveItem.name"
+                />
+              </div>
+              <span class="info-product-name">{{ moveItem.name }}</span>
+            </div>
+
+            <div class="info-form">
+              <div class="info-row-single">
+                <div class="info-field">
+                  <label class="info-label">Despensa destino</label>
+                  <ion-select
+                    interface="popover"
+                    v-model="selectedPantryCode"
+                    class="info-select"
+                    placeholder="Selecciona una despensa"
+                  >
+                    <ion-select-option
+                      v-for="p in destinationPantries"
+                      :key="p.id"
+                      :value="p.code"
+                    >
+                      {{ p.name }} ({{ p.code }})
+                    </ion-select-option>
+                  </ion-select>
+                </div>
+              </div>
+
+              <div class="info-row">
+                <div class="info-field">
+                  <label class="info-label">Cantidad a mover</label>
+                  <ion-input
+                    type="number"
+                    inputmode="numeric"
+                    v-model.number="moveQuantity"
+                    class="info-input"
+                  />
+                  <small class="info-helper">
+                    Mínimo 1, máximo {{ moveMaxQuantity }}
+                  </small>
+                </div>
+
+                <div class="info-field">
+                  <label class="info-label">Unidad</label>
+                  <ion-input
+                    :value="moveItem.unit"
+                    class="info-input info-input-readonly"
+                    readonly
+                  />
+                </div>
+              </div>
+
+              <div class="info-actions">
+                <ion-button
+                  expand="block"
+                  fill="outline"
+                  class="btn-info-cancel"
+                  @click="closeMoveModal"
+                >
+                  ✕ Cancelar
+                </ion-button>
+                <ion-button
+                  expand="block"
+                  class="btn-info-save"
+                  @click="confirmMove"
+                >
+                  Mover
+                </ion-button>
+              </div>
+            </div>
+          </div>
+        </ion-content>
+      </ion-modal>
+      <!-- Modal mover producto END -->
+
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
 import {
-  IonPage, IonHeader, IonContent, IonSpinner, IonToolbar, IonButtons,
-  IonButton, IonIcon, IonTitle, IonSearchbar, IonFab, IonFabButton,
-  IonModal, IonInput, IonItem, IonList, IonLabel, IonSelect, IonSelectOption
+  IonPage,
+  IonContent,
+  IonSpinner,
+  IonButton,
+  IonIcon,
+  IonSearchbar,
+  IonModal,
+  IonInput,
+  IonSelect,
+  IonSelectOption
 } from '@ionic/vue'
-import { arrowBackOutline, cartOutline, trashOutline, addOutline } from 'ionicons/icons'
+import { cartOutline, trashOutline, swapHorizontalOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
 import type { Location } from '@/models/location'
-import { onMounted, onBeforeUnmount, ref, watch, computed } from 'vue'
-import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe, orderBy } from 'firebase/firestore'
+import type { Pantry } from '@/models/pantry'
+import {
+  onMounted,
+  onBeforeUnmount,
+  ref,
+  computed,
+  inject,
+  watch,
+  type Ref
+} from 'vue'
+import {
+  collection,
+  query,
+  where,
+  updateDoc,
+  doc,
+  getDocs,
+  writeBatch,
+  increment,
+  onSnapshot,
+  limit,
+  type Unsubscribe,
+  orderBy
+} from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showToast } from '@/composables/showToast'
-import { getImageFirstLetter, getMeasurementUnit } from '@/composables/itemUtils'
-import { ComunItem } from '@/models/comunItem'
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
-
+import { getMeasurementUnit } from '@/composables/itemUtils'
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
+import ModalAddProduct from '@/components/layout/ModalAddProduct.vue'
+import InventoryAndPurcharseHeader from '@/components/ui/InventoryAndPurcharseHeader.vue'
 
 const props = defineProps<{ code: string; name: string }>()
 console.log('Codigo y nombre de la despensa:', props.code, props.name)
@@ -220,8 +320,16 @@ const items = ref<Item[]>([])
 
 const locations = ref<Location[]>([])
 
+// Despensas reales obtenidas por códigos guardados en localStorage
+const pantries = ref<Pantry[]>([])
+
+const destinationPantries = computed(() =>
+  pantries.value.filter(p => p.code !== props.code)
+)
+
 // Normaliza: quita acentos y pasa a minúsculas
-const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim()
+const norm = (s: string) =>
+  s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim()
 
 // Lista filtrada según el texto del searchbar
 const itemsFiltered = computed(() => {
@@ -230,29 +338,27 @@ const itemsFiltered = computed(() => {
   return items.value.filter(it => norm(it.name).includes(q))
 })
 
-const comunItems = ref<ComunItem[]>([])
-
-// Lista filtrada de items comunes según el texto del input del modal
-const comunItemsFiltered = computed(() => {
-  const q = norm(newProductName.value)
-  if (!q) return comunItems.value
-  return comunItems.value.filter(it => norm(it.name).includes(q))
-})
-
 // Lista de productos en inventario con imagen y filtro por nombre
 const pantryDocId = ref<string | null>(null)
+const purchaseCount = inject<Ref<number> | null>('purchaseCount', null)
+
+watch(
+  items,
+  () => {
+    if (purchaseCount) {
+      purchaseCount.value = items.value.filter(it => it.inPurchase).length
+    }
+  },
+  { deep: true, immediate: true }
+)
 
 onMounted(() => {
   getPantryItems(props.code)
+  loadPantries()
 })
 
 // Al cerrar la ventana dejaremos de escuchar a firestore
 onBeforeUnmount(() => stop?.())
-
-// Estado del modal de creación
-const isCreateOpen = ref(false)
-// Modelo del input del modal
-const newProductName = ref('')
 
 // Estado del modal de información
 const isInfoOpen = ref(false)
@@ -269,7 +375,54 @@ const unitOptions = ['Unidad', 'Kilogramo', 'Gramo', 'Litro', 'Mililitro']
 const pendingImageFile = ref<File | null>(null)
 const pendingImagePublicId = ref<string | null>(null)
 
-// Modal info producto
+// ----------- CARGA DE DESPENSAS POR CÓDIGOS EN LOCALSTORAGE -----------
+async function loadPantries() {
+  try {
+    const raw = localStorage.getItem('myPantries')
+    let codesList: string[] = []
+
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed)) {
+          codesList = parsed as string[]
+        }
+      } catch {
+        codesList = []
+      }
+    }
+
+    if (!codesList.length) {
+      pantries.value = []
+      return
+    }
+
+    const qPantries = query(
+      collection(db, 'pantries'),
+      where('code', 'in', codesList),
+      orderBy('name', 'asc')
+    )
+
+    const snap = await getDocs(qPantries)
+    pantries.value = snap.docs.map(d => {
+      const pantryData = d.data() as any
+      const pantry: Pantry = {
+        id: String(d.id),
+        code: String(pantryData.code ?? ''),
+        name: String(pantryData.name ?? ''),
+        memberCount: Number(pantryData.memberCount ?? 1),
+        totalItems: Number(pantryData.totalItems ?? 0),
+        creatorId: String(pantryData.creatorId ?? '0000')
+      }
+      return pantry
+    })
+  } catch (err) {
+    console.error('Error al cargar despensas:', err)
+    await showToast('Error al cargar tus despensas.', 'danger')
+  }
+}
+
+// ----------- MODAL INFO PRODUCTO -----------
 async function openInfoModal(item: Item) {
   selectedItem.value = item
   editQuantity.value = item.quantity
@@ -289,10 +442,7 @@ function closeInfoModal() {
 
 async function getLocations(locationId: string | null) {
   loading.value = true
-  const q = query(
-    collection(db, 'locations'),
-    orderBy('name', 'asc')
-  )
+  const q = query(collection(db, 'locations'), orderBy('name', 'asc'))
 
   stop = onSnapshot(
     q,
@@ -301,12 +451,11 @@ async function getLocations(locationId: string | null) {
         const loc = d.data() as any
         return {
           id: String(d.id),
-          name: String(loc.name ?? ''),
+          name: String(loc.name ?? '')
         } as Location
       })
 
-      editLocation.value =
-        locations.value.find(l => l.id === locationId) ?? null
+      editLocation.value = locations.value.find(l => l.id === locationId) ?? null
 
       loading.value = false
       console.log('locations obtenidas:', locations.value)
@@ -318,6 +467,7 @@ async function getLocations(locationId: string | null) {
     }
   )
 }
+
 // Guarda los cambios del producto y sube la imagen solo si el usuario seleccionó una nueva antes de guardar
 async function saveItemInfo() {
   if (!selectedItem.value || editQuantity.value == null) {
@@ -327,7 +477,10 @@ async function saveItemInfo() {
 
   try {
     if (pendingImageFile.value && pendingImagePublicId.value) {
-      const url = await uploadToCloudinary(pendingImageFile.value, pendingImagePublicId.value)
+      const url = await uploadToCloudinary(
+        pendingImageFile.value,
+        pendingImagePublicId.value
+      )
       if (!url) {
         await showToast('Error al subir la imagen a la nube.', 'danger')
         return
@@ -340,7 +493,7 @@ async function saveItemInfo() {
       quantity: editQuantity.value,
       unit: editUnit.value,
       imageUrl: selectedItem.value.imageUrl,
-      locationId: editLocation.value ? editLocation.value.id : null,
+      locationId: editLocation.value ? editLocation.value.id : null
     })
 
     pendingImageFile.value = null
@@ -351,29 +504,6 @@ async function saveItemInfo() {
   } catch (err) {
     await showToast('No se pudo actualizar el producto.', 'danger')
   }
-}
-
-// Modal crear producto
-function openCreateModal() {
-  getComunItems()
-  isCreateOpen.value = true
-}
-
-function closeCreateModal() {
-  isCreateOpen.value = false
-  newProductName.value = ''
-}
-
-// Confirmamos creación desde el modal
-async function confirmCreate() {
-  await addItemFromPantry(newProductName.value, getImageFirstLetter(newProductName.value))
-  if (newProductName.value.trim()) {
-    newProductName.value = ''
-  }
-}
-
-function clearInput() {
-  newProductName.value = ''
 }
 
 // Obtiene una imagen de la cámara/galería y la deja solo en memoria como preview hasta que el usuario pulse Guardar
@@ -387,7 +517,7 @@ async function pickImage(item: Item) {
       promptLabelHeader: 'Seleccionar imagen',
       promptLabelPhoto: 'Galería',
       promptLabelPicture: 'Cámara',
-      promptLabelCancel: 'Cancelar',
+      promptLabelCancel: 'Cancelar'
     })
 
     if (!photo.dataUrl) return
@@ -399,7 +529,7 @@ async function pickImage(item: Item) {
     const publicId = `${safeName}_${item.pantryCode}_${Date.now()}`
 
     const file = new File([blob], `${publicId}.jpg`, {
-      type: blob.type || 'image/jpeg',
+      type: blob.type || 'image/jpeg'
     })
 
     pendingImageFile.value = file
@@ -419,10 +549,13 @@ async function uploadToCloudinary(file: File, publicId: string): Promise<string>
   formData.append('public_id', publicId)
   formData.append('api_key', '962198993815698')
 
-  const res = await fetch('https://api.cloudinary.com/v1_1/dpgqmi3zs/image/upload', {
-    method: 'POST',
-    body: formData,
-  })
+  const res = await fetch(
+    'https://api.cloudinary.com/v1_1/dpgqmi3zs/image/upload',
+    {
+      method: 'POST',
+      body: formData
+    }
+  )
 
   const data = await res.json()
   return data.secure_url
@@ -435,7 +568,7 @@ async function getPantryItems(pantryCode: string) {
     collection(db, 'items'),
     where('pantryCode', '==', pantryCode),
     orderBy('name', 'asc')
-  );
+  )
   stop = onSnapshot(
     q,
     snap => {
@@ -449,11 +582,11 @@ async function getPantryItems(pantryCode: string) {
           pantryCode: String(item.pantryCode ?? pantryCode),
           locationId: String(item.locationId ?? null),
           inPurchase: Boolean(item.inPurchase ?? false),
-          imageUrl: String(item.imageUrl ?? getImageFirstLetter(String(item.name ?? '')))
+          imageUrl: String(item.imageUrl ?? '')
         } as Item
       })
       loading.value = false
-      console.log("items obtenidos: ", items.value)
+      console.log('items obtenidos: ', items.value)
     },
     async err => {
       console.error('Error al recuperar los items:', err)
@@ -471,96 +604,6 @@ async function togglePurchaseState(item: Item) {
   } catch (err) {
     console.error('Error al actualizar inPurchase:', err)
     await showToast(`No se pudo actualizar el estado de ${item.name}.`, 'danger')
-  }
-}
-
-// Obtenemos todas los items comunes que aun no tenemos
-async function getComunItems() {
-  loading.value = true
-
-  const q = query(collection(db, 'comun_items'), orderBy('name', 'asc'))
-  stop = onSnapshot(
-    q,
-    snap => {
-      // nombres existentes en tu inventario
-      const existing = new Set(
-        (items.value ?? []).map((i: Item) => String(i?.name ?? '').trim().toLowerCase())
-      )
-      // excluir los que ya tienes por nombre
-      comunItems.value = snap.docs
-        .map(d => {
-          const data = d.data() as any
-          return {
-            id: String(d.id),
-            name: String(data?.name ?? ''),
-            imageUrl: String(data?.imageUrl ?? ''),
-          } as ComunItem
-        }).filter(ci => !existing.has(ci.name.trim().toLowerCase()))
-
-      loading.value = false
-    }
-  )
-}
-
-// Al abrir/cerrar el modal, refrescamos sugerencias
-watch(isCreateOpen, (open) => {
-  if (open) {
-    getComunItems()
-  }
-})
-
-// Cada vez que Firestore actualice 'items', si el modal está abierto refrescamos
-watch(items, () => {
-  if (isCreateOpen.value) {
-    getComunItems()
-  }
-}, { deep: true })
-
-// Añade un nuevo item a la despensa
-async function addItemFromPantry(nameItem: string, imageUrl: string) {
-  const name = (nameItem ?? '').trim()
-  if (!name) {
-    await showToast('Escribe un nombre de producto.', 'danger')
-    return
-  }
-
-  loading.value = true
-  try {
-    // Comprobar que no exista ya un item con ese nombre en la despensa
-    const dupQ = query(
-      collection(db, 'items'),
-      where('pantryCode', '==', props.code),
-      where('name', '==', name)
-    )
-    const dupSnap = await getDocs(dupQ)
-    if (!dupSnap.empty) {
-      await showToast(`El producto ${name} ya existe en la despensa.`, 'danger')
-      return
-    }
-    // Agregamos el item y actualizamos el totalItems de la despensa
-    const batch = writeBatch(db)
-    const newItemRef = doc(collection(db, 'items'))
-    const itemName = name.charAt(0).toUpperCase() + name.slice(1);
-    batch.set(newItemRef, {
-      name: itemName,
-      pantryCode: props.code,
-      quantity: 1,
-      unit: 'Unidad',
-      inPurchase: false,
-      imageUrl: imageUrl
-    })
-
-    const pantryRef = await getPantryRefByCode()
-    batch.update(pantryRef, { totalItems: increment(1) })
-
-    await batch.commit()
-
-    await showToast(`Producto ${name} añadido.`, 'success')
-  } catch (err) {
-    console.error('Error al añadir producto:', err)
-    await showToast(`No se pudo añadir el producto ${name}.`, 'danger')
-  } finally {
-    loading.value = false
   }
 }
 
@@ -599,46 +642,164 @@ async function getPantryRefByCode() {
   pantryDocId.value = snap.docs[0].id
   return snap.docs[0].ref
 }
+
+// Obtener ref de una despensa por código genérico (para despensa destino)
+async function getPantryRefByCodeGeneric(code: string) {
+  const q = query(
+    collection(db, 'pantries'),
+    where('code', '==', code),
+    limit(1)
+  )
+  const snap = await getDocs(q)
+  if (snap.empty) throw new Error(`No existe la despensa con code ${code}`)
+  return snap.docs[0].ref
+}
+
+// Función para determinar si la imagen es de galería
+function isImageGalery(imageUrl: string | null | undefined): boolean {
+  if (!imageUrl) return false
+  return imageUrl.includes('productos_galeria')
+}
+
+// ----------- MODAL MOVER PRODUCTO -----------
+const isMoveOpen = ref(false)
+const moveItem = ref<Item | null>(null)
+const selectedPantryCode = ref<string>('')
+const moveQuantity = ref<number | null>(null)
+const moveMaxQuantity = ref<number>(0)
+
+function openMoveModal(item: Item) {
+  moveItem.value = item
+  moveMaxQuantity.value = item.quantity
+  moveQuantity.value = item.quantity > 0 ? 1 : 0
+  selectedPantryCode.value = ''
+  isMoveOpen.value = true
+}
+
+function closeMoveModal() {
+  isMoveOpen.value = false
+  moveItem.value = null
+  selectedPantryCode.value = ''
+  moveQuantity.value = null
+  moveMaxQuantity.value = 0
+}
+
+async function confirmMove() {
+  if (!moveItem.value) {
+    await showToast('No hay producto seleccionado.', 'danger')
+    return
+  }
+
+  if (!selectedPantryCode.value) {
+    await showToast('Selecciona una despensa destino.', 'danger')
+    return
+  }
+
+  if (selectedPantryCode.value === moveItem.value.pantryCode) {
+    await showToast('La despensa destino debe ser distinta a la actual.', 'danger')
+    return
+  }
+
+  if (moveQuantity.value == null || Number.isNaN(moveQuantity.value)) {
+    await showToast('Introduce una cantidad válida a mover.', 'danger')
+    return
+  }
+
+  const qty = Math.floor(moveQuantity.value)
+  if (qty < 1) {
+    await showToast('La cantidad mínima a mover es 1.', 'danger')
+    return
+  }
+
+  if (qty > moveMaxQuantity.value) {
+    await showToast('No puedes mover más cantidad de la que tienes.', 'danger')
+    return
+  }
+
+  try {
+    const destCode = selectedPantryCode.value
+
+    // Buscamos si ya existe el item en la despensa destino con el mismo nombre
+    const qDest = query(
+      collection(db, 'items'),
+      where('pantryCode', '==', destCode),
+      where('name', '==', moveItem.value.name),
+      limit(1)
+    )
+
+    const snapDest = await getDocs(qDest)
+    const batch = writeBatch(db)
+
+    if (!snapDest.empty) {
+      // Ya existe el producto en la despensa destino
+      const destDoc = snapDest.docs[0]
+      const destData = destDoc.data() as any
+      const destUnit = String(destData.unit ?? '')
+
+      if (destUnit !== moveItem.value.unit) {
+        await showToast(
+          'No se puede mover: las unidades del producto no coinciden entre despensas.',
+          'danger'
+        )
+        return
+      }
+
+      const currentDestQty = Number(destData.quantity ?? 0)
+      batch.update(destDoc.ref, {
+        quantity: currentDestQty + qty
+      })
+    } else {
+      // No existe: creamos el item en la despensa destino
+      const newRef = doc(collection(db, 'items'))
+      batch.set(newRef, {
+        name: moveItem.value.name,
+        quantity: qty,
+        unit: moveItem.value.unit,
+        pantryCode: destCode,
+        locationId: null,
+        inPurchase: false,
+        imageUrl: moveItem.value.imageUrl,
+        notePurchase: moveItem.value.notePurchase ?? ''
+      })
+
+      // Nuevo producto en esa despensa: aumentar totalItems en despensa destino
+      const destPantryRef = await getPantryRefByCodeGeneric(destCode)
+      batch.update(destPantryRef, { totalItems: increment(1) })
+    }
+
+    // Actualizamos la cantidad en la despensa origen
+    const originRef = doc(db, 'items', moveItem.value.id)
+    const newOriginQty = moveItem.value.quantity - qty
+    batch.update(originRef, {
+      quantity: newOriginQty
+    })
+
+    await batch.commit()
+
+    // Actualizamos el objeto local para que el modal se vea coherente hasta que llegue el snapshot
+    moveItem.value.quantity = newOriginQty
+
+    await showToast('Producto movido correctamente.', 'success')
+    closeMoveModal()
+  } catch (err) {
+    console.error('Error al mover producto:', err)
+    await showToast('No se pudo mover el producto.', 'danger')
+  }
+}
 </script>
 
 <style scoped>
-/* Header */
-ion-header.rounded-header {
-  --background: #2ea15d;
-  --ion-background-color: #2ea15d;
-  --color: #fff;
-  --box-shadow: none;
-  background: #2ea15d !important;
-  box-shadow: none !important;
-  border: 0;
-  padding: 0;
-  overflow: visible;
-}
-
-.back-toolbar {
-  --background: transparent;
-  --border-width: 0;
-  padding-inline: 4px;
-}
-
-ion-header.rounded-header ion-buttons ion-button {
-  --color: #fff;
-}
-
-ion-header.rounded-header ion-icon {
-  color: #fff;
-}
-
-ion-header.rounded-header ion-title {
-  color: #fff;
-  font-weight: 700;
-}
-
 /* Acciones (buscador) */
 .actions {
   display: grid;
   gap: 12px;
   margin-bottom: 8px;
+}
+
+.card-actions {
+  margin-top: auto;
+  display: flex;
+  justify-content: center;
 }
 
 /* Productos */
@@ -657,6 +818,9 @@ ion-header.rounded-header ion-title {
   border: 1px solid #eef2f4;
   background: #fff;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+
+  display: flex;
+  flex-direction: column;
 }
 
 .item-card img {
@@ -667,19 +831,72 @@ ion-header.rounded-header ion-title {
   margin: 0 auto 8px;
 }
 
+.item-card .img-galery {
+  width: 50%;
+  height: 80px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 8px;
+}
+
+/* SOLO CUANDO LA FOTO VENGA DE GALERIA */
+.item-card img.img-galery {
+  border-radius: 5%;
+  object-fit: cover;
+}
+
 .item-name {
   margin: 0;
   font-weight: 700;
   font-size: 14px;
   color: #111827;
+  line-height: 1.2;
+
+  /*RESERVAMOS EL ALTO DE 2 LINEAS COMO MÁXIMO */
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  min-height: calc(0.8em * 2);
 }
 
 .item-units {
-  margin: 2px 0 8px;
+  margin: 4px 0 5px;
   font-size: 12px;
   color: #6b7280;
 }
 
+/* Botón mover */
+.move-btn {
+  position: absolute;
+  top: 6px;
+  left: 1px;
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --background: #16a34a;
+  --background-hover: #15803d;
+  --background-activated: #166534;
+  --color: #ffffff;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.move-btn::part(native) {
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Botón eliminar */
 .delete-btn {
   position: absolute;
   top: 6px;
@@ -734,7 +951,7 @@ ion-header.rounded-header ion-title {
 
 .empty {
   text-align: center;
-  opacity: .7;
+  opacity: 0.7;
   padding: 24px 0;
 }
 
@@ -759,65 +976,11 @@ ion-header.rounded-header ion-title {
   border-radius: 8px;
   font-weight: 600;
   text-transform: none;
+  height: 33px;
 }
 
 .add-button {
   --background: #2ea15d;
-}
-
-/* Estilos del listado informativo en el modal */
-.suggested-wrapper {
-  margin-top: 24px;
-}
-
-.suggested-title {
-  margin: 0 0 10px 0;
-  font-size: 16px;
-  font-weight: 700;
-}
-
-.suggested-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-  gap: 12px;
-}
-
-.suggested-card {
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  justify-items: center;
-  text-align: center;
-  padding: 8px;
-  border: 1px solid #eef2f4;
-  border-radius: 12px;
-  background: #fff;
-}
-
-.suggested-img {
-  width: 60px;
-  height: 60px;
-  object-fit: contain;
-  display: block;
-  margin: 0 auto 8px;
-  align-self: center;
-}
-
-.suggested-name {
-  font-weight: 600;
-  font-size: 15px;
-  line-height: 1.2;
-  min-height: calc(2 * 1.2em);
-  margin: 0 0 8px 0;
-  --line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-/* El botón baja al fondo de la tarjeta */
-.suggested-card .btn-add {
-  margin-top: auto;
-  align-self: stretch;
 }
 
 .empty {
@@ -832,7 +995,7 @@ ion-header.rounded-header ion-title {
 }
 
 .empty-suggested {
-  opacity: .7;
+  opacity: 0.7;
   margin-top: 10vh;
   text-align: center;
   align-items: center;
@@ -866,85 +1029,9 @@ ion-header.rounded-header ion-title {
   font-weight: 500;
 }
 
-/* MODAL CREAR O AÑADIR PRODUCTO START */
-.create-modal-toolbar {
-  --background: #2ea15d;
-  --border-width: 0;
-}
-
-.create-modal-title {
-  --color: #ffffff;
-  font-weight: 700;
-  font-size: 18px;
-}
-
-.create-modal-close-btn {
-  --color: #ffffff;
-  font-weight: 600;
-  font-size: 14px;
-  text-transform: uppercase;
-}
-
-.create-modal-content {
-  --background: #f5faf7;
-}
-
-.create-modal-item {
-  margin-top: 12px;
-  padding-inline: 5px;
-}
-
-.create-modal-label {
-  font-weight: 700;
-  font-size: 16px;
-  color: #111827;
-  margin-left: 2%;
-}
-
-.create-modal-input {
-  margin-top: 3%;
-  border-radius: 5%;
-  --background: #ffffff;
-  --padding-start: 12px;
-  --padding-end: 12px;
-  --padding-top: 10px;
-  --padding-bottom: 10px;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-  border: 1px solid #d1d5db36;
-}
-
-.create-modal-actions {
-  display: flex;
-  gap: 10px;
-  margin-top: 16px;
-  margin-left: 16px;
-  margin-right: 16px;
-}
-
-.btn-cancel-outline {
-  flex: 1;
-  --background: transparent;
-  --box-shadow: none;
-  --color: #2ea15d;
-  font-weight: 600;
-  text-transform: uppercase;
-}
-
-.btn-create-solid {
-  flex: 1;
-  --background: #2ea15d;
-  --background-hover: #27663f;
-  --background-activated: #228447;
-  --color: #ffffff;
-  font-weight: 600;
-  text-transform: uppercase;
-  border-radius: 8px;
-}
-
-/* MODAL CREAR O AÑADIR PRODUCTO END */
-
 /* MODAL INFO PRODUCTO */
-.product-info-modal::part(content) {
+.product-info-modal::part(content),
+.move-product-modal::part(content) {
   position: absolute;
   top: 20%;
   transform: translate(-50%, -50%);
@@ -1000,11 +1087,11 @@ ion-header.rounded-header ion-title {
   top: 85px;
   right: 1px;
   font-size: 25px;
-  background: #16a34a; /* opcional */
+  background: #16a34a;
   border-radius: 50%;
   padding: 2px;
   color: #fff;
-  pointer-events: none; /* para que el click vaya al div wrapper */
+  pointer-events: none;
 }
 
 .info-product-name {
@@ -1013,7 +1100,6 @@ ion-header.rounded-header ion-title {
   color: #111827;
   margin-top: 4%;
 }
-
 
 .info-form {
   margin-top: 4px;
@@ -1026,7 +1112,8 @@ ion-header.rounded-header ion-title {
   margin-bottom: 18px;
 }
 
-.info-row2 {
+.info-row2,
+.info-row-single {
   display: grid;
   grid-template-columns: 1fr;
   margin-bottom: 18px;
@@ -1070,7 +1157,7 @@ ion-header.rounded-header ion-title {
   --border-width: 1px;
   --border-style: solid;
 
-  /* >>> color de la barra de enfoque (la que ahora ves azul) <<< */
+  /* color de la barra de enfoque */
   --highlight-color-focused: #16a34a;
   --highlight-color: #16a34a;
   --highlight-color-valid: #16a34a;
@@ -1079,6 +1166,14 @@ ion-header.rounded-header ion-title {
   font-size: 14px;
 }
 
+.info-input-readonly {
+  --background: #f3f4f6;
+}
+
+.info-helper {
+  font-size: 11px;
+  color: #6b7280;
+}
 
 /* Botones inferiores */
 .info-actions {
