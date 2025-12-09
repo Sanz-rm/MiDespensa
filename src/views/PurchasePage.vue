@@ -27,7 +27,7 @@
           <img class="icon" :src="`${item.imageUrl}`" :alt="item.name" />
           <div class="info">
             <p class="name">{{ item.name }}</p>
-            <p class="units">{{ item.quantity }} {{ getMeasurementUnit(item.unit, item.quantity) }}</p>
+            <p class="units">Stock: {{ item.quantity }} {{ getMeasurementUnit(item.unit, item.quantity) }}</p>
           </div>
 
           <!-- Icono para añadir nota cuando no hay nota -->
