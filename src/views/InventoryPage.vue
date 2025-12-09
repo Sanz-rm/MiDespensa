@@ -20,18 +20,48 @@
 
       <!-- Productos de la despensa seleccionada START -->
       <div v-if="!loading && itemsFiltered.length" class="items-grid">
-        <div v-for="item in itemsFiltered" :key="item.id" class="item-card" @click="openInfoModal(item)">
-          <ion-button class="delete-btn" fill="clear" size="small" aria-label="Eliminar producto"
-            @click.stop="deleteItemFromPantry(item)">
+        <div
+          v-for="item in itemsFiltered"
+          :key="item.id"
+          class="item-card"
+          @click="openInfoModal(item)"
+        >
+          <!-- Botón mover -->
+          <ion-button
+            class="move-btn"
+            fill="clear"
+            size="small"
+            aria-label="Mover producto"
+            @click.stop="openMoveModal(item)"
+          >
+            <ion-icon :icon="swapHorizontalOutline" />
+          </ion-button>
+
+          <!-- Botón eliminar -->
+          <ion-button
+            class="delete-btn"
+            fill="clear"
+            size="small"
+            aria-label="Eliminar producto"
+            @click.stop="deleteItemFromPantry(item)"
+          >
             <ion-icon :icon="trashOutline" />
           </ion-button>
-          <img :src="`${item.imageUrl}`" :alt="item.name" :class="{ 'img-galery': isImageGalery(item.imageUrl) }"/>
+
+          <img
+            :src="`${item.imageUrl}`"
+            :alt="item.name"
+            :class="{ 'img-galery': isImageGalery(item.imageUrl) }"
+          />
           <p class="item-name">{{ item.name }}</p>
           <p class="item-units">{{ item.quantity }} {{ getMeasurementUnit(item.unit, item.quantity) }}</p>
 
           <div class="card-actions">
-            <ion-button size="small" :class="item.inPurchase ? 'btn-remove' : 'btn-add'"
-              @click.stop="togglePurchaseState(item)">
+            <ion-button
+              size="small"
+              :class="item.inPurchase ? 'btn-remove' : 'btn-add'"
+              @click.stop="togglePurchaseState(item)"
+            >
               <ion-icon :icon="cartOutline" slot="start" />
               {{ item.inPurchase ? 'Quitar de compra' : 'Añadir a compra' }}
             </ion-button>
@@ -83,12 +113,16 @@
               <span class="info-product-name">{{ selectedItem.name }}</span>
             </div>
 
-
             <div class="info-form">
               <div class="info-row">
                 <div class="info-field">
                   <label class="info-label">Cantidad</label>
-                  <ion-input type="number" inputmode="numeric" v-model.number="editQuantity" class="info-input" />
+                  <ion-input
+                    type="number"
+                    inputmode="numeric"
+                    v-model.number="editQuantity"
+                    class="info-input"
+                  />
                 </div>
 
                 <div class="info-field">
@@ -104,7 +138,12 @@
               <div class="info-row2">
                 <div class="info-field">
                   <label class="info-label">Localización</label>
-                  <ion-select interface="popover" v-model="editLocation" class="info-select" placeholder="Selecciona una localización">
+                  <ion-select
+                    interface="popover"
+                    v-model="editLocation"
+                    class="info-select"
+                    placeholder="Selecciona una localización"
+                  >
                     <ion-select-option v-for="l in locations" :key="l.id" :value="l">
                       {{ l.name }}
                     </ion-select-option>
@@ -113,10 +152,19 @@
               </div>
 
               <div class="info-actions">
-                <ion-button expand="block" fill="outline" class="btn-info-cancel" @click="closeInfoModal">
+                <ion-button
+                  expand="block"
+                  fill="outline"
+                  class="btn-info-cancel"
+                  @click="closeInfoModal"
+                >
                   ✕ Cancelar
                 </ion-button>
-                <ion-button expand="block" class="btn-info-save" @click="saveItemInfo">
+                <ion-button
+                  expand="block"
+                  class="btn-info-save"
+                  @click="saveItemInfo"
+                >
                   Guardar
                 </ion-button>
               </div>
@@ -126,23 +174,140 @@
       </ion-modal>
       <!-- Modal info producto END -->
 
+      <!-- Modal mover producto START -->
+      <ion-modal :is-open="isMoveOpen" css-class="move-product-modal" @didDismiss="closeMoveModal">
+        <ion-content class="product-info-content" v-if="moveItem">
+          <div class="product-info-wrapper">
+            <h3 class="info-title">MOVER PRODUCTO</h3>
+
+            <div class="info-product-block">
+              <div class="info-product-image-wrapper">
+                <img
+                  :src="moveItem.imageUrl"
+                  :alt="moveItem.name"
+                />
+              </div>
+              <span class="info-product-name">{{ moveItem.name }}</span>
+            </div>
+
+            <div class="info-form">
+              <div class="info-row-single">
+                <div class="info-field">
+                  <label class="info-label">Despensa destino</label>
+                  <ion-select
+                    interface="popover"
+                    v-model="selectedPantryCode"
+                    class="info-select"
+                    placeholder="Selecciona una despensa"
+                  >
+                    <ion-select-option
+                      v-for="p in destinationPantries"
+                      :key="p.id"
+                      :value="p.code"
+                    >
+                      {{ p.name }} ({{ p.code }})
+                    </ion-select-option>
+                  </ion-select>
+                </div>
+              </div>
+
+              <div class="info-row">
+                <div class="info-field">
+                  <label class="info-label">Cantidad a mover</label>
+                  <ion-input
+                    type="number"
+                    inputmode="numeric"
+                    v-model.number="moveQuantity"
+                    class="info-input"
+                  />
+                  <small class="info-helper">
+                    Mínimo 1, máximo {{ moveMaxQuantity }}
+                  </small>
+                </div>
+
+                <div class="info-field">
+                  <label class="info-label">Unidad</label>
+                  <ion-input
+                    :value="moveItem.unit"
+                    class="info-input info-input-readonly"
+                    readonly
+                  />
+                </div>
+              </div>
+
+              <div class="info-actions">
+                <ion-button
+                  expand="block"
+                  fill="outline"
+                  class="btn-info-cancel"
+                  @click="closeMoveModal"
+                >
+                  ✕ Cancelar
+                </ion-button>
+                <ion-button
+                  expand="block"
+                  class="btn-info-save"
+                  @click="confirmMove"
+                >
+                  Mover
+                </ion-button>
+              </div>
+            </div>
+          </div>
+        </ion-content>
+      </ion-modal>
+      <!-- Modal mover producto END -->
+
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonContent, IonSpinner, IonButton, IonIcon, IonSearchbar, IonModal, IonInput, IonSelect, IonSelectOption } from '@ionic/vue'
-import {  cartOutline, trashOutline } from 'ionicons/icons'
+import {
+  IonPage,
+  IonContent,
+  IonSpinner,
+  IonButton,
+  IonIcon,
+  IonSearchbar,
+  IonModal,
+  IonInput,
+  IonSelect,
+  IonSelectOption
+} from '@ionic/vue'
+import { cartOutline, trashOutline, swapHorizontalOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
 import type { Location } from '@/models/location'
-import { onMounted, onBeforeUnmount, ref, computed, inject, watch, type Ref } from 'vue'
-import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe, orderBy } from 'firebase/firestore'
+import type { Pantry } from '@/models/pantry'
+import {
+  onMounted,
+  onBeforeUnmount,
+  ref,
+  computed,
+  inject,
+  watch,
+  type Ref
+} from 'vue'
+import {
+  collection,
+  query,
+  where,
+  updateDoc,
+  doc,
+  getDocs,
+  writeBatch,
+  increment,
+  onSnapshot,
+  limit,
+  type Unsubscribe,
+  orderBy
+} from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showToast } from '@/composables/showToast'
 import { getMeasurementUnit } from '@/composables/itemUtils'
-import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
 import ModalAddProduct from '@/components/layout/ModalAddProduct.vue'
-import InventoryAndPurcharseHeader from '@/components/ui/InventoryAndPurcharseHeader.vue';
+import InventoryAndPurcharseHeader from '@/components/ui/InventoryAndPurcharseHeader.vue'
 
 const props = defineProps<{ code: string; name: string }>()
 console.log('Codigo y nombre de la despensa:', props.code, props.name)
@@ -155,8 +320,16 @@ const items = ref<Item[]>([])
 
 const locations = ref<Location[]>([])
 
+// Despensas reales obtenidas por códigos guardados en localStorage
+const pantries = ref<Pantry[]>([])
+
+const destinationPantries = computed(() =>
+  pantries.value.filter(p => p.code !== props.code)
+)
+
 // Normaliza: quita acentos y pasa a minúsculas
-const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim()
+const norm = (s: string) =>
+  s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim()
 
 // Lista filtrada según el texto del searchbar
 const itemsFiltered = computed(() => {
@@ -181,6 +354,7 @@ watch(
 
 onMounted(() => {
   getPantryItems(props.code)
+  loadPantries()
 })
 
 // Al cerrar la ventana dejaremos de escuchar a firestore
@@ -201,7 +375,54 @@ const unitOptions = ['Unidad', 'Kilogramo', 'Gramo', 'Litro', 'Mililitro']
 const pendingImageFile = ref<File | null>(null)
 const pendingImagePublicId = ref<string | null>(null)
 
-// Modal info producto
+// ----------- CARGA DE DESPENSAS POR CÓDIGOS EN LOCALSTORAGE -----------
+async function loadPantries() {
+  try {
+    const raw = localStorage.getItem('myPantries')
+    let codesList: string[] = []
+
+    if (raw) {
+      try {
+        const parsed = JSON.parse(raw)
+        if (Array.isArray(parsed)) {
+          codesList = parsed as string[]
+        }
+      } catch {
+        codesList = []
+      }
+    }
+
+    if (!codesList.length) {
+      pantries.value = []
+      return
+    }
+
+    const qPantries = query(
+      collection(db, 'pantries'),
+      where('code', 'in', codesList),
+      orderBy('name', 'asc')
+    )
+
+    const snap = await getDocs(qPantries)
+    pantries.value = snap.docs.map(d => {
+      const pantryData = d.data() as any
+      const pantry: Pantry = {
+        id: String(d.id),
+        code: String(pantryData.code ?? ''),
+        name: String(pantryData.name ?? ''),
+        memberCount: Number(pantryData.memberCount ?? 1),
+        totalItems: Number(pantryData.totalItems ?? 0),
+        creatorId: String(pantryData.creatorId ?? '0000')
+      }
+      return pantry
+    })
+  } catch (err) {
+    console.error('Error al cargar despensas:', err)
+    await showToast('Error al cargar tus despensas.', 'danger')
+  }
+}
+
+// ----------- MODAL INFO PRODUCTO -----------
 async function openInfoModal(item: Item) {
   selectedItem.value = item
   editQuantity.value = item.quantity
@@ -221,10 +442,7 @@ function closeInfoModal() {
 
 async function getLocations(locationId: string | null) {
   loading.value = true
-  const q = query(
-    collection(db, 'locations'),
-    orderBy('name', 'asc')
-  )
+  const q = query(collection(db, 'locations'), orderBy('name', 'asc'))
 
   stop = onSnapshot(
     q,
@@ -233,12 +451,11 @@ async function getLocations(locationId: string | null) {
         const loc = d.data() as any
         return {
           id: String(d.id),
-          name: String(loc.name ?? ''),
+          name: String(loc.name ?? '')
         } as Location
       })
 
-      editLocation.value =
-        locations.value.find(l => l.id === locationId) ?? null
+      editLocation.value = locations.value.find(l => l.id === locationId) ?? null
 
       loading.value = false
       console.log('locations obtenidas:', locations.value)
@@ -250,6 +467,7 @@ async function getLocations(locationId: string | null) {
     }
   )
 }
+
 // Guarda los cambios del producto y sube la imagen solo si el usuario seleccionó una nueva antes de guardar
 async function saveItemInfo() {
   if (!selectedItem.value || editQuantity.value == null) {
@@ -259,7 +477,10 @@ async function saveItemInfo() {
 
   try {
     if (pendingImageFile.value && pendingImagePublicId.value) {
-      const url = await uploadToCloudinary(pendingImageFile.value, pendingImagePublicId.value)
+      const url = await uploadToCloudinary(
+        pendingImageFile.value,
+        pendingImagePublicId.value
+      )
       if (!url) {
         await showToast('Error al subir la imagen a la nube.', 'danger')
         return
@@ -272,7 +493,7 @@ async function saveItemInfo() {
       quantity: editQuantity.value,
       unit: editUnit.value,
       imageUrl: selectedItem.value.imageUrl,
-      locationId: editLocation.value ? editLocation.value.id : null,
+      locationId: editLocation.value ? editLocation.value.id : null
     })
 
     pendingImageFile.value = null
@@ -296,7 +517,7 @@ async function pickImage(item: Item) {
       promptLabelHeader: 'Seleccionar imagen',
       promptLabelPhoto: 'Galería',
       promptLabelPicture: 'Cámara',
-      promptLabelCancel: 'Cancelar',
+      promptLabelCancel: 'Cancelar'
     })
 
     if (!photo.dataUrl) return
@@ -308,7 +529,7 @@ async function pickImage(item: Item) {
     const publicId = `${safeName}_${item.pantryCode}_${Date.now()}`
 
     const file = new File([blob], `${publicId}.jpg`, {
-      type: blob.type || 'image/jpeg',
+      type: blob.type || 'image/jpeg'
     })
 
     pendingImageFile.value = file
@@ -328,10 +549,13 @@ async function uploadToCloudinary(file: File, publicId: string): Promise<string>
   formData.append('public_id', publicId)
   formData.append('api_key', '962198993815698')
 
-  const res = await fetch('https://api.cloudinary.com/v1_1/dpgqmi3zs/image/upload', {
-    method: 'POST',
-    body: formData,
-  })
+  const res = await fetch(
+    'https://api.cloudinary.com/v1_1/dpgqmi3zs/image/upload',
+    {
+      method: 'POST',
+      body: formData
+    }
+  )
 
   const data = await res.json()
   return data.secure_url
@@ -344,7 +568,7 @@ async function getPantryItems(pantryCode: string) {
     collection(db, 'items'),
     where('pantryCode', '==', pantryCode),
     orderBy('name', 'asc')
-  );
+  )
   stop = onSnapshot(
     q,
     snap => {
@@ -362,7 +586,7 @@ async function getPantryItems(pantryCode: string) {
         } as Item
       })
       loading.value = false
-      console.log("items obtenidos: ", items.value)
+      console.log('items obtenidos: ', items.value)
     },
     async err => {
       console.error('Error al recuperar los items:', err)
@@ -419,16 +643,152 @@ async function getPantryRefByCode() {
   return snap.docs[0].ref
 }
 
-// Función para determinar si la imagen es de galería
-function isImageGalery(imageUrl: string | null | undefined): boolean {
-  if (!imageUrl) return false;
-  return imageUrl.includes('productos_galeria');
+// Obtener ref de una despensa por código genérico (para despensa destino)
+async function getPantryRefByCodeGeneric(code: string) {
+  const q = query(
+    collection(db, 'pantries'),
+    where('code', '==', code),
+    limit(1)
+  )
+  const snap = await getDocs(q)
+  if (snap.empty) throw new Error(`No existe la despensa con code ${code}`)
+  return snap.docs[0].ref
 }
 
+// Función para determinar si la imagen es de galería
+function isImageGalery(imageUrl: string | null | undefined): boolean {
+  if (!imageUrl) return false
+  return imageUrl.includes('productos_galeria')
+}
+
+// ----------- MODAL MOVER PRODUCTO -----------
+const isMoveOpen = ref(false)
+const moveItem = ref<Item | null>(null)
+const selectedPantryCode = ref<string>('')
+const moveQuantity = ref<number | null>(null)
+const moveMaxQuantity = ref<number>(0)
+
+function openMoveModal(item: Item) {
+  moveItem.value = item
+  moveMaxQuantity.value = item.quantity
+  moveQuantity.value = item.quantity > 0 ? 1 : 0
+  selectedPantryCode.value = ''
+  isMoveOpen.value = true
+}
+
+function closeMoveModal() {
+  isMoveOpen.value = false
+  moveItem.value = null
+  selectedPantryCode.value = ''
+  moveQuantity.value = null
+  moveMaxQuantity.value = 0
+}
+
+async function confirmMove() {
+  if (!moveItem.value) {
+    await showToast('No hay producto seleccionado.', 'danger')
+    return
+  }
+
+  if (!selectedPantryCode.value) {
+    await showToast('Selecciona una despensa destino.', 'danger')
+    return
+  }
+
+  if (selectedPantryCode.value === moveItem.value.pantryCode) {
+    await showToast('La despensa destino debe ser distinta a la actual.', 'danger')
+    return
+  }
+
+  if (moveQuantity.value == null || Number.isNaN(moveQuantity.value)) {
+    await showToast('Introduce una cantidad válida a mover.', 'danger')
+    return
+  }
+
+  const qty = Math.floor(moveQuantity.value)
+  if (qty < 1) {
+    await showToast('La cantidad mínima a mover es 1.', 'danger')
+    return
+  }
+
+  if (qty > moveMaxQuantity.value) {
+    await showToast('No puedes mover más cantidad de la que tienes.', 'danger')
+    return
+  }
+
+  try {
+    const destCode = selectedPantryCode.value
+
+    // Buscamos si ya existe el item en la despensa destino con el mismo nombre
+    const qDest = query(
+      collection(db, 'items'),
+      where('pantryCode', '==', destCode),
+      where('name', '==', moveItem.value.name),
+      limit(1)
+    )
+
+    const snapDest = await getDocs(qDest)
+    const batch = writeBatch(db)
+
+    if (!snapDest.empty) {
+      // Ya existe el producto en la despensa destino
+      const destDoc = snapDest.docs[0]
+      const destData = destDoc.data() as any
+      const destUnit = String(destData.unit ?? '')
+
+      if (destUnit !== moveItem.value.unit) {
+        await showToast(
+          'No se puede mover: las unidades del producto no coinciden entre despensas.',
+          'danger'
+        )
+        return
+      }
+
+      const currentDestQty = Number(destData.quantity ?? 0)
+      batch.update(destDoc.ref, {
+        quantity: currentDestQty + qty
+      })
+    } else {
+      // No existe: creamos el item en la despensa destino
+      const newRef = doc(collection(db, 'items'))
+      batch.set(newRef, {
+        name: moveItem.value.name,
+        quantity: qty,
+        unit: moveItem.value.unit,
+        pantryCode: destCode,
+        locationId: null,
+        inPurchase: false,
+        imageUrl: moveItem.value.imageUrl,
+        notePurchase: moveItem.value.notePurchase ?? ''
+      })
+
+      // Nuevo producto en esa despensa: aumentar totalItems en despensa destino
+      const destPantryRef = await getPantryRefByCodeGeneric(destCode)
+      batch.update(destPantryRef, { totalItems: increment(1) })
+    }
+
+    // Actualizamos la cantidad en la despensa origen
+    const originRef = doc(db, 'items', moveItem.value.id)
+    const newOriginQty = moveItem.value.quantity - qty
+    batch.update(originRef, {
+      quantity: newOriginQty
+    })
+
+    await batch.commit()
+
+    // Actualizamos el objeto local para que el modal se vea coherente hasta que llegue el snapshot
+    moveItem.value.quantity = newOriginQty
+
+    await showToast('Producto movido correctamente.', 'success')
+    closeMoveModal()
+  } catch (err) {
+    console.error('Error al mover producto:', err)
+    await showToast('No se pudo mover el producto.', 'danger')
+  }
+}
 </script>
 
 <style scoped>
-
 /* Acciones (buscador) */
 .actions {
   display: grid;
@@ -497,7 +857,7 @@ function isImageGalery(imageUrl: string | null | undefined): boolean {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
   overflow: hidden;
-  min-height: calc(0.8em * 2); 
+  min-height: calc(0.8em * 2);
 }
 
 .item-units {
@@ -506,6 +866,37 @@ function isImageGalery(imageUrl: string | null | undefined): boolean {
   color: #6b7280;
 }
 
+/* Botón mover */
+.move-btn {
+  position: absolute;
+  top: 6px;
+  left: 1px;
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  --background: #16a34a;
+  --background-hover: #15803d;
+  --background-activated: #166534;
+  --color: #ffffff;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.move-btn::part(native) {
+  border-radius: 50%;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Botón eliminar */
 .delete-btn {
   position: absolute;
   top: 6px;
@@ -560,7 +951,7 @@ function isImageGalery(imageUrl: string | null | undefined): boolean {
 
 .empty {
   text-align: center;
-  opacity: .7;
+  opacity: 0.7;
   padding: 24px 0;
 }
 
@@ -604,7 +995,7 @@ function isImageGalery(imageUrl: string | null | undefined): boolean {
 }
 
 .empty-suggested {
-  opacity: .7;
+  opacity: 0.7;
   margin-top: 10vh;
   text-align: center;
   align-items: center;
@@ -639,7 +1030,8 @@ function isImageGalery(imageUrl: string | null | undefined): boolean {
 }
 
 /* MODAL INFO PRODUCTO */
-.product-info-modal::part(content) {
+.product-info-modal::part(content),
+.move-product-modal::part(content) {
   position: absolute;
   top: 20%;
   transform: translate(-50%, -50%);
@@ -695,11 +1087,11 @@ function isImageGalery(imageUrl: string | null | undefined): boolean {
   top: 85px;
   right: 1px;
   font-size: 25px;
-  background: #16a34a; /* opcional */
+  background: #16a34a;
   border-radius: 50%;
   padding: 2px;
   color: #fff;
-  pointer-events: none; /* para que el click vaya al div wrapper */
+  pointer-events: none;
 }
 
 .info-product-name {
@@ -708,7 +1100,6 @@ function isImageGalery(imageUrl: string | null | undefined): boolean {
   color: #111827;
   margin-top: 4%;
 }
-
 
 .info-form {
   margin-top: 4px;
@@ -721,7 +1112,8 @@ function isImageGalery(imageUrl: string | null | undefined): boolean {
   margin-bottom: 18px;
 }
 
-.info-row2 {
+.info-row2,
+.info-row-single {
   display: grid;
   grid-template-columns: 1fr;
   margin-bottom: 18px;
@@ -765,7 +1157,7 @@ function isImageGalery(imageUrl: string | null | undefined): boolean {
   --border-width: 1px;
   --border-style: solid;
 
-  /* >>> color de la barra de enfoque (la que ahora ves azul) <<< */
+  /* color de la barra de enfoque */
   --highlight-color-focused: #16a34a;
   --highlight-color: #16a34a;
   --highlight-color-valid: #16a34a;
@@ -774,6 +1166,14 @@ function isImageGalery(imageUrl: string | null | undefined): boolean {
   font-size: 14px;
 }
 
+.info-input-readonly {
+  --background: #f3f4f6;
+}
+
+.info-helper {
+  font-size: 11px;
+  color: #6b7280;
+}
 
 /* Botones inferiores */
 .info-actions {
