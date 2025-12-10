@@ -1,8 +1,8 @@
 <!-- PurcharsePage.vue (vista de compra) -->
 <template>
   <ion-page>
-    <InventoryAndPurcharseHeader :title="`Compra de ${props.name}`" backRouteName="home" />
-
+    <InventoryAndPurcharseHeader :title="`Compra de ${props.name}`"
+      :backHref="`/tabs/${props.code}/${props.name}/inventory`" />
     <ion-content class="ion-padding pantry-content">
       <!-- Acciones START-->
       <div class="actions">
