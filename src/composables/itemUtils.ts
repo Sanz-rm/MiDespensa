@@ -24,3 +24,9 @@ export function getOptimizedUrl(url: string | null | undefined): string {
   return url.replace('/upload/', '/upload/f_auto,q_auto/');
 }
 
+// Función para determinar si la imagen es de galería
+export function isImageGalery(imageUrl: string | null | undefined): boolean {
+  if (!imageUrl) return false
+  return imageUrl.includes('productos_galeria')
+}
+

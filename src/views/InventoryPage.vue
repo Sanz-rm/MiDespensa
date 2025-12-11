@@ -267,8 +267,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showToast } from '@/composables/showToast'
-import { getMeasurementUnit } from '@/composables/itemUtils'
-import { getOptimizedUrl } from '@/composables/itemUtils'
+import { getMeasurementUnit, getOptimizedUrl, isImageGalery } from '@/composables/itemUtils'
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
 import ModalAddProduct from '@/components/layout/ModalAddProduct.vue'
 import InventoryAndPurcharseHeader from '@/components/ui/InventoryAndPurcharseHeader.vue'
@@ -724,12 +723,6 @@ async function getPantryRefByCodeGeneric(code: string) {
   const snap = await getDocs(q)
   if (snap.empty) throw new Error(`No existe la despensa con code ${code}`)
   return snap.docs[0].ref
-}
-
-// Función para determinar si la imagen es de galería
-function isImageGalery(imageUrl: string | null | undefined): boolean {
-  if (!imageUrl) return false
-  return imageUrl.includes('productos_galeria')
 }
 
 // ----------- MODAL MOVER PRODUCTO -----------
