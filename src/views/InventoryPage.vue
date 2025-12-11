@@ -10,7 +10,7 @@
       <!-- Buscador END -->
 
       <!-- Loading START -->
-      <div v-if="loading" class="loading-box">
+      <div v-if="loading || savingItem" class="loading-box">
         <ion-spinner name="crescent" style="transform:scale(2);" />
       </div>
       <!-- Loading END -->
@@ -281,6 +281,7 @@ console.log('Codigo y nombre de la despensa:', props.code, props.name)
 
 const loading = ref<boolean>(false)
 const search = ref<string>('')
+  const savingItem = ref<boolean>(false) // loader global al guardar producto
 
 let stop: Unsubscribe | null = null
 const items = ref<Item[]>([])
@@ -512,6 +513,7 @@ function closeInfoModal() {
   editQuantity.value = null
   editUnit.value = 'Unidad'
   editLocation.value = null
+  savingItem.value = false
 }
 
 async function getLocations(locationId: string | null) {
@@ -543,11 +545,14 @@ async function getLocations(locationId: string | null) {
 }
 
 // Guarda los cambios del producto y sube la imagen solo si el usuario seleccionó una nueva antes de guardar
+// Sustituye SOLO la función saveItemInfo por esta
 async function saveItemInfo() {
   if (!selectedItem.value || editQuantity.value == null) {
     await showToast('Rellena la cantidad antes de guardar.', 'danger')
     return
   }
+
+  savingItem.value = true
 
   try {
     if (pendingImageFile.value && pendingImagePublicId.value) {
@@ -576,9 +581,13 @@ async function saveItemInfo() {
     await showToast('Producto actualizado.', 'success')
     closeInfoModal()
   } catch (err) {
+    console.error('Error al actualizar producto:', err)
     await showToast('No se pudo actualizar el producto.', 'danger')
+  } finally {
+    savingItem.value = false
   }
 }
+
 
 // Obtiene una imagen de la cámara/galería y la deja solo en memoria como preview hasta que el usuario pulse Guardar
 async function pickImage(item: Item) {
