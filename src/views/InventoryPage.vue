@@ -112,7 +112,7 @@
                     </ion-button>
 
                     <ion-input type="number" inputmode="numeric" v-model.number="editQuantity"
-                      class="info-input qty-input qty-inline-input" />
+                      class="info-input-exception  qty-input qty-inline-input" />
 
                     <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-plus qty-inline-btn"
                       @click="changeEditQuantity(1)">
@@ -940,8 +940,8 @@ async function confirmMove() {
 
 /* Botones +/- genéricos */
 .qty-btn {
-  --padding: 4px;
-  font-size: 16px;
+  --padding: 2px;
+  font-size: 12px;
   margin: 2% 1%;
 }
 
@@ -979,7 +979,7 @@ async function confirmMove() {
   background: #f9fafb;
   border-radius: 10px;
   border: 1px solid #e5e7eb;
-  padding: 0 4px;
+  padding: 0 10px;
 }
 
 /* Input dentro del contenedor: sin borde propio, centrado */
@@ -1290,6 +1290,14 @@ async function confirmMove() {
   font-size: 13px;
   font-weight: 600;
   color: #374151;
+}
+.info-input-exception {
+  --background: #f9fafb;
+  --padding-start: 15px;
+  --padding-top: 6px;
+  --padding-bottom: 6px;
+  border-radius: 10px;
+  font-size: 14px;
 }
 
 .info-input,
