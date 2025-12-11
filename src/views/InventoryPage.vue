@@ -144,7 +144,7 @@
 
               <div class="info-actions">
                 <ion-button expand="block" fill="outline" class="btn-info-cancel" @click="closeInfoModal">
-                  ✕ Cancelar
+                  <span class="material-icons">close</span> Cancelar
                 </ion-button>
                 <ion-button expand="block" class="btn-info-save" @click="saveItemInfo">
                   Guardar
