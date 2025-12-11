@@ -30,7 +30,7 @@
             <ion-icon :icon="trashOutline" />
           </ion-button>
 
-          <img :src="`${item.imageUrl}`" :alt="item.name" :class="{ 'img-galery': isImageGalery(item.imageUrl) }" />
+          <img :src="getOptimizedUrl(item.imageUrl)" :alt="item.name" :class="{ 'img-galery': isImageGalery(item.imageUrl) }" />
           <p class="item-name">{{ item.name }}</p>
 
           <!-- Controles cantidad en card -->
@@ -268,6 +268,7 @@ import {
 import { db } from '@/firebase'
 import { showToast } from '@/composables/showToast'
 import { getMeasurementUnit } from '@/composables/itemUtils'
+import { getOptimizedUrl } from '@/composables/itemUtils'
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
 import ModalAddProduct from '@/components/layout/ModalAddProduct.vue'
 import InventoryAndPurcharseHeader from '@/components/ui/InventoryAndPurcharseHeader.vue'
@@ -919,7 +920,7 @@ async function confirmMove() {
   /*RESERVAMOS EL ALTO DE 2 LINEAS COMO MÁXIMO */
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  --webkit-line-clamp: 2;
   overflow: hidden;
   min-height: calc(0.8em * 2);
 }

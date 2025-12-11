@@ -11,3 +11,16 @@ export function getMeasurementUnit(unit: string, quantity: number): string {
   const plural: Record<string, string> = { Gramo: "gramos", Kilogramo: "kilogramos",  Mililitro: "mililitros", Litro: "litros", Unidad: "unidades" };
   return quantity === 1 ? singular[unit] : plural[unit];
 }
+
+// Optimiza la URL de una imagen para carga automática y calidad automática
+export function getOptimizedUrl(url: string | null | undefined): string {
+  if (!url) return ''; // o una imagen placeholder
+
+  // Si ya tiene transformaciones, no las duplicamos
+  if (url.includes('/upload/f_auto,q_auto')) {
+    return url;
+  }
+
+  return url.replace('/upload/', '/upload/f_auto,q_auto/');
+}
+
