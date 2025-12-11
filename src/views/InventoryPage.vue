@@ -1,9 +1,6 @@
 <template>
   <ion-page>
-    <InventoryAndPurcharseHeader
-      :title="`Inventario de ${props.name}`"
-      backRouteName="home"
-    />
+    <InventoryAndPurcharseHeader :title="`Inventario de ${props.name}`" backRouteName="home" />
 
     <ion-content class="ion-padding pantry-content">
       <!-- Buscador START -->
@@ -20,48 +17,43 @@
 
       <!-- Productos de la despensa seleccionada START -->
       <div v-if="!loading && itemsFiltered.length" class="items-grid">
-        <div
-          v-for="item in itemsFiltered"
-          :key="item.id"
-          class="item-card"
-          @click="openInfoModal(item)"
-        >
+        <div v-for="item in itemsFiltered" :key="item.id" class="item-card" @click="openInfoModal(item)">
           <!-- Botón mover -->
-          <ion-button
-            class="move-btn"
-            fill="clear"
-            size="small"
-            aria-label="Mover producto"
-            @click.stop="openMoveModal(item)"
-          >
+          <ion-button class="move-btn" fill="clear" size="small" aria-label="Mover producto"
+            @click.stop="openMoveModal(item)">
             <ion-icon :icon="swapHorizontalOutline" />
           </ion-button>
 
           <!-- Botón eliminar -->
-          <ion-button
-            class="delete-btn"
-            fill="clear"
-            size="small"
-            aria-label="Eliminar producto"
-            @click.stop="deleteItemFromPantry(item)"
-          >
+          <ion-button class="delete-btn" fill="clear" size="small" aria-label="Eliminar producto"
+            @click.stop="deleteItemFromPantry(item)">
             <ion-icon :icon="trashOutline" />
           </ion-button>
 
-          <img
-            :src="`${item.imageUrl}`"
-            :alt="item.name"
-            :class="{ 'img-galery': isImageGalery(item.imageUrl) }"
-          />
+          <img :src="getOptimizedUrl(item.imageUrl)" :alt="item.name"
+            :class="{ 'img-galery': isImageGalery(item.imageUrl) }" />
           <p class="item-name">{{ item.name }}</p>
-          <p class="item-units">{{ item.quantity }} {{ getMeasurementUnit(item.unit, item.quantity) }}</p>
+
+          <!-- Controles cantidad en card -->
+          <div class="item-units">
+            <ion-button fill="clear" size="small" class="qty-btn qty-btn-card"
+              @click.stop="adjustItemQuantity(item, -1)">
+              −
+            </ion-button>
+
+            <span class="item-units-value">
+              {{ item.quantity }} {{ getMeasurementUnit(item.unit, item.quantity) }}
+            </span>
+
+            <ion-button fill="clear" size="small" class="qty-btn qty-btn-card"
+              @click.stop="adjustItemQuantity(item, 1)">
+              +
+            </ion-button>
+          </div>
 
           <div class="card-actions">
-            <ion-button
-              size="small"
-              :class="item.inPurchase ? 'btn-remove' : 'btn-add'"
-              @click.stop="togglePurchaseState(item)"
-            >
+            <ion-button size="small" :class="item.inPurchase ? 'btn-remove' : 'btn-add'"
+              @click.stop="togglePurchaseState(item)">
               <ion-icon :icon="cartOutline" slot="start" />
               {{ item.inPurchase ? 'Quitar de compra' : 'Añadir a compra' }}
             </ion-button>
@@ -88,7 +80,7 @@
         <p class="empty-title">No hay productos todavía</p>
         <p class="empty-subtitle">Crea o añade tu primer producto</p>
       </div>
-      <!-- Sin productos de la despensa seleccionada END -->  
+      <!-- Sin productos de la despensa seleccionada END -->
 
       <!-- Botón flotante START -->
       <ModalAddProduct :pantry-code="props.code" :items="items" view="inventory" />
@@ -102,29 +94,32 @@
 
             <div class="info-product-block">
               <div class="info-product-image-wrapper" @click="pickImage(selectedItem)">
-                <img
-                  :src="selectedItem.imageUrl"
-                  :alt="selectedItem.name"
-                />
+                <img :src="selectedItem.imageUrl" :alt="selectedItem.name" />
                 <span class="material-icons info-product-icon">
                   add_photo_alternate
                 </span>
               </div>
               <span class="info-product-name">{{ selectedItem.name }}</span>
             </div>
-
             <div class="info-form">
               <div class="info-row">
                 <div class="info-field">
                   <label class="info-label">Cantidad</label>
-                  <ion-input
-                    type="number"
-                    inputmode="numeric"
-                    v-model.number="editQuantity"
-                    class="info-input"
-                  />
-                </div>
+                  <div class="qty-inline">
+                    <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-minus qty-inline-btn"
+                      @click="changeEditQuantity(-1)">
+                      −
+                    </ion-button>
 
+                    <ion-input type="number" inputmode="numeric" v-model.number="editQuantity"
+                      class="info-input qty-input qty-inline-input" />
+
+                    <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-plus qty-inline-btn"
+                      @click="changeEditQuantity(1)">
+                      +
+                    </ion-button>
+                  </div>
+                </div>
                 <div class="info-field">
                   <label class="info-label">Unidad</label>
                   <ion-select interface="popover" v-model="editUnit" class="info-select">
@@ -138,12 +133,8 @@
               <div class="info-row2">
                 <div class="info-field">
                   <label class="info-label">Localización</label>
-                  <ion-select
-                    interface="popover"
-                    v-model="editLocation"
-                    class="info-select"
-                    placeholder="Selecciona una localización"
-                  >
+                  <ion-select interface="popover" v-model="editLocation" class="info-select"
+                    placeholder="Selecciona una localización">
                     <ion-select-option v-for="l in locations" :key="l.id" :value="l">
                       {{ l.name }}
                     </ion-select-option>
@@ -152,19 +143,10 @@
               </div>
 
               <div class="info-actions">
-                <ion-button
-                  expand="block"
-                  fill="outline"
-                  class="btn-info-cancel"
-                  @click="closeInfoModal"
-                >
+                <ion-button expand="block" fill="outline" class="btn-info-cancel" @click="closeInfoModal">
                   ✕ Cancelar
                 </ion-button>
-                <ion-button
-                  expand="block"
-                  class="btn-info-save"
-                  @click="saveItemInfo"
-                >
+                <ion-button expand="block" class="btn-info-save" @click="saveItemInfo">
                   Guardar
                 </ion-button>
               </div>
@@ -182,10 +164,7 @@
 
             <div class="info-product-block">
               <div class="info-product-image-wrapper">
-                <img
-                  :src="moveItem.imageUrl"
-                  :alt="moveItem.name"
-                />
+                <img :src="moveItem.imageUrl" :alt="moveItem.name" />
               </div>
               <span class="info-product-name">{{ moveItem.name }}</span>
             </div>
@@ -194,17 +173,9 @@
               <div class="info-row-single">
                 <div class="info-field">
                   <label class="info-label">Despensa destino</label>
-                  <ion-select
-                    interface="popover"
-                    v-model="selectedPantryCode"
-                    class="info-select"
-                    placeholder="Selecciona una despensa"
-                  >
-                    <ion-select-option
-                      v-for="p in destinationPantries"
-                      :key="p.id"
-                      :value="p.code"
-                    >
+                  <ion-select interface="popover" v-model="selectedPantryCode" class="info-select"
+                    placeholder="Selecciona una despensa">
+                    <ion-select-option v-for="p in destinationPantries" :key="p.id" :value="p.code">
                       {{ p.name }} ({{ p.code }})
                     </ion-select-option>
                   </ion-select>
@@ -214,12 +185,21 @@
               <div class="info-row">
                 <div class="info-field">
                   <label class="info-label">Cantidad a mover</label>
-                  <ion-input
-                    type="number"
-                    inputmode="numeric"
-                    v-model.number="moveQuantity"
-                    class="info-input"
-                  />
+                  <div class="qty-inline">
+                    <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-minus qty-inline-btn"
+                      @click="changeMoveQuantity(-1)">
+                      −
+                    </ion-button>
+
+                    <ion-input type="number" inputmode="numeric" v-model.number="moveQuantity"
+                      class="info-input qty-input qty-inline-input" />
+
+                    <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-plus qty-inline-btn"
+                      @click="changeMoveQuantity(1)">
+                      +
+                    </ion-button>
+                  </div>
+
                   <small class="info-helper">
                     Mínimo 1, máximo {{ moveMaxQuantity }}
                   </small>
@@ -227,28 +207,15 @@
 
                 <div class="info-field">
                   <label class="info-label">Unidad</label>
-                  <ion-input
-                    :value="moveItem.unit"
-                    class="info-input info-input-readonly"
-                    readonly
-                  />
+                  <ion-input :value="moveItem.unit" class="info-input info-input-readonly" readonly />
                 </div>
               </div>
 
               <div class="info-actions">
-                <ion-button
-                  expand="block"
-                  fill="outline"
-                  class="btn-info-cancel"
-                  @click="closeMoveModal"
-                >
+                <ion-button expand="block" fill="outline" class="btn-info-cancel" @click="closeMoveModal">
                   ✕ Cancelar
                 </ion-button>
-                <ion-button
-                  expand="block"
-                  class="btn-info-save"
-                  @click="confirmMove"
-                >
+                <ion-button expand="block" class="btn-info-save" @click="confirmMove">
                   Mover
                 </ion-button>
               </div>
@@ -304,7 +271,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showToast } from '@/composables/showToast'
-import { getMeasurementUnit } from '@/composables/itemUtils'
+import { getMeasurementUnit, getOptimizedUrl, isImageGalery } from '@/composables/itemUtils'
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
 import ModalAddProduct from '@/components/layout/ModalAddProduct.vue'
 import InventoryAndPurcharseHeader from '@/components/ui/InventoryAndPurcharseHeader.vue'
@@ -364,7 +331,14 @@ onBeforeUnmount(() => stop?.())
 const isInfoOpen = ref(false)
 const selectedItem = ref<Item | null>(null)
 
-// Campos editables del modal
+// Estado del modal de mover
+const isMoveOpen = ref(false)
+const moveItem = ref<Item | null>(null)
+const selectedPantryCode = ref<string>('')
+const moveQuantity = ref<number | null>(null)
+const moveMaxQuantity = ref<number>(0)
+
+// Campos editables del modal de info
 const editQuantity = ref<number | null>(null)
 const editUnit = ref<string>()
 const editLocation = ref<Location | null>(null)
@@ -420,6 +394,106 @@ async function loadPantries() {
     console.error('Error al cargar despensas:', err)
     await showToast('Error al cargar tus despensas.', 'danger')
   }
+}
+
+// ----------- HELPERS DE CANTIDAD -----------
+function getStepForUnit(unitRaw: string | undefined | null): number {
+  const u = (unitRaw || '').toLowerCase()
+
+  if (u === 'gramo' || u === 'gramos' || u === 'mililitro' || u === 'mililitros') {
+    return 50
+  }
+
+  if (
+    u === 'kilogramo' ||
+    u === 'kilogramos' ||
+    u === 'kg' ||
+    u === 'litro' ||
+    u === 'litros' ||
+    u === 'unidad' ||
+    u === 'unidades'
+  ) {
+    return 1
+  }
+
+  // Por defecto 1 si algo raro
+  return 1
+}
+
+// Ajusta la cantidad aplicando el paso y, si es step 50, busca el múltiplo entero 50/100 la primera vez
+function getAdjustedQuantity(
+  current: number,
+  step: number,
+  deltaSign: 1 | -1,
+  min = 0,
+  max = Number.POSITIVE_INFINITY
+): number {
+  let target = current
+
+  if (step === 50) {
+    if (deltaSign === 1) {
+      if (current < step) {
+        target = step
+      } else if (current % step === 0) {
+        target = current + step
+      } else {
+        target = Math.floor(current / step) * step + step
+      }
+    } else {
+      if (current <= 0) {
+        target = 0
+      } else if (current % step === 0) {
+        target = current - step
+      } else {
+        target = Math.floor(current / step) * step
+      }
+    }
+  } else {
+    target = current + deltaSign * step
+  }
+
+  if (target < min) target = min
+  if (target > max) target = max
+
+  return target
+}
+
+// Ajuste de cantidad directo en la card (actualiza Firestore)
+async function adjustItemQuantity(item: Item, deltaSign: 1 | -1) {
+  const step = getStepForUnit(item.unit)
+  const newQty = getAdjustedQuantity(item.quantity, step, deltaSign, 0)
+
+  try {
+    const refItem = doc(db, 'items', item.id)
+    await updateDoc(refItem, { quantity: newQty })
+    item.quantity = newQty
+  } catch (err) {
+    console.error('Error al actualizar cantidad:', err)
+    await showToast('No se pudo actualizar la cantidad.', 'danger')
+  }
+}
+
+// Para el modal de editar producto (solo cambia el campo local, se guarda en saveItemInfo)
+function changeEditQuantity(deltaSign: 1 | -1) {
+  if (!selectedItem.value) return
+
+  const unitToUse = editUnit.value || selectedItem.value.unit
+  const step = getStepForUnit(unitToUse)
+  const current = editQuantity.value ?? 0
+  const newQty = getAdjustedQuantity(current, step, deltaSign, 0)
+
+  editQuantity.value = newQty
+}
+
+// Para el modal de mover producto (respeta mínimo 1 y máximo moveMaxQuantity)
+function changeMoveQuantity(deltaSign: 1 | -1) {
+  if (!moveItem.value) return
+
+  const step = getStepForUnit(moveItem.value.unit)
+  const current = moveQuantity.value ?? 1
+  const newQty = getAdjustedQuantity(current, step, deltaSign, 1, moveMaxQuantity.value)
+
+  moveQuantity.value = newQty
 }
 
 // ----------- MODAL INFO PRODUCTO -----------
@@ -655,19 +729,7 @@ async function getPantryRefByCodeGeneric(code: string) {
   return snap.docs[0].ref
 }
 
-// Función para determinar si la imagen es de galería
-function isImageGalery(imageUrl: string | null | undefined): boolean {
-  if (!imageUrl) return false
-  return imageUrl.includes('productos_galeria')
-}
-
 // ----------- MODAL MOVER PRODUCTO -----------
-const isMoveOpen = ref(false)
-const moveItem = ref<Item | null>(null)
-const selectedPantryCode = ref<string>('')
-const moveQuantity = ref<number | null>(null)
-const moveMaxQuantity = ref<number>(0)
-
 function openMoveModal(item: Item) {
   moveItem.value = item
   moveMaxQuantity.value = item.quantity
@@ -855,15 +917,115 @@ async function confirmMove() {
   /*RESERVAMOS EL ALTO DE 2 LINEAS COMO MÁXIMO */
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  --webkit-line-clamp: 2;
   overflow: hidden;
   min-height: calc(0.8em * 2);
 }
 
 .item-units {
-  margin: 4px 0 5px;
+  margin: 3px 0 5px;
   font-size: 12px;
   color: #6b7280;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.item-units-value {
+  min-width: 70px;
+  text-align: center;
+}
+
+/* Botones +/- genéricos */
+.qty-btn {
+  --padding: 4px;
+  font-size: 16px;
+  margin: 2% 1%;
+}
+
+/* Card: borde gris ligero, circular en +/- */
+.qty-btn-card {
+  --border-radius: 999px;
+  --border-width: 1px;
+  --border-style: solid;
+  --border-color: #d1d5db;
+  --background: #ffffff;
+  width: 26px;
+  height: 26px;
+}
+
+.qty-btn-card::part(native) {
+  border-radius: 999px;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #111827;
+}
+
+/* Cantidad en modales: input con -  cantidad  + inline */
+.qty-input {
+  flex: 1;
+}
+
+/* Contenedor que simula el “input completo” | -  5  + | */
+.qty-inline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f9fafb;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  padding: 0 4px;
+}
+
+/* Input dentro del contenedor: sin borde propio, centrado */
+.qty-inline-input {
+  --background: transparent;
+  --border-width: 0;
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 6px;
+  --padding-bottom: 6px;
+  text-align: center;
+  width: 100%;
+}
+
+/* Botones +/- dentro del “input” */
+.qty-inline-btn {
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  margin: 0;
+}
+
+/* Botones +/- modales: tamaño redondo y colores */
+.qty-btn-modal::part(native) {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+
+.qty-btn-plus {
+  --background: #16a34a;
+  --background-hover: #15803d;
+  --background-activated: #166534;
+  --color: #ffffff;
+}
+
+.qty-btn-minus {
+  --background: #ef4444;
+  --background-hover: #dc2626;
+  --background-activated: #b91c1c;
+  --color: #ffffff;
 }
 
 /* Botón mover */
@@ -917,7 +1079,6 @@ async function confirmMove() {
   z-index: 2;
 }
 
-/* El círculo REAL debe aplicarse al elemento interno */
 .delete-btn::part(native) {
   border-radius: 50%;
   width: 32px;
@@ -1029,7 +1190,7 @@ async function confirmMove() {
   font-weight: 500;
 }
 
-/* MODAL INFO PRODUCTO */
+/* MODAL INFO PRODUCTO / MOVER PRODUCTO */
 .product-info-modal::part(content),
 .move-product-modal::part(content) {
   position: absolute;
@@ -1173,6 +1334,44 @@ async function confirmMove() {
 .info-helper {
   font-size: 11px;
   color: #6b7280;
+  margin-top: 4px;
+}
+
+/* Cantidad en modales */
+.qty-input {
+  flex: 1;
+}
+
+/* Fila de botones +/- en modales, debajo del input y centrados */
+.qty-buttons-row {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Botones +/- modales: estilo tipo mover, + verde, - rojo */
+.qty-btn-modal::part(native) {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+
+.qty-btn-plus {
+  --background: #16a34a;
+  --background-hover: #15803d;
+  --background-activated: #166534;
+  --color: #ffffff;
+}
+
+.qty-btn-minus {
+  --background: #ef4444;
+  --background-hover: #dc2626;
+  --background-activated: #b91c1c;
+  --color: #ffffff;
 }
 
 /* Botones inferiores */

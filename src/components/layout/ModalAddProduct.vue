@@ -53,7 +53,7 @@
                     <div v-if="comunItemsFiltered && comunItemsFiltered.length">
                         <div class="suggested-grid">
                             <div v-for="item in comunItemsFiltered" :key="item.id" class="suggested-card">
-                                <img :src="item.imageUrl" :alt="item.name" class="suggested-img" />
+                                <img :src="getOptimizedUrl(item.imageUrl)" :alt="item.name" class="suggested-img" />
                                 <p class="suggested-name">{{ item.name }}</p>
 
                                 <!-- Botón para añadir al inventario -->
@@ -82,35 +82,20 @@
                 <template v-else>
                     <!-- Filtros radio START -->
                     <div class="filter-radios mydict">
-                    <div>
-                        <label>
-                        <input
-                            type="radio"
-                            name="filterMode"
-                            value="all"
-                            v-model="filterMode"
-                        />
-                        <span>Todos</span>
-                        </label>
-                        <label>
-                        <input
-                            type="radio"
-                            name="filterMode"
-                            value="common"
-                            v-model="filterMode"
-                        />
-                        <span>Comunes</span>
-                        </label>
-                        <label>
-                        <input
-                            type="radio"
-                            name="filterMode"
-                            value="inventory"
-                            v-model="filterMode"
-                        />
-                        <span>Inventario</span>
-                        </label>
-                    </div>
+                        <div>
+                            <label>
+                                <input type="radio" name="filterMode" value="all" v-model="filterMode" />
+                                <span>Todos</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="filterMode" value="common" v-model="filterMode" />
+                                <span>Comunes</span>
+                            </label>
+                            <label>
+                                <input type="radio" name="filterMode" value="inventory" v-model="filterMode" />
+                                <span>Inventario</span>
+                            </label>
+                        </div>
                     </div>
                     <!-- Filtros radio END -->
 
@@ -118,7 +103,7 @@
                     <!-- Lista combinada START-->
                     <div v-if="combinedItems && combinedItems.length" class="suggested-grid">
                         <div v-for="item in combinedItems" :key="item.kind + '-' + item.id" class="suggested-card">
-                            <img :src="item.imageUrl" :alt="item.name" class="suggested-img" />
+                            <img :src="getOptimizedUrl(item.imageUrl)" :alt="item.name" class="suggested-img" :class="{ 'img-galery': isImageGalery(item.imageUrl) }"/>
                             <p class="suggested-name">{{ item.name }}</p>
 
                             <!-- Botón según tipo -->
@@ -131,7 +116,7 @@
                             </ion-button>
                         </div>
                     </div>
-                     <!-- Lista combinada END-->
+                    <!-- Lista combinada END-->
 
                     <!-- Sin productos START -->
                     <div v-else class="empty">
@@ -184,7 +169,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showToast } from '@/composables/showToast'
-import { getImageFirstLetter } from '@/composables/itemUtils'
+import { getImageFirstLetter, getOptimizedUrl, isImageGalery } from '@/composables/itemUtils'
 import type { Item } from '@/models/item'
 import type { ComunItem } from '@/models/comunItem'
 
@@ -521,6 +506,19 @@ watch(
     background: #fff;
 }
 
+/* SOLO CUANDO LA FOTO VENGA DE GALERIA */
+.suggested-card .img-galery {
+    width: 70%;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 8px;
+}
+
+.suggested-card img.img-galery {
+    border-radius: 5%;
+    object-fit: cover;
+}
+
 .suggested-img {
     width: 60px;
     height: 60px;
@@ -556,48 +554,48 @@ watch(
 
 
 .empty {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  text-align: center;
-  padding: 24px 16px;
-  color: #6b7280;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 24px 16px;
+    color: #6b7280;
 }
 
 .empty-icon {
-  width: 120px;
-  height: 120px;
-  border-radius: 999px;
-  display: grid;
-  place-items: center;
-  margin-bottom: 2px;
+    width: 120px;
+    height: 120px;
+    border-radius: 999px;
+    display: grid;
+    place-items: center;
+    margin-bottom: 2px;
 }
 
 .empty-icon .material-icons {
-  font-size: 78px;
-  color: #374151;
+    font-size: 78px;
+    color: #374151;
 }
 
 .empty-title {
-  margin: 0 0 4px;
-  font-weight: 700;
-  font-size: 18px;
-  color: #111827;
+    margin: 0 0 4px;
+    font-weight: 700;
+    font-size: 18px;
+    color: #111827;
 }
 
 .empty-subtitle {
-  margin: 0;
-  font-size: 14px;
-  color: #3f4146;
-  font-weight: 500;
+    margin: 0;
+    font-size: 14px;
+    color: #3f4146;
+    font-weight: 500;
 }
 
 .loading-box {
-  display: grid;
-  place-content: center;
-  min-height: 40vh;
+    display: grid;
+    place-content: center;
+    min-height: 40vh;
 }
 
 
@@ -616,61 +614,62 @@ watch(
 /* FILTRO RADIO BUTTONS START */
 /* Contenedor del bloque de filtros */
 .filter-radios {
-  margin: 16px 4px 22px;
+    margin: 16px 4px 22px;
 }
 
 /* Layout del grupo de radios */
-.filter-radios.mydict > div {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
+.filter-radios.mydict>div {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .filter-radios.mydict input[type="radio"] {
-  clip: rect(0 0 0 0);
-  clip-path: inset(100%);
-  height: 1px;
-  overflow: hidden;
-  position: absolute;
-  white-space: nowrap;
-  width: 1px;
+    clip: rect(0 0 0 0);
+    clip-path: inset(100%);
+    height: 1px;
+    overflow: hidden;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
 }
 
-.filter-radios.mydict input[type="radio"]:focus + span {
-  outline: 0;
-  border-color: #2ea15d;
-  box-shadow: 0 0 0 4px #bcdbc9;
+.filter-radios.mydict input[type="radio"]:focus+span {
+    outline: 0;
+    border-color: #2ea15d;
+    box-shadow: 0 0 0 4px #bcdbc9;
 }
 
-.filter-radios.mydict input[type="radio"]:checked + span {
-  box-shadow: 0 0 0 0.0625em #2ea15d;
-  background-color: #cefde2af;
-  z-index: 1;
-  color: #2ea15d;
+.filter-radios.mydict input[type="radio"]:checked+span {
+    box-shadow: 0 0 0 0.0625em #2ea15d;
+    background-color: #cefde2af;
+    z-index: 1;
+    color: #2ea15d;
 }
 
 .filter-radios.mydict label span {
-  display: block;
-  cursor: pointer;
-  background-color: #fff;
-  padding: 0.3em 0.8em;
-  position: relative;
-  margin-left: 0.0625em;
-  box-shadow: 0 0 0 0.0625em #b5c9af;
-  letter-spacing: 0.05em;
-  color: #7caa8f;
-  text-align: center;
-  font-size: 17px;
-  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+    display: block;
+    cursor: pointer;
+    background-color: #fff;
+    padding: 0.3em 0.8em;
+    position: relative;
+    margin-left: 0.0625em;
+    box-shadow: 0 0 0 0.0625em #b5c9af;
+    letter-spacing: 0.05em;
+    color: #7caa8f;
+    text-align: center;
+    font-size: 17px;
+    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .filter-radios.mydict label:first-child span {
-  border-radius: 0.375em 0 0 0.375em;
+    border-radius: 0.375em 0 0 0.375em;
 }
 
 .filter-radios.mydict label:last-child span {
-  border-radius: 0 0.375em 0.375em 0;
+    border-radius: 0 0.375em 0.375em 0;
 }
+
 /* FILTRO RADIO BUTTONS END */
 
 

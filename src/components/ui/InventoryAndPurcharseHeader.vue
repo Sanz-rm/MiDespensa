@@ -3,7 +3,7 @@
   <ion-header class="rounded-header">
     <ion-toolbar class="back-toolbar">
       <ion-buttons slot="start">
-        <ion-button :routerLink="backRoute" routerDirection="root" fill="clear">
+        <ion-button :routerLink="backHref" routerDirection="root" fill="clear">
           <ion-icon :icon="arrowBackOutline" style="font-size:28px;" />
         </ion-button>
       </ion-buttons>
@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
+import { computed } from 'vue'
 import {
   IonHeader,
   IonToolbar,
@@ -21,15 +21,16 @@ import {
   IonButton,
   IonIcon,
   IonTitle,
-} from '@ionic/vue';
-import { arrowBackOutline } from 'ionicons/icons';
+} from '@ionic/vue'
+import { arrowBackOutline } from 'ionicons/icons'
 
 const props = defineProps<{
-  title: string;          // Ej: `Inventario de ${name}` o `Compra de ${name}`
-  backRouteName?: string; // Por defecto 'home'
-}>();
+  title: string
+  backHref?: string    // URL completa a la que quieres ir
+}>()
 
-const backRoute = computed(() => ({ name: props.backRouteName ?? 'home' }));
+// si no pasas nada, por defecto va a /home
+const backHref = computed(() => props.backHref ?? '/home')
 </script>
 
 <style scoped>
