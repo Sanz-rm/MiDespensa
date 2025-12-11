@@ -192,7 +192,7 @@
                     </ion-button>
 
                     <ion-input type="number" inputmode="numeric" v-model.number="moveQuantity"
-                      class="info-input qty-input qty-inline-input" />
+                      class="info-input-exception qty-input qty-inline-input" />
 
                     <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-plus qty-inline-btn"
                       @click="changeMoveQuantity(1)">
@@ -213,7 +213,7 @@
 
               <div class="info-actions">
                 <ion-button expand="block" fill="outline" class="btn-info-cancel" @click="closeMoveModal">
-                  ✕ Cancelar
+                  <span class="material-icons">close</span> Cancelar
                 </ion-button>
                 <ion-button expand="block" class="btn-info-save" @click="confirmMove">
                   Mover
@@ -968,6 +968,8 @@ async function confirmMove() {
   font-size: 14px;
   color: #e2e2e9;
 }
+
+
 
 /* Card: borde gris ligero, circular en +/- */
 .qty-btn-card {
