@@ -30,7 +30,8 @@
             <ion-icon :icon="trashOutline" />
           </ion-button>
 
-          <img :src="getOptimizedUrl(item.imageUrl)" :alt="item.name" :class="{ 'img-galery': isImageGalery(item.imageUrl) }" />
+          <img :src="getOptimizedUrl(item.imageUrl)" :alt="item.name"
+            :class="{ 'img-galery': isImageGalery(item.imageUrl) }" />
           <p class="item-name">{{ item.name }}</p>
 
           <!-- Controles cantidad en card -->
@@ -100,25 +101,25 @@
               </div>
               <span class="info-product-name">{{ selectedItem.name }}</span>
             </div>
-
             <div class="info-form">
               <div class="info-row">
                 <div class="info-field">
                   <label class="info-label">Cantidad</label>
-                  <ion-input type="number" inputmode="numeric" v-model.number="editQuantity"
-                    class="info-input qty-input" />
-                  <div class="qty-buttons-row">
-                    <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-minus"
+                  <div class="qty-inline">
+                    <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-minus qty-inline-btn"
                       @click="changeEditQuantity(-1)">
                       −
                     </ion-button>
-                    <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-plus"
+
+                    <ion-input type="number" inputmode="numeric" v-model.number="editQuantity"
+                      class="info-input qty-input qty-inline-input" />
+
+                    <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-plus qty-inline-btn"
                       @click="changeEditQuantity(1)">
                       +
                     </ion-button>
                   </div>
                 </div>
-
                 <div class="info-field">
                   <label class="info-label">Unidad</label>
                   <ion-select interface="popover" v-model="editUnit" class="info-select">
@@ -184,21 +185,24 @@
               <div class="info-row">
                 <div class="info-field">
                   <label class="info-label">Cantidad a mover</label>
-                  <ion-input type="number" inputmode="numeric" v-model.number="moveQuantity"
-                    class="info-input qty-input" />
+                  <div class="qty-inline">
+                    <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-minus qty-inline-btn"
+                      @click="changeMoveQuantity(-1)">
+                      −
+                    </ion-button>
+
+                    <ion-input type="number" inputmode="numeric" v-model.number="moveQuantity"
+                      class="info-input qty-input qty-inline-input" />
+
+                    <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-plus qty-inline-btn"
+                      @click="changeMoveQuantity(1)">
+                      +
+                    </ion-button>
+                  </div>
+
                   <small class="info-helper">
                     Mínimo 1, máximo {{ moveMaxQuantity }}
                   </small>
-                  <div class="qty-buttons-row">
-                    <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-minus"
-                    @click="changeMoveQuantity(-1)">
-                    −
-                  </ion-button>
-                  <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-plus"
-                    @click="changeMoveQuantity(1)">
-                    +
-                  </ion-button>
-                  </div>
                 </div>
 
                 <div class="info-field">
@@ -939,7 +943,6 @@ async function confirmMove() {
   --padding: 4px;
   font-size: 16px;
   margin: 2% 1%;
-
 }
 
 /* Card: borde gris ligero, circular en +/- */
@@ -961,6 +964,68 @@ async function confirmMove() {
   align-items: center;
   justify-content: center;
   color: #111827;
+}
+
+/* Cantidad en modales: input con -  cantidad  + inline */
+.qty-input {
+  flex: 1;
+}
+
+/* Contenedor que simula el “input completo” | -  5  + | */
+.qty-inline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f9fafb;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  padding: 0 4px;
+}
+
+/* Input dentro del contenedor: sin borde propio, centrado */
+.qty-inline-input {
+  --background: transparent;
+  --border-width: 0;
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 6px;
+  --padding-bottom: 6px;
+  text-align: center;
+  width: 100%;
+}
+
+/* Botones +/- dentro del “input” */
+.qty-inline-btn {
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  margin: 0;
+}
+
+/* Botones +/- modales: tamaño redondo y colores */
+.qty-btn-modal::part(native) {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+
+.qty-btn-plus {
+  --background: #16a34a;
+  --background-hover: #15803d;
+  --background-activated: #166534;
+  --color: #ffffff;
+}
+
+.qty-btn-minus {
+  --background: #ef4444;
+  --background-hover: #dc2626;
+  --background-activated: #b91c1c;
+  --color: #ffffff;
 }
 
 /* Botón mover */

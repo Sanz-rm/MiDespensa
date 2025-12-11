@@ -340,7 +340,7 @@ async function showErrorToast(message: string) {
   width: 50%;
   object-fit: contain;
   display: block;
-  margin: 0 auto 8px;
+  margin: 0 8px;
 }
 
 .item-row img.img-galery {
