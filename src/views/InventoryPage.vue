@@ -38,7 +38,7 @@
           <div class="item-units">
             <ion-button fill="clear" size="small" class="qty-btn qty-btn-card"
               @click.stop="adjustItemQuantity(item, -1)">
-              −
+              <span class="material-icons">remove</span>
             </ion-button>
 
             <span class="item-units-value">
@@ -47,7 +47,7 @@
 
             <ion-button fill="clear" size="small" class="qty-btn qty-btn-card"
               @click.stop="adjustItemQuantity(item, 1)">
-              +
+              <span class="material-icons">add</span>
             </ion-button>
           </div>
 
@@ -108,7 +108,7 @@
                   <div class="qty-inline">
                     <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-minus qty-inline-btn"
                       @click="changeEditQuantity(-1)">
-                      −
+                      <span class="material-icons">remove</span>
                     </ion-button>
 
                     <ion-input type="number" inputmode="numeric" v-model.number="editQuantity"
@@ -116,7 +116,7 @@
 
                     <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-plus qty-inline-btn"
                       @click="changeEditQuantity(1)">
-                      +
+                      <span class="material-icons">add</span>
                     </ion-button>
                   </div>
                 </div>
@@ -188,7 +188,7 @@
                   <div class="qty-inline">
                     <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-minus qty-inline-btn"
                       @click="changeMoveQuantity(-1)">
-                      −
+                      <span class="material-icons">remove</span>
                     </ion-button>
 
                     <ion-input type="number" inputmode="numeric" v-model.number="moveQuantity"
@@ -196,7 +196,7 @@
 
                     <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-plus qty-inline-btn"
                       @click="changeMoveQuantity(1)">
-                      +
+                      <span class="material-icons">add</span>
                     </ion-button>
                   </div>
 
@@ -950,8 +950,23 @@ async function confirmMove() {
 /* Botones +/- genéricos */
 .qty-btn {
   --padding: 2px;
-  font-size: 12px;
+  font-size: 8px;
   margin: 2% 1%;
+}
+
+.item-units .qty-btn .material-icons {
+  font-size: 14px;
+  color: #2e2e30;
+}
+
+.qty-inline .qty-btn .material-icons {
+  font-size: 14px;
+  color: #e2e2e9;
+}
+
+.qty-inline .qty-btn .material-icons {
+  font-size: 14px;
+  color: #e2e2e9;
 }
 
 /* Card: borde gris ligero, circular en +/- */
