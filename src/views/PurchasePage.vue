@@ -24,7 +24,7 @@
       <!-- Productos de la despensa seleccionada (en compra) -->
       <div v-if="!loading && itemsFiltered.length" class="list-cards">
         <div v-for="item in itemsFiltered" :key="item.id" class="item-row">
-          <img class="icon" :src="`${item.imageUrl}`" :alt="item.name" />
+          <img class="icon" :src="getOptimizedUrl(item.imageUrl)" :alt="item.name" :class="{ 'img-galery': isImageGalery(item.imageUrl) }"/>
           <div class="info">
             <p class="name">{{ item.name }}</p>
             <p class="units">Stock: {{ item.quantity }} {{ getMeasurementUnit(item.unit, item.quantity) }}</p>
@@ -92,7 +92,7 @@ import { trashOutline, readerOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
 import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
 import { collection, query, where, updateDoc, doc, getDoc, onSnapshot, type Unsubscribe, writeBatch, orderBy } from 'firebase/firestore'
-import { getImageFirstLetter, getMeasurementUnit } from '@/composables/itemUtils'
+import { getImageFirstLetter, getMeasurementUnit, getOptimizedUrl, isImageGalery } from '@/composables/itemUtils'
 import { db } from '@/firebase'
 import ConfirmPopup from '@/components/ui/ConfirmPopup.vue';
 import ModalAddProduct from '@/components/layout/ModalAddProduct.vue'
@@ -333,6 +333,19 @@ async function showErrorToast(message: string) {
   border: 1px solid #eef2f4;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
   padding: 10px 12px;
+}
+
+/* SOLO CUANDO LA FOTO VENGA DE GALERIA */
+.item-row .img-galery {
+  width: 50%;
+  object-fit: contain;
+  display: block;
+  margin: 0 8px;
+}
+
+.item-row img.img-galery {
+  border-radius: 5%;
+  object-fit: cover;
 }
 
 .icon {
