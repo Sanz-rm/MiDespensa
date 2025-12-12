@@ -73,29 +73,6 @@
           </ion-item>
         </ion-list>
 
-        <!-- Preferencias -->
-        <ion-list inset class="list-card">
-          <ion-item-divider class="section-divider">Preferencias</ion-item-divider>
-
-          <ion-item lines="full" class="setting-item" button @click="comingSoon('Notificaciones')">
-            <ion-icon slot="start" :icon="notificationsOutline" class="item-icon accent" />
-            <ion-label>
-              <h2>Notificaciones</h2>
-              <p>Avisos de caducidad y listas</p>
-            </ion-label>
-            <ion-note slot="end" class="soon">Próximamente</ion-note>
-          </ion-item>
-
-          <ion-item lines="none" class="setting-item" button @click="comingSoon('Copia de seguridad')">
-            <ion-icon slot="start" :icon="cloudUploadOutline" class="item-icon accent" />
-            <ion-label>
-              <h2>Copia de seguridad</h2>
-              <p>Guardar y restaurar datos</p>
-            </ion-label>
-            <ion-note slot="end" class="soon">Próximamente</ion-note>
-          </ion-item>
-        </ion-list>
-
         <!-- Datos -->
         <ion-list inset class="list-card">
           <ion-item-divider class="section-divider">Datos</ion-item-divider>
@@ -169,8 +146,6 @@ import {
 } from '@ionic/vue'
 import {
   colorPaletteOutline,
-  notificationsOutline,
-  cloudUploadOutline,
   informationCircleOutline,
   trashOutline,
   downloadOutline,
@@ -178,55 +153,25 @@ import {
   sparklesOutline,
   moonOutline,
 } from 'ionicons/icons'
-import { toggleTheme } from '@/theme/theme'
-
-const DEFAULT_ACCENT = '#2ea15d'
-const ACCENT_KEY = 'midespensa_accent_color'
+import { initTheme, toggleTheme, accentColor, setAccentColor, resetAccentColor } from '@/theme/theme'
 
 const isDark = ref(false)
-const accentColor = ref(DEFAULT_ACCENT)
-
-function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
-  const h = hex.trim()
-  if (!/^#[0-9A-Fa-f]{6}$/.test(h)) return null
-  const r = parseInt(h.slice(1, 3), 16)
-  const g = parseInt(h.slice(3, 5), 16)
-  const b = parseInt(h.slice(5, 7), 16)
-  return { r, g, b }
-}
-
-function applyAccentColor(hex: string) {
-  const rgb = hexToRgb(hex) ?? hexToRgb(DEFAULT_ACCENT)!
-  document.documentElement.style.setProperty('--md-accent', hex)
-  document.documentElement.style.setProperty('--md-accent-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`)
-}
 
 function onAccentColorInput() {
-  const value = accentColor.value
-  const ok = /^#[0-9A-Fa-f]{6}$/.test(value)
-  if (!ok) return
-  localStorage.setItem(ACCENT_KEY, value)
-  applyAccentColor(value)
-}
-
-function resetAccentColor() {
-  accentColor.value = DEFAULT_ACCENT
-  localStorage.setItem(ACCENT_KEY, DEFAULT_ACCENT)
-  applyAccentColor(DEFAULT_ACCENT)
+  // v-model ya actualiza el ref; esto fuerza validación/normalización por si acaso
+  setAccentColor(accentColor.value)
 }
 
 onMounted(() => {
+  initTheme()
   isDark.value =
     document.body.classList.contains('dark') || document.documentElement.classList.contains('dark')
-
-  const saved = localStorage.getItem(ACCENT_KEY)
-  accentColor.value = saved && /^#[0-9A-Fa-f]{6}$/.test(saved) ? saved : DEFAULT_ACCENT
-  applyAccentColor(accentColor.value)
 })
 
 const onThemeToggle = () => {
   toggleTheme()
-  isDark.value = !isDark.value
+  isDark.value =
+    document.body.classList.contains('dark') || document.documentElement.classList.contains('dark')
 }
 
 const appVersion = computed(() => (import.meta as any).env?.VITE_APP_VERSION ?? '1.0.0')
@@ -239,8 +184,6 @@ async function showToast(message: string) {
   })
   await t.present()
 }
-
-const comingSoon = (feature: string) => showToast(`${feature}: próximamente`)
 
 const onExportData = () => showToast('Exportar: por implementar (JSON/CSV)')
 const onClearCache = () => showToast('Caché limpiada (pendiente de implementar)')
@@ -426,7 +369,6 @@ ion-back-button {
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-/* ✅ CORREGIDO: claro = borde claro, oscuro = borde negro */
 .color-chip {
   width: 34px;
   height: 34px;
@@ -443,7 +385,6 @@ ion-back-button {
   border: 1px solid #000000;
 }
 
-/* Quitar borde interno del input type="color" */
 .color-input {
   width: 34px;
   height: 34px;
@@ -469,11 +410,6 @@ ion-back-button {
 .color-input::-moz-color-swatch {
   border: 0;
   border-radius: 10px;
-}
-
-.soon {
-  font-weight: 700;
-  opacity: 0.65;
 }
 
 .footer-space {

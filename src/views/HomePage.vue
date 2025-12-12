@@ -568,7 +568,6 @@ async function copyPantryCode(code: string) {
 }
 </script>
 
-
 <style scoped>
 /* Header transparente y sin sombra */
 ion-header.rounded-header {
@@ -605,7 +604,7 @@ ion-header.rounded-header::after {
   font-weight: 700;
 }
 
-/* Acciones: lado a lado si caben.Si no, se apilan ocupando todo el ancho */
+/* Acciones */
 .actions {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -621,15 +620,15 @@ ion-header.rounded-header::after {
   padding: 10px 14px;
   font-weight: 700;
   font-size: 14px;
-  border: 2px solid #1f9d55;
+  border: 2px solid var(--md-accent, #2ea15d);
   background: transparent;
-  color: #1f9d55;
+  color: var(--md-accent, #2ea15d);
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
   width: 100%;
 }
 
 .btn-solid {
-  background: #1f9d55;
+  background: var(--md-accent, #2ea15d);
   color: #fff;
 }
 
@@ -657,7 +656,6 @@ ion-header.rounded-header::after {
   gap: 24px;
 }
 
-
 /* Tarjeta de despensa */
 .pantry-card {
   position: relative;
@@ -665,10 +663,10 @@ ion-header.rounded-header::after {
   grid-template-columns: 56px 1fr;
   gap: 12px;
   padding: 12px;
-  border: 2px solid #2ea15d;
+  border: 2px solid var(--md-accent, #2ea15d);
   background: #ffffff;
   border-radius: 14px;
-  box-shadow: 0 2px 0 rgba(31, 157, 85, 0.1);
+  box-shadow: 0 2px 0 rgba(var(--md-accent-rgb, 46, 161, 93), 0.12);
   cursor: pointer;
   transition: transform .12s ease, box-shadow .12s ease;
 }
@@ -700,8 +698,8 @@ ion-header.rounded-header::after {
 }
 
 .corner-btn.accent {
-  box-shadow: inset 0 0 0 2px #e5f0ff;
-  color: #1f9d55;
+  box-shadow: inset 0 0 0 2px rgba(var(--md-accent-rgb, 46, 161, 93), 0.18);
+  color: var(--md-accent, #2ea15d);
 }
 
 /* Botón de salir/eliminar fijo en esquina de las tarjetas */
@@ -727,8 +725,8 @@ ion-header.rounded-header::after {
   width: 44px;
   height: 44px;
   border-radius: 10px;
-  background: #e8fbf2;
-  border: 2px solid #bde8d1;
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.12);
+  border: 2px solid rgba(var(--md-accent-rgb, 46, 161, 93), 0.28);
   display: grid;
   place-items: center;
   font-size: 60px;
@@ -748,7 +746,7 @@ ion-header.rounded-header::after {
 
 .name {
   margin: 0;
-  color: #1f9d55;
+  color: var(--md-accent, #2ea15d);
   font-size: 18px;
   font-weight: 800;
 }
@@ -787,8 +785,8 @@ ion-header.rounded-header::after {
   gap: 8px;
   padding: 6px 10px;
   border-radius: 10px;
-  background: #f4fbf7;
-  border: 2px solid #e2f5ea;
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.10);
+  border: 2px solid rgba(var(--md-accent-rgb, 46, 161, 93), 0.18);
   font-weight: 700;
   color: #1f2937;
   font-size: 13px;
@@ -801,11 +799,10 @@ ion-header.rounded-header::after {
 }
 
 .copy-btn:focus-visible {
-  outline: 2px solid #1f9d55;
+  outline: 2px solid var(--md-accent, #2ea15d);
   outline-offset: 2px;
   border-radius: 12px;
 }
-
 
 .chip-text {
   letter-spacing: .5px;
@@ -814,7 +811,6 @@ ion-header.rounded-header::after {
 .chip-copy {
   opacity: .8;
 }
-
 
 .items-grid {
   margin-top: 8px;
@@ -902,5 +898,4 @@ ion-header.rounded-header::after {
   color: #3f4146;
   font-weight: 500;
 }
-
 </style>
