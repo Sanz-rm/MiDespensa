@@ -83,7 +83,7 @@
       <!-- Sin productos de la despensa seleccionada END -->
 
       <!-- Botón flotante START -->
-      <ModalAddProduct :pantry-code="props.code" :items="items" view="inventory" />
+      <ModalAddProduct :pantry-code="props.code" :items="items" view="inventory" @willOpen="search = ''" />
       <!-- Botón flotante END -->
 
       <!-- Modal info producto START -->
