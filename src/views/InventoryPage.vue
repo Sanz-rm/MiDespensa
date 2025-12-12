@@ -10,7 +10,7 @@
       <!-- Buscador END -->
 
       <!-- Loading START -->
-      <div v-if="loading" class="loading-box">
+      <div v-if="loading || savingItem" class="loading-box">
         <ion-spinner name="crescent" style="transform:scale(2);" />
       </div>
       <!-- Loading END -->
@@ -38,7 +38,7 @@
           <div class="item-units">
             <ion-button fill="clear" size="small" class="qty-btn qty-btn-card"
               @click.stop="adjustItemQuantity(item, -1)">
-              −
+              <span class="material-icons">remove</span>
             </ion-button>
 
             <span class="item-units-value">
@@ -47,7 +47,7 @@
 
             <ion-button fill="clear" size="small" class="qty-btn qty-btn-card"
               @click.stop="adjustItemQuantity(item, 1)">
-              +
+              <span class="material-icons">add</span>
             </ion-button>
           </div>
 
@@ -108,15 +108,15 @@
                   <div class="qty-inline">
                     <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-minus qty-inline-btn"
                       @click="changeEditQuantity(-1)">
-                      −
+                      <span class="material-icons">remove</span>
                     </ion-button>
 
                     <ion-input type="number" inputmode="numeric" v-model.number="editQuantity"
-                      class="info-input qty-input qty-inline-input" />
+                      class="info-input-exception  qty-input qty-inline-input" />
 
                     <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-plus qty-inline-btn"
                       @click="changeEditQuantity(1)">
-                      +
+                      <span class="material-icons">add</span>
                     </ion-button>
                   </div>
                 </div>
@@ -144,7 +144,7 @@
 
               <div class="info-actions">
                 <ion-button expand="block" fill="outline" class="btn-info-cancel" @click="closeInfoModal">
-                  ✕ Cancelar
+                  <span class="material-icons">close</span> Cancelar
                 </ion-button>
                 <ion-button expand="block" class="btn-info-save" @click="saveItemInfo">
                   Guardar
@@ -188,15 +188,15 @@
                   <div class="qty-inline">
                     <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-minus qty-inline-btn"
                       @click="changeMoveQuantity(-1)">
-                      −
+                      <span class="material-icons">remove</span>
                     </ion-button>
 
                     <ion-input type="number" inputmode="numeric" v-model.number="moveQuantity"
-                      class="info-input qty-input qty-inline-input" />
+                      class="info-input-exception qty-input qty-inline-input" />
 
                     <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-plus qty-inline-btn"
                       @click="changeMoveQuantity(1)">
-                      +
+                      <span class="material-icons">add</span>
                     </ion-button>
                   </div>
 
@@ -213,7 +213,7 @@
 
               <div class="info-actions">
                 <ion-button expand="block" fill="outline" class="btn-info-cancel" @click="closeMoveModal">
-                  ✕ Cancelar
+                  <span class="material-icons">close</span> Cancelar
                 </ion-button>
                 <ion-button expand="block" class="btn-info-save" @click="confirmMove">
                   Mover
@@ -281,6 +281,7 @@ console.log('Codigo y nombre de la despensa:', props.code, props.name)
 
 const loading = ref<boolean>(false)
 const search = ref<string>('')
+  const savingItem = ref<boolean>(false) // loader global al guardar producto
 
 let stop: Unsubscribe | null = null
 const items = ref<Item[]>([])
@@ -512,6 +513,7 @@ function closeInfoModal() {
   editQuantity.value = null
   editUnit.value = 'Unidad'
   editLocation.value = null
+  savingItem.value = false
 }
 
 async function getLocations(locationId: string | null) {
@@ -543,11 +545,14 @@ async function getLocations(locationId: string | null) {
 }
 
 // Guarda los cambios del producto y sube la imagen solo si el usuario seleccionó una nueva antes de guardar
+// Sustituye SOLO la función saveItemInfo por esta
 async function saveItemInfo() {
   if (!selectedItem.value || editQuantity.value == null) {
     await showToast('Rellena la cantidad antes de guardar.', 'danger')
     return
   }
+
+  savingItem.value = true
 
   try {
     if (pendingImageFile.value && pendingImagePublicId.value) {
@@ -576,9 +581,13 @@ async function saveItemInfo() {
     await showToast('Producto actualizado.', 'success')
     closeInfoModal()
   } catch (err) {
+    console.error('Error al actualizar producto:', err)
     await showToast('No se pudo actualizar el producto.', 'danger')
+  } finally {
+    savingItem.value = false
   }
 }
+
 
 // Obtiene una imagen de la cámara/galería y la deja solo en memoria como preview hasta que el usuario pulse Guardar
 async function pickImage(item: Item) {
@@ -940,10 +949,27 @@ async function confirmMove() {
 
 /* Botones +/- genéricos */
 .qty-btn {
-  --padding: 4px;
-  font-size: 16px;
+  --padding: 2px;
+  font-size: 8px;
   margin: 2% 1%;
 }
+
+.item-units .qty-btn .material-icons {
+  font-size: 14px;
+  color: #2e2e30;
+}
+
+.qty-inline .qty-btn .material-icons {
+  font-size: 14px;
+  color: #e2e2e9;
+}
+
+.qty-inline .qty-btn .material-icons {
+  font-size: 14px;
+  color: #e2e2e9;
+}
+
+
 
 /* Card: borde gris ligero, circular en +/- */
 .qty-btn-card {
@@ -979,7 +1005,7 @@ async function confirmMove() {
   background: #f9fafb;
   border-radius: 10px;
   border: 1px solid #e5e7eb;
-  padding: 0 4px;
+  padding: 0 10px;
 }
 
 /* Input dentro del contenedor: sin borde propio, centrado */
@@ -1290,6 +1316,14 @@ async function confirmMove() {
   font-size: 13px;
   font-weight: 600;
   color: #374151;
+}
+.info-input-exception {
+  --background: #f9fafb;
+  --padding-start: 15px;
+  --padding-top: 6px;
+  --padding-bottom: 6px;
+  border-radius: 10px;
+  font-size: 14px;
 }
 
 .info-input,
