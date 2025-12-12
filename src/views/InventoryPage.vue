@@ -17,7 +17,13 @@
 
       <!-- Productos de la despensa seleccionada START -->
       <div v-if="!loading && itemsFiltered.length" class="items-grid">
-        <div v-for="item in itemsFiltered" :key="item.id" class="item-card" @click="openInfoModal(item)">
+        <div
+          v-for="item in itemsFiltered"
+          :key="item.id"
+          class="item-card"
+          :class="{ 'item-card-expiring': isExpiringSoon(item) }"
+          @click="openInfoModal(item)"
+        >
           <!-- Botón mover -->
           <ion-button class="move-btn" fill="clear" size="small" aria-label="Mover producto"
             @click.stop="openMoveModal(item)">
@@ -140,6 +146,19 @@
                       {{ l.name }}
                     </ion-select-option>
                   </ion-select>
+                </div>
+              </div>
+
+              <!-- Caducidad (date picker nativo) -->
+              <div class="info-row2">
+                <div class="info-field">
+                  <label class="info-label">Caducidad</label>
+                  <ion-input
+                    type="date"
+                    class="info-input"
+                    v-model="editExpirationDateInput"
+                    :disabled="savingItem"
+                  />
                 </div>
               </div>
 
@@ -363,12 +382,40 @@ const moveMaxQuantity = ref<number>(0)
 const editQuantity = ref<number | null>(null)
 const editUnit = ref<string>()
 const editLocation = ref<Location | null>(null)
+const editExpirationDate = ref<string | null>(null)
+
+const editExpirationDateInput = computed<string>({
+  get: () => editExpirationDate.value ?? '',
+  set: (v: string) => {
+    const s = String(v ?? '').trim()
+    editExpirationDate.value = s ? s : null
+  }
+})
 
 const unitOptions = ['Unidad', 'Kilogramo', 'Gramo', 'Litro', 'Mililitro']
 
 // refs para manejar la imagen pendiente de guardar
 const pendingImageFile = ref<File | null>(null)
 const pendingImagePublicId = ref<string | null>(null)
+
+// ----------- CADUCIDAD / ALERTA EN CARD -----------
+function daysUntilExpiration(expiration: string): number {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const exp = new Date(`${expiration}T00:00:00`)
+  exp.setHours(0, 0, 0, 0)
+
+  const msPerDay = 24 * 60 * 60 * 1000
+  return Math.floor((exp.getTime() - today.getTime()) / msPerDay)
+}
+
+function isExpiringSoon(item: Item): boolean {
+  const exp = (item as any).expirationDate as string | null | undefined
+  if (!exp) return false
+  const d = daysUntilExpiration(exp)
+  return d >= 0 && d < 3
+}
 
 // ----------- CARGA DE DESPENSAS POR CÓDIGOS EN LOCALSTORAGE -----------
 async function loadPantries() {
@@ -522,6 +569,7 @@ async function openInfoModal(item: Item) {
   selectedItem.value = item
   editQuantity.value = item.quantity
   editUnit.value = item.unit || 'Unidad'
+  editExpirationDate.value = (item as any).expirationDate ?? null
   getLocations(item.locationId || null)
   isInfoOpen.value = true
 }
@@ -533,6 +581,7 @@ function closeInfoModal() {
   editQuantity.value = null
   editUnit.value = 'Unidad'
   editLocation.value = null
+  editExpirationDate.value = null
   savingItem.value = false
 }
 
@@ -564,7 +613,6 @@ async function getLocations(locationId: string | null) {
   )
 }
 
-// Guarda los cambios del producto y sube la imagen solo si el usuario seleccionó una nueva antes de guardar
 // Sustituye SOLO la función saveItemInfo por esta
 async function saveItemInfo() {
   if (!selectedItem.value || editQuantity.value == null) {
@@ -587,13 +635,18 @@ async function saveItemInfo() {
       selectedItem.value.imageUrl = url
     }
 
+    const expirationToSave = editExpirationDate.value ? editExpirationDate.value.trim() : null
+
     const refItem = doc(db, 'items', selectedItem.value.id)
     await updateDoc(refItem, {
       quantity: editQuantity.value,
       unit: editUnit.value,
       imageUrl: selectedItem.value.imageUrl,
-      locationId: editLocation.value ? editLocation.value.id : null
+      locationId: editLocation.value ? editLocation.value.id : null,
+      expirationDate: expirationToSave
     })
+
+    ;(selectedItem.value as any).expirationDate = expirationToSave
 
     pendingImageFile.value = null
     pendingImagePublicId.value = null
@@ -685,7 +738,8 @@ async function getPantryItems(pantryCode: string) {
           pantryCode: String(item.pantryCode ?? pantryCode),
           locationId: String(item.locationId ?? null),
           inPurchase: Boolean(item.inPurchase ?? false),
-          imageUrl: String(item.imageUrl ?? '')
+          imageUrl: String(item.imageUrl ?? ''),
+          expirationDate: item.expirationDate ?? null
         } as Item
       })
       loading.value = false
@@ -844,7 +898,8 @@ async function confirmMove() {
         locationId: null,
         inPurchase: false,
         imageUrl: moveItem.value.imageUrl,
-        notePurchase: moveItem.value.notePurchase ?? ''
+        notePurchase: (moveItem.value as any).notePurchase ?? '',
+        expirationDate: (moveItem.value as any).expirationDate ?? null
       })
 
       // Nuevo producto en esa despensa: aumentar totalItems en despensa destino
@@ -873,7 +928,6 @@ async function confirmMove() {
     movingItem.value = false
   }
 }
-
 </script>
 
 <style scoped>
@@ -909,6 +963,12 @@ async function confirmMove() {
 
   display: flex;
   flex-direction: column;
+}
+
+/* alerta caducidad */
+.item-card-expiring {
+  border: 2px solid #ef4444;
+  box-shadow: 0 2px 12px rgba(239, 68, 68, 0.18);
 }
 
 .item-card img {
@@ -985,8 +1045,6 @@ async function confirmMove() {
   font-size: 14px;
   color: #e2e2e9;
 }
-
-
 
 /* Card: borde gris ligero, circular en +/- */
 .qty-btn-card {
@@ -1388,43 +1446,6 @@ async function confirmMove() {
   font-size: 11px;
   color: #6b7280;
   margin-top: 4px;
-}
-
-/* Cantidad en modales */
-.qty-input {
-  flex: 1;
-}
-
-/* Fila de botones +/- en modales, debajo del input y centrados */
-.qty-buttons-row {
-  display: flex;
-  justify-content: center;
-  gap: 8px;
-}
-
-/* Botones +/- modales: estilo tipo mover, + verde, - rojo */
-.qty-btn-modal::part(native) {
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-}
-
-.qty-btn-plus {
-  --background: #16a34a;
-  --background-hover: #15803d;
-  --background-activated: #166534;
-  --color: #ffffff;
-}
-
-.qty-btn-minus {
-  --background: #ef4444;
-  --background-hover: #dc2626;
-  --background-activated: #b91c1c;
-  --color: #ffffff;
 }
 
 /* Botones inferiores */
