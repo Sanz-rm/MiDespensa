@@ -9,7 +9,7 @@
     <!-- Botón flotante END -->
 
     <!-- Modal crear producto START -->
-    <ion-modal :is-open="isCreateOpen" @didDismiss="closeCreateModal">
+    <ion-modal :is-open="isCreateOpen" @didDismiss="closeCreateModal" @willPresent="emit('willOpen')">
         <!-- Header modal START -->
         <ion-header>
             <ion-toolbar class="create-modal-toolbar">
@@ -177,6 +177,10 @@ const props = defineProps<{
     pantryCode: string
     items: Item[]
     view: 'inventory' | 'purcharse'
+}>()
+
+const emit = defineEmits<{
+  (e: 'willOpen'): void
 }>()
 
 const isCreateOpen = ref(false)

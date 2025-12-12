@@ -73,7 +73,7 @@
       </div>
 
       <!-- Botón flotante START -->
-      <ModalAddProduct :pantry-code="props.code" :items="items" view="purcharse" />
+      <ModalAddProduct :pantry-code="props.code" :items="items" view="purcharse" @willOpen="search = ''"/>
       <!-- Botón flotante END -->
 
       <!-- Pop up confirmar salir/eliminar despensa START -->
