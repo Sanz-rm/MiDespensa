@@ -2,28 +2,150 @@
 <template>
   <ion-page>
     <ion-header translucent>
-      <ion-toolbar>
+      <ion-toolbar class="top-toolbar">
         <ion-buttons slot="start">
-          <ion-back-button defaultHref="/tabs/home" text="Inicio"></ion-back-button>
+          <ion-back-button defaultHref="/tabs/home" text="Inicio" />
         </ion-buttons>
         <ion-title>Ajustes</ion-title>
       </ion-toolbar>
     </ion-header>
 
-    <ion-content fullscreen>
-      <div class="content">
-         <ion-toolbar>
-        <ion-title>Cambiar tema</ion-title>
-        <ion-buttons slot="end">
-          <ion-button @click="onToggleTheme">Tema</ion-button>
-        </ion-buttons>
-      </ion-toolbar>
+    <ion-content fullscreen class="options-content">
+      <ion-header collapse="condense">
+        <ion-toolbar class="condense-toolbar">
+          <ion-title size="large">Ajustes</ion-title>
+        </ion-toolbar>
+      </ion-header>
+
+      <div class="container">
+        <!-- Tarjeta cabecera -->
+        <ion-card class="hero-card">
+          <ion-card-content class="hero-content">
+            <div class="hero-left">
+              <div class="app-badge">
+                <ion-icon :icon="sparklesOutline" class="hero-icon" />
+              </div>
+              <div class="hero-text">
+                <ion-text class="hero-title">MiDespensa</ion-text>
+                <ion-text class="hero-subtitle">Personaliza tu experiencia</ion-text>
+              </div>
+            </div>
+
+            <ion-note class="hero-version">v{{ appVersion }}</ion-note>
+          </ion-card-content>
+        </ion-card>
+
+        <!-- Apariencia -->
+        <ion-list inset class="list-card">
+          <ion-item-divider class="section-divider">Apariencia</ion-item-divider>
+
+          <ion-item lines="full" class="setting-item">
+            <ion-icon slot="start" :icon="moonOutline" class="item-icon accent" />
+            <ion-label>
+              <h2>Tema oscuro</h2>
+              <p>Cambia entre claro y oscuro</p>
+            </ion-label>
+            <ion-toggle :checked="isDark" @ionChange="onThemeToggle" class="accent-toggle" />
+          </ion-item>
+
+          <ion-item lines="none" class="setting-item">
+            <ion-icon slot="start" :icon="colorPaletteOutline" class="item-icon accent" />
+            <ion-label>
+              <h2>Color principal</h2>
+              <p>Header, acentos e iconos</p>
+            </ion-label>
+
+            <div slot="end" class="color-actions">
+              <ion-button fill="solid" size="small" class="reset-pill" @click="resetAccentColor">
+                Reset
+              </ion-button>
+
+              <label class="color-chip" :title="accentColor">
+                <input
+                  class="color-input"
+                  type="color"
+                  v-model="accentColor"
+                  @input="onAccentColorInput"
+                  aria-label="Seleccionar color principal"
+                />
+              </label>
+            </div>
+          </ion-item>
+        </ion-list>
+
+        <!-- Preferencias -->
+        <ion-list inset class="list-card">
+          <ion-item-divider class="section-divider">Preferencias</ion-item-divider>
+
+          <ion-item lines="full" class="setting-item" button @click="comingSoon('Notificaciones')">
+            <ion-icon slot="start" :icon="notificationsOutline" class="item-icon accent" />
+            <ion-label>
+              <h2>Notificaciones</h2>
+              <p>Avisos de caducidad y listas</p>
+            </ion-label>
+            <ion-note slot="end" class="soon">Próximamente</ion-note>
+          </ion-item>
+
+          <ion-item lines="none" class="setting-item" button @click="comingSoon('Copia de seguridad')">
+            <ion-icon slot="start" :icon="cloudUploadOutline" class="item-icon accent" />
+            <ion-label>
+              <h2>Copia de seguridad</h2>
+              <p>Guardar y restaurar datos</p>
+            </ion-label>
+            <ion-note slot="end" class="soon">Próximamente</ion-note>
+          </ion-item>
+        </ion-list>
+
+        <!-- Datos -->
+        <ion-list inset class="list-card">
+          <ion-item-divider class="section-divider">Datos</ion-item-divider>
+
+          <ion-item lines="full" class="setting-item" button @click="onExportData">
+            <ion-icon slot="start" :icon="downloadOutline" class="item-icon accent" />
+            <ion-label>
+              <h2>Exportar</h2>
+              <p>Descarga tus datos</p>
+            </ion-label>
+          </ion-item>
+
+          <ion-item lines="none" class="setting-item" button @click="onClearCache">
+            <ion-icon slot="start" :icon="trashOutline" class="item-icon accent" />
+            <ion-label>
+              <h2>Limpiar caché</h2>
+              <p>Soluciona cargas lentas o errores</p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+
+        <!-- App -->
+        <ion-list inset class="list-card">
+          <ion-item-divider class="section-divider">App</ion-item-divider>
+
+          <ion-item lines="full" class="setting-item" button @click="onAbout">
+            <ion-icon slot="start" :icon="informationCircleOutline" class="item-icon accent" />
+            <ion-label>
+              <h2>Acerca de</h2>
+              <p>Versión, cambios y soporte</p>
+            </ion-label>
+          </ion-item>
+
+          <ion-item lines="none" class="setting-item" button @click="onExitApp">
+            <ion-icon slot="start" :icon="logOutOutline" class="item-icon accent" />
+            <ion-label>
+              <h2>Salir de la aplicación</h2>
+              <p>Cierra MiDespensa</p>
+            </ion-label>
+          </ion-item>
+        </ion-list>
+
+        <div class="footer-space" />
       </div>
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
 import {
   IonPage,
   IonHeader,
@@ -31,12 +153,330 @@ import {
   IonTitle,
   IonContent,
   IonButtons,
-  IonBackButton
+  IonBackButton,
+  IonCard,
+  IonCardContent,
+  IonText,
+  IonNote,
+  IonList,
+  IonItem,
+  IonLabel,
+  IonToggle,
+  IonIcon,
+  IonItemDivider,
+  IonButton,
+  toastController,
 } from '@ionic/vue'
-import { toggleTheme } from '@/theme/theme';
-const onToggleTheme = () => toggleTheme();
+import {
+  colorPaletteOutline,
+  notificationsOutline,
+  cloudUploadOutline,
+  informationCircleOutline,
+  trashOutline,
+  downloadOutline,
+  logOutOutline,
+  sparklesOutline,
+  moonOutline,
+} from 'ionicons/icons'
+import { toggleTheme } from '@/theme/theme'
+
+const DEFAULT_ACCENT = '#2ea15d'
+const ACCENT_KEY = 'midespensa_accent_color'
+
+const isDark = ref(false)
+const accentColor = ref(DEFAULT_ACCENT)
+
+function hexToRgb(hex: string): { r: number; g: number; b: number } | null {
+  const h = hex.trim()
+  if (!/^#[0-9A-Fa-f]{6}$/.test(h)) return null
+  const r = parseInt(h.slice(1, 3), 16)
+  const g = parseInt(h.slice(3, 5), 16)
+  const b = parseInt(h.slice(5, 7), 16)
+  return { r, g, b }
+}
+
+function applyAccentColor(hex: string) {
+  const rgb = hexToRgb(hex) ?? hexToRgb(DEFAULT_ACCENT)!
+  document.documentElement.style.setProperty('--md-accent', hex)
+  document.documentElement.style.setProperty('--md-accent-rgb', `${rgb.r}, ${rgb.g}, ${rgb.b}`)
+}
+
+function onAccentColorInput() {
+  const value = accentColor.value
+  const ok = /^#[0-9A-Fa-f]{6}$/.test(value)
+  if (!ok) return
+  localStorage.setItem(ACCENT_KEY, value)
+  applyAccentColor(value)
+}
+
+function resetAccentColor() {
+  accentColor.value = DEFAULT_ACCENT
+  localStorage.setItem(ACCENT_KEY, DEFAULT_ACCENT)
+  applyAccentColor(DEFAULT_ACCENT)
+}
+
+onMounted(() => {
+  isDark.value =
+    document.body.classList.contains('dark') || document.documentElement.classList.contains('dark')
+
+  const saved = localStorage.getItem(ACCENT_KEY)
+  accentColor.value = saved && /^#[0-9A-Fa-f]{6}$/.test(saved) ? saved : DEFAULT_ACCENT
+  applyAccentColor(accentColor.value)
+})
+
+const onThemeToggle = () => {
+  toggleTheme()
+  isDark.value = !isDark.value
+}
+
+const appVersion = computed(() => (import.meta as any).env?.VITE_APP_VERSION ?? '1.0.0')
+
+async function showToast(message: string) {
+  const t = await toastController.create({
+    message,
+    duration: 1600,
+    position: 'bottom',
+  })
+  await t.present()
+}
+
+const comingSoon = (feature: string) => showToast(`${feature}: próximamente`)
+
+const onExportData = () => showToast('Exportar: por implementar (JSON/CSV)')
+const onClearCache = () => showToast('Caché limpiada (pendiente de implementar)')
+const onAbout = () => showToast(`MiDespensa · v${appVersion.value}`)
+
+const onExitApp = async () => {
+  try {
+    const mod = await import('@capacitor/app')
+    await mod.App.exitApp()
+  } catch {
+    showToast('Salir de la app solo está disponible en móvil')
+  }
+}
 </script>
 
 <style scoped>
-.content { padding: 16px; }
+.options-content {
+  --background: linear-gradient(
+    180deg,
+    rgba(var(--md-accent-rgb, 46, 161, 93), 0.08),
+    rgba(20, 20, 20, 0)
+  );
+}
+
+.top-toolbar,
+.condense-toolbar {
+  --background: var(--md-accent, #2ea15d);
+  --color: #ffffff !important;
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
+}
+
+.top-toolbar ion-title,
+.condense-toolbar ion-title,
+.top-toolbar ion-back-button,
+.top-toolbar ion-button,
+.top-toolbar ion-icon,
+.condense-toolbar ion-button,
+.condense-toolbar ion-icon {
+  color: #ffffff !important;
+}
+
+ion-back-button {
+  --color: #ffffff;
+}
+
+.container {
+  padding: 14px 14px 0;
+}
+
+.hero-card {
+  border-radius: 18px;
+  border: 1px solid rgba(var(--md-accent-rgb, 46, 161, 93), 0.18);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
+  margin: 8px 0 14px;
+}
+
+.hero-content {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.hero-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.app-badge {
+  width: 44px;
+  height: 44px;
+  border-radius: 14px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(var(--md-accent-rgb, 46, 161, 93), 0.25);
+  background: linear-gradient(
+    180deg,
+    rgba(var(--md-accent-rgb, 46, 161, 93), 0.18),
+    rgba(var(--md-accent-rgb, 46, 161, 93), 0.06)
+  );
+  font-size: 20px;
+}
+
+.hero-icon {
+  color: var(--md-accent, #2ea15d);
+}
+
+.hero-text {
+  display: grid;
+  line-height: 1.1;
+  gap: 4px;
+}
+
+.hero-title {
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.hero-subtitle {
+  opacity: 0.75;
+  font-size: 13px;
+}
+
+.hero-version {
+  opacity: 0.7;
+  font-weight: 700;
+  color: rgba(var(--md-accent-rgb, 46, 161, 93), 0.95);
+}
+
+.list-card {
+  border-radius: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
+  margin: 0 0 14px;
+}
+
+.section-divider {
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  opacity: 0.8;
+}
+
+.setting-item {
+  --padding-start: 14px;
+  --inner-padding-end: 12px;
+  --min-height: 56px;
+}
+
+.item-icon {
+  font-size: 20px;
+  opacity: 0.95;
+}
+
+.accent {
+  color: var(--md-accent, #2ea15d) !important;
+}
+
+/* Toggle */
+.accent-toggle {
+  --handle-background: #ffffff;
+  --handle-background-checked: var(--md-accent, #2ea15d);
+  --track-background: rgba(169, 169, 169, 0.35);
+  --track-background-checked: #5c5c5c6c;
+  --background: rgba(169, 169, 169, 0.35);
+  --background-checked: rgba(169, 169, 169, 0.35);
+}
+
+:global(body.dark) .accent-toggle {
+  --track-background: rgba(255, 255, 255, 0.22);
+  --track-background-checked: rgba(206, 206, 206, 0.22);
+  --background: rgba(255, 255, 255, 0.22);
+  --background-checked: rgba(255, 255, 255, 0.22);
+  --handle-background: #ffffff;
+  --handle-background-checked: var(--md-accent, #2ea15d);
+}
+
+.color-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.reset-pill {
+  --background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.14);
+  --background-hover: rgba(var(--md-accent-rgb, 46, 161, 93), 0.2);
+  --color: var(--md-accent, #2ea15d);
+  --border-radius: 999px;
+  --padding-start: 12px;
+  --padding-end: 12px;
+  height: 30px;
+  font-weight: 800;
+  text-transform: none;
+}
+
+:global(body.dark) .reset-pill {
+  --background: rgba(255, 255, 255, 0.12);
+  --background-hover: rgba(255, 255, 255, 0.16);
+  --color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ✅ CORREGIDO: claro = borde claro, oscuro = borde negro */
+.color-chip {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  overflow: hidden;
+  display: inline-grid;
+  place-items: center;
+  background: #fff;
+}
+
+:global(body.dark) .color-chip {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid #000000;
+}
+
+/* Quitar borde interno del input type="color" */
+.color-input {
+  width: 34px;
+  height: 34px;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  background: transparent;
+  cursor: pointer;
+  outline: none;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.color-input::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.color-input::-webkit-color-swatch {
+  border: 0;
+  border-radius: 10px;
+}
+
+.color-input::-moz-color-swatch {
+  border: 0;
+  border-radius: 10px;
+}
+
+.soon {
+  font-weight: 700;
+  opacity: 0.65;
+}
+
+.footer-space {
+  height: 18px;
+}
 </style>
