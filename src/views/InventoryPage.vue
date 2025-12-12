@@ -703,7 +703,7 @@ async function getPantryItems(pantryCode: string) {
 async function togglePurchaseState(item: Item) {
   try {
     const ref = doc(db, 'items', item.id)
-    await updateDoc(ref, { inPurchase: !item.inPurchase })
+    await updateDoc(ref, { inPurchase: !item.inPurchase, notePurchase: null })
   } catch (err) {
     console.error('Error al actualizar inPurchase:', err)
     await showToast(`No se pudo actualizar el estado de ${item.name}.`, 'danger')
