@@ -1,9 +1,6 @@
 <template>
   <ion-page>
-    <InventoryAndPurcharseHeader
-      :title="`Inventario de ${props.name}`"
-      backRouteName="home"
-    />
+    <InventoryAndPurcharseHeader :title="`Inventario de ${props.name}`" backRouteName="home" />
 
     <ion-content class="ion-padding pantry-content">
       <!-- Buscador START -->
@@ -24,44 +21,45 @@
           v-for="item in itemsFiltered"
           :key="item.id"
           class="item-card"
+          :class="{ 'item-card-expiring': isExpiringSoon(item) }"
           @click="openInfoModal(item)"
         >
           <!-- Botón mover -->
-          <ion-button
-            class="move-btn"
-            fill="clear"
-            size="small"
-            aria-label="Mover producto"
-            @click.stop="openMoveModal(item)"
-          >
+          <ion-button class="move-btn" fill="clear" size="small" aria-label="Mover producto"
+            @click.stop="openMoveModal(item)">
             <ion-icon :icon="swapHorizontalOutline" />
           </ion-button>
 
           <!-- Botón eliminar -->
-          <ion-button
-            class="delete-btn"
-            fill="clear"
-            size="small"
-            aria-label="Eliminar producto"
-            @click.stop="deleteItemFromPantry(item)"
-          >
+          <ion-button class="delete-btn" fill="clear" size="small" aria-label="Eliminar producto"
+            @click.stop="deleteItemFromPantry(item)">
             <ion-icon :icon="trashOutline" />
           </ion-button>
 
-          <img
-            :src="`${item.imageUrl}`"
-            :alt="item.name"
-            :class="{ 'img-galery': isImageGalery(item.imageUrl) }"
-          />
+          <img :src="getOptimizedUrl(item.imageUrl)" :alt="item.name"
+            :class="{ 'img-galery': isImageGalery(item.imageUrl) }" />
           <p class="item-name">{{ item.name }}</p>
-          <p class="item-units">{{ item.quantity }} {{ getMeasurementUnit(item.unit, item.quantity) }}</p>
+
+          <!-- Controles cantidad en card -->
+          <div class="item-units">
+            <ion-button fill="clear" size="small" class="qty-btn qty-btn-card"
+              @click.stop="adjustItemQuantity(item, -1)">
+              <span class="material-icons">remove</span>
+            </ion-button>
+
+            <span class="item-units-value">
+              {{ item.quantity }} {{ getMeasurementUnit(item.unit, item.quantity) }}
+            </span>
+
+            <ion-button fill="clear" size="small" class="qty-btn qty-btn-card"
+              @click.stop="adjustItemQuantity(item, 1)">
+              <span class="material-icons">add</span>
+            </ion-button>
+          </div>
 
           <div class="card-actions">
-            <ion-button
-              size="small"
-              :class="item.inPurchase ? 'btn-remove' : 'btn-add'"
-              @click.stop="togglePurchaseState(item)"
-            >
+            <ion-button size="small" :class="item.inPurchase ? 'btn-remove' : 'btn-add'"
+              @click.stop="togglePurchaseState(item)">
               <ion-icon :icon="cartOutline" slot="start" />
               {{ item.inPurchase ? 'Quitar de compra' : 'Añadir a compra' }}
             </ion-button>
@@ -88,27 +86,23 @@
         <p class="empty-title">No hay productos todavía</p>
         <p class="empty-subtitle">Crea o añade tu primer producto</p>
       </div>
-      <!-- Sin productos de la despensa seleccionada END -->  
+      <!-- Sin productos de la despensa seleccionada END -->
 
       <!-- Botón flotante START -->
-      <ModalAddProduct :pantry-code="props.code" :items="items" view="inventory" />
+      <ModalAddProduct :pantry-code="props.code" :items="items" view="inventory" @willOpen="search = ''" />
       <!-- Botón flotante END -->
 
       <!-- Modal info producto START -->
-      <ion-modal :is-open="isInfoOpen" css-class="product-info-modal" @didDismiss="closeInfoModal">
+      <ion-modal :is-open="isInfoOpen" css-class="product-info-modal" @didDismiss="closeInfoModal"
+        :backdropDismiss="!savingItem" :canDismiss="!savingItem">
         <ion-content class="product-info-content" v-if="selectedItem">
           <div class="product-info-wrapper">
             <h3 class="info-title">INFORMACIÓN DE PRODUCTO</h3>
 
             <div class="info-product-block">
-              <div class="info-product-image-wrapper" @click="pickImage(selectedItem)">
-                <img
-                  :src="selectedItem.imageUrl"
-                  :alt="selectedItem.name"
-                />
-                <span class="material-icons info-product-icon">
-                  add_photo_alternate
-                </span>
+              <div class="info-product-image-wrapper" @click="!savingItem && pickImage(selectedItem)">
+                <img :src="selectedItem.imageUrl" :alt="selectedItem.name" />
+                <span class="material-icons info-product-icon">add_photo_alternate</span>
               </div>
               <span class="info-product-name">{{ selectedItem.name }}</span>
             </div>
@@ -117,17 +111,25 @@
               <div class="info-row">
                 <div class="info-field">
                   <label class="info-label">Cantidad</label>
-                  <ion-input
-                    type="number"
-                    inputmode="numeric"
-                    v-model.number="editQuantity"
-                    class="info-input"
-                  />
+                  <div class="qty-inline">
+                    <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-minus qty-inline-btn"
+                      @click="changeEditQuantity(-1)" :disabled="savingItem">
+                      <span class="material-icons">remove</span>
+                    </ion-button>
+
+                    <ion-input type="number" inputmode="numeric" v-model.number="editQuantity"
+                      class="info-input-exception qty-input qty-inline-input" :disabled="savingItem" />
+
+                    <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-plus qty-inline-btn"
+                      @click="changeEditQuantity(1)" :disabled="savingItem">
+                      <span class="material-icons">add</span>
+                    </ion-button>
+                  </div>
                 </div>
 
                 <div class="info-field">
                   <label class="info-label">Unidad</label>
-                  <ion-select interface="popover" v-model="editUnit" class="info-select">
+                  <ion-select interface="popover" v-model="editUnit" class="info-select" :disabled="savingItem">
                     <ion-select-option v-for="u in unitOptions" :key="u" :value="u">
                       {{ u }}
                     </ion-select-option>
@@ -138,12 +140,8 @@
               <div class="info-row2">
                 <div class="info-field">
                   <label class="info-label">Localización</label>
-                  <ion-select
-                    interface="popover"
-                    v-model="editLocation"
-                    class="info-select"
-                    placeholder="Selecciona una localización"
-                  >
+                  <ion-select interface="popover" v-model="editLocation" class="info-select"
+                    placeholder="Selecciona una localización" :disabled="savingItem">
                     <ion-select-option v-for="l in locations" :key="l.id" :value="l">
                       {{ l.name }}
                     </ion-select-option>
@@ -151,23 +149,35 @@
                 </div>
               </div>
 
+              <!-- Caducidad (date picker nativo) -->
+              <div class="info-row2">
+                <div class="info-field">
+                  <label class="info-label">Caducidad</label>
+                  <ion-input
+                    type="date"
+                    class="info-input"
+                    v-model="editExpirationDateInput"
+                    :disabled="savingItem"
+                  />
+                </div>
+              </div>
+
               <div class="info-actions">
-                <ion-button
-                  expand="block"
-                  fill="outline"
-                  class="btn-info-cancel"
-                  @click="closeInfoModal"
-                >
-                  ✕ Cancelar
+                <ion-button expand="block" fill="outline" class="btn-info-cancel" @click="closeInfoModal"
+                  :disabled="savingItem">
+                  <span class="material-icons">close</span> Cancelar
                 </ion-button>
-                <ion-button
-                  expand="block"
-                  class="btn-info-save"
-                  @click="saveItemInfo"
-                >
+
+                <ion-button expand="block" class="btn-info-save" @click="saveItemInfo" :disabled="savingItem">
                   Guardar
                 </ion-button>
               </div>
+            </div>
+
+            <!-- OVERLAY LOADER MODAL -->
+            <div v-if="savingItem" class="modal-saving-overlay">
+              <ion-spinner name="crescent" style="transform:scale(1.6);" />
+              <p class="modal-saving-text">Guardando…</p>
             </div>
           </div>
         </ion-content>
@@ -175,17 +185,15 @@
       <!-- Modal info producto END -->
 
       <!-- Modal mover producto START -->
-      <ion-modal :is-open="isMoveOpen" css-class="move-product-modal" @didDismiss="closeMoveModal">
+      <ion-modal :is-open="isMoveOpen" css-class="move-product-modal" @didDismiss="closeMoveModal"
+        :backdropDismiss="!movingItem" :canDismiss="!movingItem">
         <ion-content class="product-info-content" v-if="moveItem">
           <div class="product-info-wrapper">
             <h3 class="info-title">MOVER PRODUCTO</h3>
 
             <div class="info-product-block">
               <div class="info-product-image-wrapper">
-                <img
-                  :src="moveItem.imageUrl"
-                  :alt="moveItem.name"
-                />
+                <img :src="moveItem.imageUrl" :alt="moveItem.name" />
               </div>
               <span class="info-product-name">{{ moveItem.name }}</span>
             </div>
@@ -194,17 +202,9 @@
               <div class="info-row-single">
                 <div class="info-field">
                   <label class="info-label">Despensa destino</label>
-                  <ion-select
-                    interface="popover"
-                    v-model="selectedPantryCode"
-                    class="info-select"
-                    placeholder="Selecciona una despensa"
-                  >
-                    <ion-select-option
-                      v-for="p in destinationPantries"
-                      :key="p.id"
-                      :value="p.code"
-                    >
+                  <ion-select interface="popover" v-model="selectedPantryCode" class="info-select"
+                    placeholder="Selecciona una despensa" :disabled="movingItem">
+                    <ion-select-option v-for="p in destinationPantries" :key="p.id" :value="p.code">
                       {{ p.name }} ({{ p.code }})
                     </ion-select-option>
                   </ion-select>
@@ -214,12 +214,22 @@
               <div class="info-row">
                 <div class="info-field">
                   <label class="info-label">Cantidad a mover</label>
-                  <ion-input
-                    type="number"
-                    inputmode="numeric"
-                    v-model.number="moveQuantity"
-                    class="info-input"
-                  />
+
+                  <div class="qty-inline">
+                    <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-minus qty-inline-btn"
+                      @click="changeMoveQuantity(-1)" :disabled="movingItem">
+                      <span class="material-icons">remove</span>
+                    </ion-button>
+
+                    <ion-input type="number" inputmode="numeric" v-model.number="moveQuantity"
+                      class="info-input-exception qty-input qty-inline-input" :disabled="movingItem" />
+
+                    <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-plus qty-inline-btn"
+                      @click="changeMoveQuantity(1)" :disabled="movingItem">
+                      <span class="material-icons">add</span>
+                    </ion-button>
+                  </div>
+
                   <small class="info-helper">
                     Mínimo 1, máximo {{ moveMaxQuantity }}
                   </small>
@@ -227,31 +237,26 @@
 
                 <div class="info-field">
                   <label class="info-label">Unidad</label>
-                  <ion-input
-                    :value="moveItem.unit"
-                    class="info-input info-input-readonly"
-                    readonly
-                  />
+                  <ion-input :value="moveItem.unit" class="info-input info-input-readonly" readonly />
                 </div>
               </div>
 
               <div class="info-actions">
-                <ion-button
-                  expand="block"
-                  fill="outline"
-                  class="btn-info-cancel"
-                  @click="closeMoveModal"
-                >
-                  ✕ Cancelar
+                <ion-button expand="block" fill="outline" class="btn-info-cancel" @click="closeMoveModal"
+                  :disabled="movingItem">
+                  <span class="material-icons">close</span> Cancelar
                 </ion-button>
-                <ion-button
-                  expand="block"
-                  class="btn-info-save"
-                  @click="confirmMove"
-                >
+
+                <ion-button expand="block" class="btn-info-save" @click="confirmMove" :disabled="movingItem">
                   Mover
                 </ion-button>
               </div>
+            </div>
+
+            <!-- OVERLAY LOADER MODAL -->
+            <div v-if="movingItem" class="modal-saving-overlay">
+              <ion-spinner name="crescent" style="transform:scale(1.6);" />
+              <p class="modal-saving-text">Moviendo…</p>
             </div>
           </div>
         </ion-content>
@@ -304,7 +309,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showToast } from '@/composables/showToast'
-import { getMeasurementUnit } from '@/composables/itemUtils'
+import { getMeasurementUnit, getOptimizedUrl, isImageGalery } from '@/composables/itemUtils'
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
 import ModalAddProduct from '@/components/layout/ModalAddProduct.vue'
 import InventoryAndPurcharseHeader from '@/components/ui/InventoryAndPurcharseHeader.vue'
@@ -314,6 +319,8 @@ console.log('Codigo y nombre de la despensa:', props.code, props.name)
 
 const loading = ref<boolean>(false)
 const search = ref<string>('')
+const savingItem = ref<boolean>(false)
+const movingItem = ref<boolean>(false)
 
 let stop: Unsubscribe | null = null
 const items = ref<Item[]>([])
@@ -364,16 +371,51 @@ onBeforeUnmount(() => stop?.())
 const isInfoOpen = ref(false)
 const selectedItem = ref<Item | null>(null)
 
-// Campos editables del modal
+// Estado del modal de mover
+const isMoveOpen = ref(false)
+const moveItem = ref<Item | null>(null)
+const selectedPantryCode = ref<string>('')
+const moveQuantity = ref<number | null>(null)
+const moveMaxQuantity = ref<number>(0)
+
+// Campos editables del modal de info
 const editQuantity = ref<number | null>(null)
 const editUnit = ref<string>()
 const editLocation = ref<Location | null>(null)
+const editExpirationDate = ref<string | null>(null)
+
+const editExpirationDateInput = computed<string>({
+  get: () => editExpirationDate.value ?? '',
+  set: (v: string) => {
+    const s = String(v ?? '').trim()
+    editExpirationDate.value = s ? s : null
+  }
+})
 
 const unitOptions = ['Unidad', 'Kilogramo', 'Gramo', 'Litro', 'Mililitro']
 
 // refs para manejar la imagen pendiente de guardar
 const pendingImageFile = ref<File | null>(null)
 const pendingImagePublicId = ref<string | null>(null)
+
+// ----------- CADUCIDAD / ALERTA EN CARD -----------
+function daysUntilExpiration(expiration: string): number {
+  const today = new Date()
+  today.setHours(0, 0, 0, 0)
+
+  const exp = new Date(`${expiration}T00:00:00`)
+  exp.setHours(0, 0, 0, 0)
+
+  const msPerDay = 24 * 60 * 60 * 1000
+  return Math.floor((exp.getTime() - today.getTime()) / msPerDay)
+}
+
+function isExpiringSoon(item: Item): boolean {
+  const exp = (item as any).expirationDate as string | null | undefined
+  if (!exp) return false
+  const d = daysUntilExpiration(exp)
+  return d >= 0 && d < 3
+}
 
 // ----------- CARGA DE DESPENSAS POR CÓDIGOS EN LOCALSTORAGE -----------
 async function loadPantries() {
@@ -422,11 +464,112 @@ async function loadPantries() {
   }
 }
 
+// ----------- HELPERS DE CANTIDAD -----------
+function getStepForUnit(unitRaw: string | undefined | null): number {
+  const u = (unitRaw || '').toLowerCase()
+
+  if (u === 'gramo' || u === 'gramos' || u === 'mililitro' || u === 'mililitros') {
+    return 50
+  }
+
+  if (
+    u === 'kilogramo' ||
+    u === 'kilogramos' ||
+    u === 'kg' ||
+    u === 'litro' ||
+    u === 'litros' ||
+    u === 'unidad' ||
+    u === 'unidades'
+  ) {
+    return 1
+  }
+
+  // Por defecto 1 si algo raro
+  return 1
+}
+
+// Ajusta la cantidad aplicando el paso y, si es step 50, busca el múltiplo entero 50/100 la primera vez
+function getAdjustedQuantity(
+  current: number,
+  step: number,
+  deltaSign: 1 | -1,
+  min = 0,
+  max = Number.POSITIVE_INFINITY
+): number {
+  let target = current
+
+  if (step === 50) {
+    if (deltaSign === 1) {
+      if (current < step) {
+        target = step
+      } else if (current % step === 0) {
+        target = current + step
+      } else {
+        target = Math.floor(current / step) * step + step
+      }
+    } else {
+      if (current <= 0) {
+        target = 0
+      } else if (current % step === 0) {
+        target = current - step
+      } else {
+        target = Math.floor(current / step) * step
+      }
+    }
+  } else {
+    target = current + deltaSign * step
+  }
+
+  if (target < min) target = min
+  if (target > max) target = max
+
+  return target
+}
+
+// Ajuste de cantidad directo en la card (actualiza Firestore)
+async function adjustItemQuantity(item: Item, deltaSign: 1 | -1) {
+  const step = getStepForUnit(item.unit)
+  const newQty = getAdjustedQuantity(item.quantity, step, deltaSign, 0)
+
+  try {
+    const refItem = doc(db, 'items', item.id)
+    await updateDoc(refItem, { quantity: newQty })
+    item.quantity = newQty
+  } catch (err) {
+    console.error('Error al actualizar cantidad:', err)
+    await showToast('No se pudo actualizar la cantidad.', 'danger')
+  }
+}
+
+// Para el modal de editar producto (solo cambia el campo local, se guarda en saveItemInfo)
+function changeEditQuantity(deltaSign: 1 | -1) {
+  if (!selectedItem.value) return
+
+  const unitToUse = editUnit.value || selectedItem.value.unit
+  const step = getStepForUnit(unitToUse)
+  const current = editQuantity.value ?? 0
+  const newQty = getAdjustedQuantity(current, step, deltaSign, 0)
+
+  editQuantity.value = newQty
+}
+
+// Para el modal de mover producto (respeta mínimo 1 y máximo moveMaxQuantity)
+function changeMoveQuantity(deltaSign: 1 | -1) {
+  if (!moveItem.value) return
+
+  const step = getStepForUnit(moveItem.value.unit)
+  const current = moveQuantity.value ?? 1
+  const newQty = getAdjustedQuantity(current, step, deltaSign, 1, moveMaxQuantity.value)
+
+  moveQuantity.value = newQty
+}
+
 // ----------- MODAL INFO PRODUCTO -----------
 async function openInfoModal(item: Item) {
   selectedItem.value = item
   editQuantity.value = item.quantity
   editUnit.value = item.unit || 'Unidad'
+  editExpirationDate.value = (item as any).expirationDate ?? null
   getLocations(item.locationId || null)
   isInfoOpen.value = true
 }
@@ -438,6 +581,8 @@ function closeInfoModal() {
   editQuantity.value = null
   editUnit.value = 'Unidad'
   editLocation.value = null
+  editExpirationDate.value = null
+  savingItem.value = false
 }
 
 async function getLocations(locationId: string | null) {
@@ -468,12 +613,14 @@ async function getLocations(locationId: string | null) {
   )
 }
 
-// Guarda los cambios del producto y sube la imagen solo si el usuario seleccionó una nueva antes de guardar
+// Sustituye SOLO la función saveItemInfo por esta
 async function saveItemInfo() {
   if (!selectedItem.value || editQuantity.value == null) {
     await showToast('Rellena la cantidad antes de guardar.', 'danger')
     return
   }
+
+  savingItem.value = true
 
   try {
     if (pendingImageFile.value && pendingImagePublicId.value) {
@@ -488,13 +635,18 @@ async function saveItemInfo() {
       selectedItem.value.imageUrl = url
     }
 
+    const expirationToSave = editExpirationDate.value ? editExpirationDate.value.trim() : null
+
     const refItem = doc(db, 'items', selectedItem.value.id)
     await updateDoc(refItem, {
       quantity: editQuantity.value,
       unit: editUnit.value,
       imageUrl: selectedItem.value.imageUrl,
-      locationId: editLocation.value ? editLocation.value.id : null
+      locationId: editLocation.value ? editLocation.value.id : null,
+      expirationDate: expirationToSave
     })
+
+    ;(selectedItem.value as any).expirationDate = expirationToSave
 
     pendingImageFile.value = null
     pendingImagePublicId.value = null
@@ -502,9 +654,13 @@ async function saveItemInfo() {
     await showToast('Producto actualizado.', 'success')
     closeInfoModal()
   } catch (err) {
+    console.error('Error al actualizar producto:', err)
     await showToast('No se pudo actualizar el producto.', 'danger')
+  } finally {
+    savingItem.value = false
   }
 }
+
 
 // Obtiene una imagen de la cámara/galería y la deja solo en memoria como preview hasta que el usuario pulse Guardar
 async function pickImage(item: Item) {
@@ -582,7 +738,8 @@ async function getPantryItems(pantryCode: string) {
           pantryCode: String(item.pantryCode ?? pantryCode),
           locationId: String(item.locationId ?? null),
           inPurchase: Boolean(item.inPurchase ?? false),
-          imageUrl: String(item.imageUrl ?? '')
+          imageUrl: String(item.imageUrl ?? ''),
+          expirationDate: item.expirationDate ?? null
         } as Item
       })
       loading.value = false
@@ -600,7 +757,7 @@ async function getPantryItems(pantryCode: string) {
 async function togglePurchaseState(item: Item) {
   try {
     const ref = doc(db, 'items', item.id)
-    await updateDoc(ref, { inPurchase: !item.inPurchase })
+    await updateDoc(ref, { inPurchase: !item.inPurchase, notePurchase: null })
   } catch (err) {
     console.error('Error al actualizar inPurchase:', err)
     await showToast(`No se pudo actualizar el estado de ${item.name}.`, 'danger')
@@ -655,19 +812,7 @@ async function getPantryRefByCodeGeneric(code: string) {
   return snap.docs[0].ref
 }
 
-// Función para determinar si la imagen es de galería
-function isImageGalery(imageUrl: string | null | undefined): boolean {
-  if (!imageUrl) return false
-  return imageUrl.includes('productos_galeria')
-}
-
 // ----------- MODAL MOVER PRODUCTO -----------
-const isMoveOpen = ref(false)
-const moveItem = ref<Item | null>(null)
-const selectedPantryCode = ref<string>('')
-const moveQuantity = ref<number | null>(null)
-const moveMaxQuantity = ref<number>(0)
-
 function openMoveModal(item: Item) {
   moveItem.value = item
   moveMaxQuantity.value = item.quantity
@@ -682,6 +827,7 @@ function closeMoveModal() {
   selectedPantryCode.value = ''
   moveQuantity.value = null
   moveMaxQuantity.value = 0
+  movingItem.value = false
 }
 
 async function confirmMove() {
@@ -716,6 +862,8 @@ async function confirmMove() {
     return
   }
 
+  movingItem.value = true
+
   try {
     const destCode = selectedPantryCode.value
 
@@ -734,15 +882,6 @@ async function confirmMove() {
       // Ya existe el producto en la despensa destino
       const destDoc = snapDest.docs[0]
       const destData = destDoc.data() as any
-      const destUnit = String(destData.unit ?? '')
-
-      if (destUnit !== moveItem.value.unit) {
-        await showToast(
-          'No se puede mover: las unidades del producto no coinciden entre despensas.',
-          'danger'
-        )
-        return
-      }
 
       const currentDestQty = Number(destData.quantity ?? 0)
       batch.update(destDoc.ref, {
@@ -759,7 +898,8 @@ async function confirmMove() {
         locationId: null,
         inPurchase: false,
         imageUrl: moveItem.value.imageUrl,
-        notePurchase: moveItem.value.notePurchase ?? ''
+        notePurchase: (moveItem.value as any).notePurchase ?? '',
+        expirationDate: (moveItem.value as any).expirationDate ?? null
       })
 
       // Nuevo producto en esa despensa: aumentar totalItems en despensa destino
@@ -784,6 +924,8 @@ async function confirmMove() {
   } catch (err) {
     console.error('Error al mover producto:', err)
     await showToast('No se pudo mover el producto.', 'danger')
+  } finally {
+    movingItem.value = false
   }
 }
 </script>
@@ -823,6 +965,12 @@ async function confirmMove() {
   flex-direction: column;
 }
 
+/* alerta caducidad */
+.item-card-expiring {
+  border: 2px solid #ef4444;
+  box-shadow: 0 2px 12px rgba(239, 68, 68, 0.18);
+}
+
 .item-card img {
   width: 100%;
   height: 80px;
@@ -855,15 +1003,130 @@ async function confirmMove() {
   /*RESERVAMOS EL ALTO DE 2 LINEAS COMO MÁXIMO */
   display: -webkit-box;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  --webkit-line-clamp: 2;
   overflow: hidden;
   min-height: calc(0.8em * 2);
 }
 
 .item-units {
-  margin: 4px 0 5px;
+  margin: 3px 0 5px;
   font-size: 12px;
   color: #6b7280;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.item-units-value {
+  min-width: 70px;
+  text-align: center;
+}
+
+/* Botones +/- genéricos */
+.qty-btn {
+  --padding: 2px;
+  font-size: 8px;
+  margin: 2% 1%;
+}
+
+.item-units .qty-btn .material-icons {
+  font-size: 14px;
+  color: #2e2e30;
+}
+
+.qty-inline .qty-btn .material-icons {
+  font-size: 14px;
+  color: #e2e2e9;
+}
+
+.qty-inline .qty-btn .material-icons {
+  font-size: 14px;
+  color: #e2e2e9;
+}
+
+/* Card: borde gris ligero, circular en +/- */
+.qty-btn-card {
+  --border-radius: 999px;
+  --border-width: 1px;
+  --border-style: solid;
+  --border-color: #d1d5db;
+  --background: #ffffff;
+  width: 26px;
+  height: 26px;
+}
+
+.qty-btn-card::part(native) {
+  border-radius: 999px;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #111827;
+}
+
+/* Cantidad en modales: input con -  cantidad  + inline */
+.qty-input {
+  flex: 1;
+}
+
+/* Contenedor que simula el “input completo” | -  5  + | */
+.qty-inline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #f9fafb;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+  padding: 0 10px;
+}
+
+/* Input dentro del contenedor: sin borde propio, centrado */
+.qty-inline-input {
+  --background: transparent;
+  --border-width: 0;
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 6px;
+  --padding-bottom: 6px;
+  text-align: center;
+  width: 100%;
+}
+
+/* Botones +/- dentro del “input” */
+.qty-inline-btn {
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+  margin: 0;
+}
+
+/* Botones +/- modales: tamaño redondo y colores */
+.qty-btn-modal::part(native) {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+}
+
+.qty-btn-plus {
+  --background: #16a34a;
+  --background-hover: #15803d;
+  --background-activated: #166534;
+  --color: #ffffff;
+}
+
+.qty-btn-minus {
+  --background: #ef4444;
+  --background-hover: #dc2626;
+  --background-activated: #b91c1c;
+  --color: #ffffff;
 }
 
 /* Botón mover */
@@ -917,7 +1180,6 @@ async function confirmMove() {
   z-index: 2;
 }
 
-/* El círculo REAL debe aplicarse al elemento interno */
 .delete-btn::part(native) {
   border-radius: 50%;
   width: 32px;
@@ -1029,7 +1291,7 @@ async function confirmMove() {
   font-weight: 500;
 }
 
-/* MODAL INFO PRODUCTO */
+/* MODAL INFO PRODUCTO / MOVER PRODUCTO */
 .product-info-modal::part(content),
 .move-product-modal::part(content) {
   position: absolute;
@@ -1050,6 +1312,7 @@ async function confirmMove() {
 
 .product-info-wrapper {
   padding: 18px 16px 20px;
+  position: relative;
 }
 
 .info-title {
@@ -1131,6 +1394,15 @@ async function confirmMove() {
   color: #374151;
 }
 
+.info-input-exception {
+  --background: #f9fafb;
+  --padding-start: 15px;
+  --padding-top: 6px;
+  --padding-bottom: 6px;
+  border-radius: 10px;
+  font-size: 14px;
+}
+
 .info-input,
 .info-select {
   --background: #f9fafb;
@@ -1173,6 +1445,7 @@ async function confirmMove() {
 .info-helper {
   font-size: 11px;
   color: #6b7280;
+  margin-top: 4px;
 }
 
 /* Botones inferiores */
@@ -1202,5 +1475,24 @@ async function confirmMove() {
   font-weight: 600;
   text-transform: none;
   border-radius: 999px;
+}
+
+.modal-saving-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(2px);
+  z-index: 999;
+}
+
+.modal-saving-text {
+  margin: 0;
+  font-weight: 700;
+  color: #111827;
 }
 </style>
