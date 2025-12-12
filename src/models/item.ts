@@ -8,4 +8,5 @@ export interface Item {
   inPurchase: boolean
   imageUrl: string
   notePurchase?: string
+  expirationDate?: string
 }
