@@ -337,7 +337,7 @@ async function showErrorToast(message: string) {
 
 /* SOLO CUANDO LA FOTO VENGA DE GALERIA */
 .item-row .img-galery {
-  width: 50%;
+  width: 80%;
   object-fit: contain;
   display: block;
   margin: 0 8px;
