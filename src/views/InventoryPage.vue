@@ -10,7 +10,7 @@
       <!-- Buscador END -->
 
       <!-- Loading START -->
-      <div v-if="loading || savingItem" class="loading-box">
+      <div v-if="loading" class="loading-box">
         <ion-spinner name="crescent" style="transform:scale(2);" />
       </div>
       <!-- Loading END -->
@@ -83,46 +83,47 @@
       <!-- Sin productos de la despensa seleccionada END -->
 
       <!-- Botón flotante START -->
-      <ModalAddProduct :pantry-code="props.code" :items="items" view="inventory" />
+      <ModalAddProduct :pantry-code="props.code" :items="items" view="inventory" @willOpen="search = ''" />
       <!-- Botón flotante END -->
 
       <!-- Modal info producto START -->
-      <ion-modal :is-open="isInfoOpen" css-class="product-info-modal" @didDismiss="closeInfoModal">
+      <ion-modal :is-open="isInfoOpen" css-class="product-info-modal" @didDismiss="closeInfoModal"
+        :backdropDismiss="!savingItem" :canDismiss="!savingItem">
         <ion-content class="product-info-content" v-if="selectedItem">
           <div class="product-info-wrapper">
             <h3 class="info-title">INFORMACIÓN DE PRODUCTO</h3>
 
             <div class="info-product-block">
-              <div class="info-product-image-wrapper" @click="pickImage(selectedItem)">
+              <div class="info-product-image-wrapper" @click="!savingItem && pickImage(selectedItem)">
                 <img :src="selectedItem.imageUrl" :alt="selectedItem.name" />
-                <span class="material-icons info-product-icon">
-                  add_photo_alternate
-                </span>
+                <span class="material-icons info-product-icon">add_photo_alternate</span>
               </div>
               <span class="info-product-name">{{ selectedItem.name }}</span>
             </div>
+
             <div class="info-form">
               <div class="info-row">
                 <div class="info-field">
                   <label class="info-label">Cantidad</label>
                   <div class="qty-inline">
                     <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-minus qty-inline-btn"
-                      @click="changeEditQuantity(-1)">
+                      @click="changeEditQuantity(-1)" :disabled="savingItem">
                       <span class="material-icons">remove</span>
                     </ion-button>
 
                     <ion-input type="number" inputmode="numeric" v-model.number="editQuantity"
-                      class="info-input-exception  qty-input qty-inline-input" />
+                      class="info-input-exception qty-input qty-inline-input" :disabled="savingItem" />
 
                     <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-plus qty-inline-btn"
-                      @click="changeEditQuantity(1)">
+                      @click="changeEditQuantity(1)" :disabled="savingItem">
                       <span class="material-icons">add</span>
                     </ion-button>
                   </div>
                 </div>
+
                 <div class="info-field">
                   <label class="info-label">Unidad</label>
-                  <ion-select interface="popover" v-model="editUnit" class="info-select">
+                  <ion-select interface="popover" v-model="editUnit" class="info-select" :disabled="savingItem">
                     <ion-select-option v-for="u in unitOptions" :key="u" :value="u">
                       {{ u }}
                     </ion-select-option>
@@ -134,7 +135,7 @@
                 <div class="info-field">
                   <label class="info-label">Localización</label>
                   <ion-select interface="popover" v-model="editLocation" class="info-select"
-                    placeholder="Selecciona una localización">
+                    placeholder="Selecciona una localización" :disabled="savingItem">
                     <ion-select-option v-for="l in locations" :key="l.id" :value="l">
                       {{ l.name }}
                     </ion-select-option>
@@ -143,13 +144,21 @@
               </div>
 
               <div class="info-actions">
-                <ion-button expand="block" fill="outline" class="btn-info-cancel" @click="closeInfoModal">
+                <ion-button expand="block" fill="outline" class="btn-info-cancel" @click="closeInfoModal"
+                  :disabled="savingItem">
                   <span class="material-icons">close</span> Cancelar
                 </ion-button>
-                <ion-button expand="block" class="btn-info-save" @click="saveItemInfo">
+
+                <ion-button expand="block" class="btn-info-save" @click="saveItemInfo" :disabled="savingItem">
                   Guardar
                 </ion-button>
               </div>
+            </div>
+
+            <!-- OVERLAY LOADER MODAL -->
+            <div v-if="savingItem" class="modal-saving-overlay">
+              <ion-spinner name="crescent" style="transform:scale(1.6);" />
+              <p class="modal-saving-text">Guardando…</p>
             </div>
           </div>
         </ion-content>
@@ -157,7 +166,8 @@
       <!-- Modal info producto END -->
 
       <!-- Modal mover producto START -->
-      <ion-modal :is-open="isMoveOpen" css-class="move-product-modal" @didDismiss="closeMoveModal">
+      <ion-modal :is-open="isMoveOpen" css-class="move-product-modal" @didDismiss="closeMoveModal"
+        :backdropDismiss="!movingItem" :canDismiss="!movingItem">
         <ion-content class="product-info-content" v-if="moveItem">
           <div class="product-info-wrapper">
             <h3 class="info-title">MOVER PRODUCTO</h3>
@@ -174,7 +184,7 @@
                 <div class="info-field">
                   <label class="info-label">Despensa destino</label>
                   <ion-select interface="popover" v-model="selectedPantryCode" class="info-select"
-                    placeholder="Selecciona una despensa">
+                    placeholder="Selecciona una despensa" :disabled="movingItem">
                     <ion-select-option v-for="p in destinationPantries" :key="p.id" :value="p.code">
                       {{ p.name }} ({{ p.code }})
                     </ion-select-option>
@@ -185,17 +195,18 @@
               <div class="info-row">
                 <div class="info-field">
                   <label class="info-label">Cantidad a mover</label>
+
                   <div class="qty-inline">
                     <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-minus qty-inline-btn"
-                      @click="changeMoveQuantity(-1)">
+                      @click="changeMoveQuantity(-1)" :disabled="movingItem">
                       <span class="material-icons">remove</span>
                     </ion-button>
 
                     <ion-input type="number" inputmode="numeric" v-model.number="moveQuantity"
-                      class="info-input-exception qty-input qty-inline-input" />
+                      class="info-input-exception qty-input qty-inline-input" :disabled="movingItem" />
 
                     <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-plus qty-inline-btn"
-                      @click="changeMoveQuantity(1)">
+                      @click="changeMoveQuantity(1)" :disabled="movingItem">
                       <span class="material-icons">add</span>
                     </ion-button>
                   </div>
@@ -212,13 +223,21 @@
               </div>
 
               <div class="info-actions">
-                <ion-button expand="block" fill="outline" class="btn-info-cancel" @click="closeMoveModal">
+                <ion-button expand="block" fill="outline" class="btn-info-cancel" @click="closeMoveModal"
+                  :disabled="movingItem">
                   <span class="material-icons">close</span> Cancelar
                 </ion-button>
-                <ion-button expand="block" class="btn-info-save" @click="confirmMove">
+
+                <ion-button expand="block" class="btn-info-save" @click="confirmMove" :disabled="movingItem">
                   Mover
                 </ion-button>
               </div>
+            </div>
+
+            <!-- OVERLAY LOADER MODAL -->
+            <div v-if="movingItem" class="modal-saving-overlay">
+              <ion-spinner name="crescent" style="transform:scale(1.6);" />
+              <p class="modal-saving-text">Moviendo…</p>
             </div>
           </div>
         </ion-content>
@@ -281,7 +300,8 @@ console.log('Codigo y nombre de la despensa:', props.code, props.name)
 
 const loading = ref<boolean>(false)
 const search = ref<string>('')
-  const savingItem = ref<boolean>(false) // loader global al guardar producto
+const savingItem = ref<boolean>(false)
+const movingItem = ref<boolean>(false)
 
 let stop: Unsubscribe | null = null
 const items = ref<Item[]>([])
@@ -683,7 +703,7 @@ async function getPantryItems(pantryCode: string) {
 async function togglePurchaseState(item: Item) {
   try {
     const ref = doc(db, 'items', item.id)
-    await updateDoc(ref, { inPurchase: !item.inPurchase })
+    await updateDoc(ref, { inPurchase: !item.inPurchase, notePurchase: null })
   } catch (err) {
     console.error('Error al actualizar inPurchase:', err)
     await showToast(`No se pudo actualizar el estado de ${item.name}.`, 'danger')
@@ -753,6 +773,7 @@ function closeMoveModal() {
   selectedPantryCode.value = ''
   moveQuantity.value = null
   moveMaxQuantity.value = 0
+  movingItem.value = false
 }
 
 async function confirmMove() {
@@ -787,6 +808,8 @@ async function confirmMove() {
     return
   }
 
+  movingItem.value = true
+
   try {
     const destCode = selectedPantryCode.value
 
@@ -805,15 +828,6 @@ async function confirmMove() {
       // Ya existe el producto en la despensa destino
       const destDoc = snapDest.docs[0]
       const destData = destDoc.data() as any
-      const destUnit = String(destData.unit ?? '')
-
-      if (destUnit !== moveItem.value.unit) {
-        await showToast(
-          'No se puede mover: las unidades del producto no coinciden entre despensas.',
-          'danger'
-        )
-        return
-      }
 
       const currentDestQty = Number(destData.quantity ?? 0)
       batch.update(destDoc.ref, {
@@ -855,8 +869,11 @@ async function confirmMove() {
   } catch (err) {
     console.error('Error al mover producto:', err)
     await showToast('No se pudo mover el producto.', 'danger')
+  } finally {
+    movingItem.value = false
   }
 }
+
 </script>
 
 <style scoped>
@@ -1237,6 +1254,7 @@ async function confirmMove() {
 
 .product-info-wrapper {
   padding: 18px 16px 20px;
+  position: relative;
 }
 
 .info-title {
@@ -1317,6 +1335,7 @@ async function confirmMove() {
   font-weight: 600;
   color: #374151;
 }
+
 .info-input-exception {
   --background: #f9fafb;
   --padding-start: 15px;
@@ -1435,5 +1454,24 @@ async function confirmMove() {
   font-weight: 600;
   text-transform: none;
   border-radius: 999px;
+}
+
+.modal-saving-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(2px);
+  z-index: 999;
+}
+
+.modal-saving-text {
+  margin: 0;
+  font-weight: 700;
+  color: #111827;
 }
 </style>

@@ -73,7 +73,7 @@
       </div>
 
       <!-- Botón flotante START -->
-      <ModalAddProduct :pantry-code="props.code" :items="items" view="purcharse" />
+      <ModalAddProduct :pantry-code="props.code" :items="items" view="purcharse" @willOpen="search = ''"/>
       <!-- Botón flotante END -->
 
       <!-- Pop up confirmar salir/eliminar despensa START -->
@@ -337,7 +337,7 @@ async function showErrorToast(message: string) {
 
 /* SOLO CUANDO LA FOTO VENGA DE GALERIA */
 .item-row .img-galery {
-  width: 50%;
+  width: 80%;
   object-fit: contain;
   display: block;
   margin: 0 8px;
