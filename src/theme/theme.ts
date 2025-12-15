@@ -57,7 +57,8 @@ export function toggleTheme() {
 
 export function applyAccentColor(hex: string) {
   const safeHex = isValidHex(hex) ? hex : DEFAULT_ACCENT
-  const rgb = hexToRgb(safeHex) ?? hexToRgb(DEFAULT_ACCENT)!
+  const 
+  rgb = hexToRgb(safeHex) ?? hexToRgb(DEFAULT_ACCENT)!
 
   // Vars propias (tu app)
   document.documentElement.style.setProperty('--md-accent', safeHex)

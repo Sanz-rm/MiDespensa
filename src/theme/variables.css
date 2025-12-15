@@ -5,6 +5,7 @@ http://ionicframework.com/docs/theming/ */
   --ion-background-color: #ffffff;
   --ion-background-color-rgb: 255,255,255;
   --ion-text-color: #0f172a;
+  --ion-text-color2: #464646; 
   --ion-text-color-rgb: 15,23,42;
   --ion-color-primary: #3b82f6;
   --ion-color-primary-contrast: #ffffff;
@@ -13,9 +14,10 @@ http://ionicframework.com/docs/theming/ */
 
 /* Tema oscuro activable con clase en <body> */
 .dark {
-  --ion-background-color: #121212;
+  --ion-background-color: #1f2324;
   --ion-background-color-rgb: 18,18,18;
   --ion-text-color: #e5e7eb;
+  --ion-text-color2: #f7faff;
   --ion-text-color-rgb: 229,231,235;
   --ion-color-primary: #60a5fa;
   --ion-color-primary-contrast: #0b0f19;

@@ -127,20 +127,8 @@
 import PantryHeader from '@/components/ui/PantryHeader.vue'
 import { IonPage, IonHeader, IonContent, IonSpinner } from '@ionic/vue'
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
-import {
-  collection,
-  query,
-  where,
-  getDocs,
-  addDoc,
-  updateDoc,
-  onSnapshot,
-  type Unsubscribe,
-  increment,
-  orderBy,
-  doc,
-  writeBatch,
-} from 'firebase/firestore'
+import { collection, query, where, getDocs, addDoc, updateDoc, onSnapshot,
+ type Unsubscribe, increment, orderBy, doc, writeBatch } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { Pantry } from '@/models/pantry'
 import { useRouter } from 'vue-router'
@@ -562,7 +550,7 @@ ion-header.rounded-header::after {
 
 /* DARK: fondo general */
 :global(body.dark) .pantry-content {
-  --background: #0f1115;
+  background: var(--ion-background-color);
 }
 
 /* Error */
@@ -655,7 +643,7 @@ ion-header.rounded-header::after {
 
 /* DARK: tarjeta */
 :global(body.dark) .pantry-card {
-  background: #161a22;
+  background: var(--ion-background-color);
   border-color: rgba(var(--md-accent-rgb, 46, 161, 93), 0.55);
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
 }
@@ -671,8 +659,8 @@ ion-header.rounded-header::after {
   right: 10px;
   border: 0;
   background: #fff;
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 8px;
   box-shadow: inset 0 0 0 2px #e8eef2;
   display: grid;
@@ -681,12 +669,12 @@ ion-header.rounded-header::after {
 }
 
 .corner-btn.danger {
-  box-shadow: inset 0 0 0 2px #ffdddd;
+  box-shadow: inset 0 0 0 2px #e53935;
   color: #e53935;
 }
 
 .corner-btn.accent {
-  box-shadow: inset 0 0 0 2px rgba(var(--md-accent-rgb, 46, 161, 93), 0.18);
+  box-shadow: inset 0 0 0 2px #e53935;
   color: var(--md-accent, #2ea15d);
 }
 
@@ -704,20 +692,6 @@ ion-header.rounded-header::after {
 }
 
 /* DARK: botón esquina */
-:global(body.dark) .corner-btn {
-  background: rgba(255, 255, 255, 0.06);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
-}
-
-:global(body.dark) .corner-btn.danger {
-  background: rgba(229, 57, 53, 0.12);
-  box-shadow: inset 0 0 0 1px rgba(229, 57, 53, 0.35);
-}
-
-:global(body.dark) .corner-btn.accent {
-  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.12);
-  box-shadow: inset 0 0 0 1px rgba(var(--md-accent-rgb, 46, 161, 93), 0.38);
-}
 
 /* Icono izquierda */
 .icon-box {
@@ -769,10 +743,6 @@ ion-header.rounded-header::after {
   font-size: 13px;
 }
 
-:global(body.dark) .meta {
-  color: rgba(229, 231, 235, 0.78);
-}
-
 .meta-item {
   display: inline-flex;
   align-items: center;
@@ -804,12 +774,6 @@ ion-header.rounded-header::after {
   font-weight: 700;
   color: #1f2937;
   font-size: 13px;
-}
-
-:global(body.dark) .code-chip {
-  color: rgba(255, 255, 255, 0.92);
-  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.14);
-  border-color: rgba(var(--md-accent-rgb, 46, 161, 93), 0.32);
 }
 
 .copy-btn {
@@ -906,7 +870,7 @@ ion-header.rounded-header::after {
 }
 
 :global(body.dark) .item-card {
-  background: #161a22;
+  background: var(--ion-background-color);
   border-color: rgba(255, 255, 255, 0.08);
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
 }
@@ -991,4 +955,24 @@ ion-content.pantry-content {
 .code-chip {
   color: var(--md-card-text) !important;
 }
+</style>
+
+<style>
+/* Estilos globales para dark mode */
+body.dark .meta {
+  color: #ffffff !important;
+}
+
+body.dark .code-chip {
+  color: #ffffff !important;
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.14) !important;
+  border-color: rgba(var(--md-accent-rgb, 46, 161, 93), 0.32) !important;
+}
+
+body.dark .corner-btn,
+body.dark .corner-btn.accent,
+body.dark .corner-btn.danger{
+  background: var(--ion-background-color);
+}
+
 </style>

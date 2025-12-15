@@ -26,7 +26,7 @@
                 <ion-icon :icon="sparklesOutline" class="hero-icon" />
               </div>
               <div class="hero-text">
-                <ion-text class="hero-title">MiDespensa</ion-text>
+                <ion-text class="hero-title">MI DESPENSA</ion-text>
                 <ion-text class="hero-subtitle">Personaliza tu experiencia</ion-text>
               </div>
             </div>
@@ -123,36 +123,9 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import {
-  IonPage,
-  IonHeader,
-  IonToolbar,
-  IonTitle,
-  IonContent,
-  IonButtons,
-  IonBackButton,
-  IonCard,
-  IonCardContent,
-  IonText,
-  IonNote,
-  IonList,
-  IonItem,
-  IonLabel,
-  IonToggle,
-  IonIcon,
-  IonItemDivider,
-  IonButton,
-  toastController,
-} from '@ionic/vue'
-import {
-  colorPaletteOutline,
-  informationCircleOutline,
-  trashOutline,
-  downloadOutline,
-  logOutOutline,
-  sparklesOutline,
-  moonOutline,
-} from 'ionicons/icons'
+import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton, IonCard, IonCardContent, IonText,
+  IonNote, IonList, IonItem, IonLabel, IonToggle, IonIcon, IonItemDivider, IonButton, toastController } from '@ionic/vue'
+import { colorPaletteOutline, informationCircleOutline, trashOutline, downloadOutline, logOutOutline, sparklesOutline, moonOutline } from 'ionicons/icons'
 import { initTheme, toggleTheme, accentColor, setAccentColor, resetAccentColor } from '@/theme/theme'
 
 const isDark = ref(false)
@@ -201,10 +174,9 @@ const onExitApp = async () => {
 
 <style scoped>
 .options-content {
-  --background: linear-gradient(
-    180deg,
-    rgba(var(--md-accent-rgb, 46, 161, 93), 0.08),
-    rgba(20, 20, 20, 0)
+  --background: linear-gradient( 180deg,
+                rgba(var(--md-accent-rgb, 46, 161, 93), 0.08),
+                rgba(0, 0, 0, 0)
   );
 }
 
@@ -260,17 +232,14 @@ ion-back-button {
   border-radius: 14px;
   display: grid;
   place-items: center;
-  border: 1px solid rgba(var(--md-accent-rgb, 46, 161, 93), 0.25);
-  background: linear-gradient(
-    180deg,
-    rgba(var(--md-accent-rgb, 46, 161, 93), 0.18),
-    rgba(var(--md-accent-rgb, 46, 161, 93), 0.06)
-  );
-  font-size: 20px;
+  border: 1px solid var(--md-accent, #2ea15d);
+  background: var(--md-accent, #2ea15d);
+
+  font-size: 22px;
 }
 
 .hero-icon {
-  color: var(--md-accent, #2ea15d);
+  color: #ffffff;
 }
 
 .hero-text {
@@ -280,19 +249,20 @@ ion-back-button {
 }
 
 .hero-title {
-  font-weight: 800;
-  font-size: 18px;
+  font-weight: 600;
+  font-size: 22px;
+  color: var(--ion-text-color2);
 }
 
 .hero-subtitle {
-  opacity: 0.75;
   font-size: 13px;
+  color: var(--ion-text-color);
 }
 
 .hero-version {
-  opacity: 0.7;
-  font-weight: 700;
-  color: rgba(var(--md-accent-rgb, 46, 161, 93), 0.95);
+  font-weight: 500;
+  color: var(--ion-text-color, #ffffff);
+  opacity: 1;
 }
 
 .list-card {
@@ -307,18 +277,18 @@ ion-back-button {
   font-size: 12px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  opacity: 0.8;
+  color: var(--ion-text-color), !important;
 }
 
 .setting-item {
   --padding-start: 14px;
-  --inner-padding-end: 12px;
+  --inner-padding-end: 15px;
   --min-height: 56px;
 }
 
 .item-icon {
-  font-size: 20px;
-  opacity: 0.95;
+  font-size: 26px;
+  margin-left: 3%;
 }
 
 .accent {
@@ -333,6 +303,7 @@ ion-back-button {
   --track-background-checked: #5c5c5c6c;
   --background: rgba(169, 169, 169, 0.35);
   --background-checked: rgba(169, 169, 169, 0.35);
+  margin-left: 4%;
 }
 
 :global(body.dark) .accent-toggle {
@@ -402,12 +373,8 @@ ion-back-button {
   padding: 0;
 }
 
-.color-input::-webkit-color-swatch {
-  border: 0;
-  border-radius: 10px;
-}
-
-.color-input::-moz-color-swatch {
+.color-input::-webkit-color-swatch,
+.color-input::-moz-color-swatch{
   border: 0;
   border-radius: 10px;
 }

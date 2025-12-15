@@ -965,6 +965,12 @@ async function confirmMove() {
   flex-direction: column;
 }
 
+:global(body.dark) .item-card {
+  background: #1e1e1e;
+  border-color: #333333;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
 /* alerta caducidad */
 .item-card-expiring {
   border: 2px solid #ef4444;
@@ -1008,6 +1014,10 @@ async function confirmMove() {
   min-height: calc(0.8em * 2);
 }
 
+:global(body.dark) .item-name {
+  color: #ffffff;
+}
+
 .item-units {
   margin: 3px 0 5px;
   font-size: 12px;
@@ -1017,6 +1027,10 @@ async function confirmMove() {
   align-items: center;
   justify-content: center;
   gap: 5px;
+}
+
+:global(body.dark) .item-units {
+  color: #ffffff;
 }
 
 .item-units-value {
@@ -1057,6 +1071,11 @@ async function confirmMove() {
   height: 26px;
 }
 
+:global(body.dark) .qty-btn-card {
+  --border-color: #444444;
+  --background: #2a2a2a;
+}
+
 .qty-btn-card::part(native) {
   border-radius: 999px;
   width: 26px;
@@ -1065,6 +1084,10 @@ async function confirmMove() {
   align-items: center;
   justify-content: center;
   color: #111827;
+}
+
+:global(body.dark) .qty-btn-card::part(native) {
+  color: #ffffff;
 }
 
 /* Cantidad en modales: input con -  cantidad  + inline */
@@ -1081,6 +1104,11 @@ async function confirmMove() {
   border-radius: 10px;
   border: 1px solid #e5e7eb;
   padding: 0 10px;
+}
+
+:global(body.dark) .qty-inline {
+  background: #2a2a2a;
+  border-color: #444444;
 }
 
 /* Input dentro del contenedor: sin borde propio, centrado */
@@ -1256,6 +1284,10 @@ async function confirmMove() {
   color: #6b7280;
 }
 
+:global(body.dark) .empty {
+  color: #ffffff;
+}
+
 .empty-suggested {
   opacity: 0.7;
   margin-top: 10vh;
@@ -1277,6 +1309,10 @@ async function confirmMove() {
   color: #374151;
 }
 
+:global(body.dark) .empty-icon .material-icons {
+  color: #ffffff;
+}
+
 .empty-title {
   margin: 0 0 4px;
   font-weight: 700;
@@ -1284,11 +1320,19 @@ async function confirmMove() {
   color: #111827;
 }
 
+:global(body.dark) .empty-title {
+  color: #ffffff;
+}
+
 .empty-subtitle {
   margin: 0;
   font-size: 17px;
   color: #3f4146;
   font-weight: 500;
+}
+
+:global(body.dark) .empty-subtitle {
+  color: #ffffff;
 }
 
 /* MODAL INFO PRODUCTO / MOVER PRODUCTO */
@@ -1306,8 +1350,18 @@ async function confirmMove() {
   background: #ffffff;
 }
 
+:global(body.dark) .product-info-modal::part(content),
+:global(body.dark) .move-product-modal::part(content) {
+  background: #1e1e1e;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
 .product-info-content {
   --background: #ffffff;
+}
+
+:global(body.dark) .product-info-content {
+  --background: #1e1e1e;
 }
 
 .product-info-wrapper {
@@ -1322,6 +1376,10 @@ async function confirmMove() {
   font-weight: 700;
   color: #111827;
   margin-bottom: 6%;
+}
+
+:global(body.dark) .info-title {
+  color: #ffffff;
 }
 
 .info-product-block {
@@ -1364,6 +1422,10 @@ async function confirmMove() {
   margin-top: 4%;
 }
 
+:global(body.dark) .info-product-name {
+  color: #ffffff;
+}
+
 .info-form {
   margin-top: 4px;
 }
@@ -1394,6 +1456,10 @@ async function confirmMove() {
   color: #374151;
 }
 
+:global(body.dark) .info-label {
+  color: #ffffff;
+}
+
 .info-input-exception {
   --background: #f9fafb;
   --padding-start: 15px;
@@ -1401,6 +1467,10 @@ async function confirmMove() {
   --padding-bottom: 6px;
   border-radius: 10px;
   font-size: 14px;
+}
+
+:global(body.dark) .info-input-exception {
+  --background: #2a2a2a;
 }
 
 .info-input,
@@ -1442,10 +1512,18 @@ async function confirmMove() {
   --background: #f3f4f6;
 }
 
+:global(body.dark) .info-input-readonly {
+  --background: #1a1a1a;
+}
+
 .info-helper {
   font-size: 11px;
   color: #6b7280;
   margin-top: 4px;
+}
+
+:global(body.dark) .info-helper {
+  color: #ffffff;
 }
 
 /* Botones inferiores */
@@ -1464,6 +1542,12 @@ async function confirmMove() {
   font-weight: 600;
   text-transform: none;
   border-radius: 999px;
+}
+
+:global(body.dark) .btn-info-cancel {
+  --background: #2a2a2a;
+  --border-color: #16a34a;
+  --color: #16a34a;
 }
 
 .btn-info-save {
@@ -1490,9 +1574,17 @@ async function confirmMove() {
   z-index: 999;
 }
 
+:global(body.dark) .modal-saving-overlay {
+  background: rgba(0, 0, 0, 0.85);
+}
+
 .modal-saving-text {
   margin: 0;
   font-weight: 700;
   color: #111827;
+}
+
+:global(body.dark) .modal-saving-text {
+  color: #ffffff;
 }
 </style>
