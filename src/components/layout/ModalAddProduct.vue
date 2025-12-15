@@ -404,6 +404,7 @@ watch(
 <style scoped>
 .add-button {
     --background: #2ea15d;
+    --color: #fff;
 }
 
 /* MODAL CREAR O AÑADIR PRODUCTO START */

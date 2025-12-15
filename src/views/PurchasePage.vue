@@ -316,6 +316,20 @@ async function showErrorToast(message: string) {
   margin-bottom: 8px;
 }
 
+ion-searchbar {
+  --border-radius: 999px;
+}
+
+body.dark ion-searchbar {
+  --background: #2d2e2e;
+  --placeholder-color: #ffffff;
+  --color: #ffffff;
+  --icon-color: #ffffffaf;
+  --clear-icon-color: #888888;
+  --border-color: #444444;
+  --border-radius: 999px;
+}
+
 /* Lista estilo cards en fila */
 .list-cards {
   display: grid;
