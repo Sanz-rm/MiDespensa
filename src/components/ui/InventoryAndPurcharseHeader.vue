@@ -35,11 +35,10 @@ const backHref = computed(() => props.backHref ?? '/home')
 
 <style scoped>
 ion-header.rounded-header {
-  --background: #2ea15d;
-  --ion-background-color: #2ea15d;
+  --ion-background-color: var(--md-accent, #2ea15d);
   --color: #fff;
   --box-shadow: none;
-  background: #2ea15d !important;
+  background: var(--md-accent, #2ea15d) !important;
   box-shadow: none !important;
   border: 0;
   padding: 0;

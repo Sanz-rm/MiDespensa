@@ -52,7 +52,7 @@ function onConfirm() {
 .confirm-dialog {
   width: 90%;
   max-width: 360px;
-  background: #ffffff;
+  background: var(--ion-background-color2);
   border-radius: 18px;
   padding: 18px 20px 16px;
   box-shadow: 0 15px 40px rgba(15, 23, 42, 0.25);
@@ -63,13 +63,13 @@ function onConfirm() {
   margin: 0 0 6px;
   font-size: 18px;
   font-weight: 700;
-  color: #111827;
+  color: var(--ion-text-color);
 }
 
 .confirm-dialog p {
   margin: 0 0 16px;
   font-size: 14px;
-  color: #4b5563;
+  color: var(--ion-text-color2);
 }
 
 .confirm-actions {
@@ -94,7 +94,7 @@ function onConfirm() {
 }
 
 .confirm-actions .btn-danger {
-  background: #2ea15d;
+  background: var(--md-accent, #2ea15d);
   color: #ffffff;
 }
 

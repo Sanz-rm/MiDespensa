@@ -233,7 +233,7 @@ async function onConfirm() {
 
 /* arjeta por dentro */
 .modal-card {
-  background: #ffffff;
+  background: var(--ion-background-color2);
   border-radius: 22px;
   overflow: hidden;
   box-shadow: var(--box-shadow);
@@ -242,7 +242,7 @@ async function onConfirm() {
 /* Cabecera verde */
 .modal-head {
   position: relative;
-  background: #2e9b52;
+  background: var(--md-accent, #2ea15d);
   color: #fff;
   padding: 28px 20px 22px;
   border-bottom-left-radius: 22px;
@@ -289,12 +289,12 @@ async function onConfirm() {
 .field-label {
   display: block;
   font-weight: 700;
-  color: #222;
+  color: var(--ion-text-color);
   margin: 8px 2px 8px;
 }
 
 .field-item {
-  --background: #fff;
+  --background: #f7f9fa;
   --inner-padding-end: 0;
   --inner-padding-start: 0;
   --padding-start: 10px;
@@ -302,6 +302,10 @@ async function onConfirm() {
   border-radius: 12px;
   box-shadow: 0 4px 14px rgba(0,0,0,.08);
   margin-bottom: 14px;
+}
+
+body.dark .field-item {
+  --background: #3a3838;
 }
 
 .field-item ion-input::part(native) {
@@ -314,7 +318,7 @@ async function onConfirm() {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  margin-top: 6px;
+  margin-top: 6%;
 }
 
 .btn {
@@ -334,13 +338,17 @@ async function onConfirm() {
 .btn:active { transform: translateY(1px); }
 
 .btn-outline {
-  background: #fff;
-  color: #2e9b52;
-  border-color: #2e9b52;
+  background: var(--ion-background-color);
+  color: var(--md-accent, #2ea15d);
+  border-color: var(--md-accent, #2ea15d);
+}
+
+body.dark .btn-outline  {
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.08) !important;
 }
 
 .btn-solid {
-  background: #2e9b52;
+  background: var(--md-accent, #2ea15d);
   color: #fff;
 }
 

@@ -49,9 +49,9 @@ provide('purchaseCount', purchaseCount)
 
 <style scoped>
 .tabs {
-  --background: #fff;
-  --color: #000;
-  --color-selected: #2ea15d;
+  --background: var(--ion-background-color);
+  --color: var(--ion-text-color);
+  --color-selected: var(--md-accent, #2ea15d);
   box-shadow: 0 -2px 8px rgba(0, 0, 0, .06);
 }
 
@@ -70,8 +70,8 @@ provide('purchaseCount', purchaseCount)
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background-color: #2ea15d;
-  color: #ffffff;
+  background-color: var(--md-accent, #2ea15d);
+  --color: var(--ion-text-color4);
   display: flex;
   align-items: center;
   justify-content: center;

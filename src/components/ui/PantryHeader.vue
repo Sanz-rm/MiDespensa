@@ -61,8 +61,6 @@ const btnRef = ref<HTMLButtonElement | null>(null)
 const title = computed(() => props.title)
 const alt = computed(() => props.alt)
 
-
-// Detección de plataforma nativa (Capacitor v5+)
 const isNative = () =>
   typeof (Capacitor as any).isNativePlatform === 'function'
     ? (Capacitor as any).isNativePlatform()
@@ -72,7 +70,6 @@ const toggle = () => { isOpen.value = !isOpen.value }
 const close = () => { isOpen.value = false }
 
 const gracefulWebExit = async () => {
-  // En web, intentamos volver atrás; si no hay historial, vamos a la raíz
   if (window.history.length > 1) {
     window.history.back()
   } else {
@@ -89,9 +86,7 @@ const exitApp = async () => {
     try {
       await App.exitApp()
       return
-    } catch {
-      // Fallback por si no está disponible (iOS no soporta cerrar)
-    }
+    } catch {}
   }
   await gracefulWebExit()
 }
@@ -119,7 +114,6 @@ const onDocClick = (e: MouseEvent) => {
   if (clickedOutsideMenu && clickedOutsideBtn) close()
 }
 
-// Manejo del botón físico "Atrás" en Android (Capacitor)
 let removeBackListener: (() => void) | null = null
 
 onMounted(async () => {
@@ -128,12 +122,10 @@ onMounted(async () => {
   if (isNative()) {
     try {
       const { remove } = await App.addListener('backButton', ({ canGoBack }) => {
-        // 1) Si el menú está abierto, ciérralo
         if (isOpen.value) {
           close()
           return
         }
-        // 2) Si el router puede retroceder, vuelve atrás; si no, sal de la app
         if (canGoBack) {
           router.back()
         } else {
@@ -141,9 +133,7 @@ onMounted(async () => {
         }
       })
       removeBackListener = remove
-    } catch {
-      // Ignorar si no está disponible
-    }
+    } catch {}
   }
 })
 
@@ -157,8 +147,7 @@ onBeforeUnmount(() => {
 </script>
 
 <style scoped>
-
-
+/* ✅ En tu app ya estás seteando --md-accent y --md-accent-rgb */
 .banner {
   display: flex;
   align-items: center;
@@ -166,7 +155,7 @@ onBeforeUnmount(() => {
   gap: 12px;
   padding: 14px 18px;
   padding-top: 8%;
-  background: #2ea15d;
+  background: var(--md-accent, #2ea15d);
   color: #fff;
   border-bottom-left-radius: 18px;
   border-bottom-right-radius: 18px;
@@ -182,35 +171,88 @@ onBeforeUnmount(() => {
   filter: brightness(0) invert(1);
 }
 
-.title { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; line-height: 1; }
+.title {
+  margin: 0;
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: .4px;
+  text-transform: uppercase;
+  line-height: 1;
+}
 
 .right { position: relative; }
 
 .menu-btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 38px; height: 38px; border-radius: 10px; border: none;
-  background: rgba(255,255,255,.18); cursor: pointer; transition: background .2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,.22);
+  background: rgba(255,255,255,.18);
+  cursor: pointer;
+  transition: background .2s ease, transform .08s ease, border-color .2s ease;
 }
 .menu-btn:hover { background: rgba(255,255,255,.28); }
-.menu-btn:focus { outline: 2px solid rgba(255,255,255,.7); outline-offset: 2px; }
 
 .hamb { display: inline-flex; flex-direction: column; gap: 4px; }
 .hamb > span { display: block; width: 18px; height: 2px; background: #fff; border-radius: 2px; }
 
+/* ✅ Menú: claro por defecto */
 .menu {
-  position: absolute; top: calc(100% + 8px); right: 0; min-width: 180px;
-  background: #fff; color: #222; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.18);
-  padding: 6px; z-index: 20;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  min-width: 180px;
+  background: #fff;
+  color: #222;
+  border-radius: 12px;
+  box-shadow: 0 10px 26px rgba(0,0,0,.18);
+  padding: 6px;
+  z-index: 20;
+  border: 1px solid rgba(0,0,0,.08);
+}
+
+body.dark .menu {
+  background: #292a2b;
+  color: #ffffff;
 }
 
 .menu ul { list-style: none; margin: 0; padding: 4px; }
 .menu li + li { margin-top: 4px; }
 
 .menu button[role="menuitem"] {
-  width: 100%; text-align: left; background: transparent; border: none;
-  padding: 10px 12px; border-radius: 8px; cursor: pointer; font: inherit; color: inherit; transition: background .15s ease;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  transition: background .15s ease, color .15s ease;
 }
 .menu button[role="menuitem"]:hover { background: rgba(0,0,0,.06); }
+
+/* ✅ Modo oscuro "como la vista": menú oscuro, bordes suaves, hover gris */
+:global(body.dark) .menu {
+  background: rgba(20, 20, 20, 0.92);
+  color: rgba(255,255,255,0.92);
+  border: 1px solid rgba(255,255,255,0.10);
+  box-shadow: 0 14px 34px rgba(0,0,0,.55);
+  backdrop-filter: blur(10px);
+}
+
+:global(body.dark) .menu button[role="menuitem"]:hover {
+  background: rgba(255,255,255,.10);
+}
+
+:global(body.dark) .menu-btn {
+  background: rgba(255,255,255,.14);
+  border-color: rgba(255,255,255,.18);
+}
 
 .sr-only {
   position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
