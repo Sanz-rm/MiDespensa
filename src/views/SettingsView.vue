@@ -147,7 +147,8 @@ const onThemeToggle = () => {
     document.body.classList.contains('dark') || document.documentElement.classList.contains('dark')
 }
 
-const appVersion = computed(() => (import.meta as any).env?.VITE_APP_VERSION ?? '1.0.0')
+// const appVersion = computed(() => (import.meta as any).env?.VITE_APP_VERSION ?? '1.0.0')
+const appVersion = '1'
 
 async function showToast(message: string) {
   const t = await toastController.create({
@@ -160,7 +161,7 @@ async function showToast(message: string) {
 
 const onExportData = () => showToast('Exportar: por implementar (JSON/CSV)')
 const onClearCache = () => showToast('Caché limpiada (pendiente de implementar)')
-const onAbout = () => showToast(`MiDespensa · v${appVersion.value}`)
+const onAbout = () => showToast(`MiDespensa · v${appVersion.valueOf}`)
 
 const onExitApp = async () => {
   try {
