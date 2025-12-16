@@ -418,6 +418,11 @@ body.dark .item-row{
   border: 1px solid #cacaca;
 }
 
+body.dark .note-row {
+  background: #2d2e2e;
+  border-color: #555555cc;
+}
+
 .note-text {
   flex: 1;
   white-space: pre-wrap;
