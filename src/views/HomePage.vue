@@ -549,7 +549,7 @@ ion-header.rounded-header::after {
 }
 
 /* DARK: fondo general */
-:global(body.dark) .pantry-content {
+body.dark .pantry-content {
   background: var(--ion-background-color);
 }
 
@@ -823,28 +823,20 @@ ion-header.rounded-header::after {
 
 .empty-icon .material-icons {
   font-size: 78px;
-  color: #374151;
-}
-
-:global(body.dark) .empty-icon .material-icons {
-  color: rgba(229, 231, 235, 0.85);
+  color: var(--ion-text-color3);
 }
 
 .empty-title {
   margin: 0 0 4px;
   font-weight: 700;
   font-size: 18px;
-  color: #111827;
-}
-
-:global(body.dark) .empty-title {
-  color: rgba(255, 255, 255, 0.94);
+  color: var(--ion-text-color3);
 }
 
 .empty-subtitle {
   margin: 0;
   font-size: 14px;
-  color: #3f4146;
+  color: var(--ion-text-color2);
   font-weight: 500;
 }
 

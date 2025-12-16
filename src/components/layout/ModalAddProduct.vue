@@ -427,7 +427,7 @@ watch(
 }
 
 .create-modal-content {
-    --background: #f5faf7;
+    --background: var(--ion-background-color);
 }
 
 .create-modal-item {
@@ -438,20 +438,20 @@ watch(
 .create-modal-label {
     font-weight: 700;
     font-size: 19px;
-    color: #111827;
+    color: var(--ion-text-color);
     margin-left: 2%;
 }
 
 .create-modal-input {
     margin-top: 4%;
     border-radius: 5%;
-    --background: #ffffff;
+    --background: var(--ion-background-color2);
     --padding-start: 12px;
     --padding-end: 12px;
     --padding-top: 10px;
     --padding-bottom: 10px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-    border: 1px solid #d1d5db36;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--ion-border-color);
 }
 
 .create-modal-actions {
@@ -506,9 +506,9 @@ watch(
     justify-items: center;
     text-align: center;
     padding: 8px;
-    border: 1px solid #eef2f4;
+    border: 1px solid var(--ion-border-color);
     border-radius: 12px;
-    background: #fff;
+    background: var(--ion-background-color);
 }
 
 /* SOLO CUANDO LA FOTO VENGA DE GALERIA */
@@ -580,20 +580,20 @@ watch(
 
 .empty-icon .material-icons {
     font-size: 78px;
-    color: #374151;
+    color: var(--ion-text-color3);
 }
 
 .empty-title {
     margin: 0 0 4px;
     font-weight: 700;
     font-size: 18px;
-    color: #111827;
+    color: var(--ion-text-color3);
 }
 
 .empty-subtitle {
     margin: 0;
     font-size: 14px;
-    color: #3f4146;
+    color: var(--ion-text-color2);
     font-weight: 500;
 }
 
@@ -652,10 +652,17 @@ watch(
     color: #2ea15d;
 }
 
+body.dark .filter-radios.mydict input[type="radio"]:checked+span {
+    box-shadow: 0 0 0 0.0625em #2ea15d;
+    background-color: #2ea15e1a;
+    z-index: 1;
+    color: #c3e0cf;
+}
+
 .filter-radios.mydict label span {
     display: block;
     cursor: pointer;
-    background-color: #fff;
+    background-color: var( --ion-background-color);
     padding: 0.3em 0.8em;
     position: relative;
     margin-left: 0.0625em;

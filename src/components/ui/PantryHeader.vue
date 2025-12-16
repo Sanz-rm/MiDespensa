@@ -195,8 +195,6 @@ onBeforeUnmount(() => {
   transition: background .2s ease, transform .08s ease, border-color .2s ease;
 }
 .menu-btn:hover { background: rgba(255,255,255,.28); }
-.menu-btn:active { transform: scale(.98); }
-.menu-btn:focus { outline: 2px solid rgba(255,255,255,.7); outline-offset: 2px; }
 
 .hamb { display: inline-flex; flex-direction: column; gap: 4px; }
 .hamb > span { display: block; width: 18px; height: 2px; background: #fff; border-radius: 2px; }
@@ -214,6 +212,11 @@ onBeforeUnmount(() => {
   padding: 6px;
   z-index: 20;
   border: 1px solid rgba(0,0,0,.08);
+}
+
+body.dark .menu {
+  background: #292a2b;
+  color: #ffffff;
 }
 
 .menu ul { list-style: none; margin: 0; padding: 4px; }

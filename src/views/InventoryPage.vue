@@ -1308,14 +1308,14 @@ body.dark .qty-inline {
 
 .empty-icon .material-icons {
   font-size: 78px;
-  color: var(--ion-text-color);
+  color: var(--ion-text-color2);
 }
 
 .empty-title {
   margin: 0 0 4px;
   font-weight: 700;
   font-size: 18px;
-  color: var(--ion-text-color);
+  color: var(--ion-text-color2);
 }
 
 .empty-subtitle {

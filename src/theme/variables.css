@@ -12,6 +12,7 @@ http://ionicframework.com/docs/theming/ */
   --ion-text-color-rgb: 15,23,42;
   --ion-color-primary: #3b82f6;
   --ion-color-primary-contrast: #ffffff;
+  --ion-border-color: #eef2f4;
   /* ...el resto de tus variables */
 }
 
@@ -27,6 +28,7 @@ http://ionicframework.com/docs/theming/ */
   --ion-text-color-rgb: 229,231,235;
   --ion-color-primary: #60a5fa;
   --ion-color-primary-contrast: #0b0f19;
+  --ion-border-color: #a0a2a35b;
 }
 
 /* Asegura que ion-content use el fondo del tema */
