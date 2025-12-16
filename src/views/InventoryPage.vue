@@ -1004,6 +1004,20 @@ async function confirmMove() {
   margin-bottom: 8px;
 }
 
+ion-searchbar {
+  --border-radius: 999px;
+}
+
+body.dark ion-searchbar {
+  --background: #2d2e2e;
+  --placeholder-color: #ffffff;
+  --color: #ffffff;
+  --icon-color: #ffffffaf;
+  --clear-icon-color: #888888;
+  --border-color: #444444;
+  --border-radius: 999px;
+}
+
 .card-actions {
   margin-top: auto;
   display: flex;
@@ -1029,6 +1043,12 @@ async function confirmMove() {
 
   display: flex;
   flex-direction: column;
+}
+
+body.dark .item-card {
+  background: var(--ion-background-color);
+  border-color: #333333;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
 /* alerta caducidad */
@@ -1063,7 +1083,7 @@ async function confirmMove() {
   margin: 0;
   font-weight: 700;
   font-size: 14px;
-  color: #111827;
+  color: var(--ion-text-color);
   line-height: 1.2;
 
   /*RESERVAMOS EL ALTO DE 2 LINEAS COMO MÁXIMO */
@@ -1077,7 +1097,7 @@ async function confirmMove() {
 .item-units {
   margin: 3px 0 5px;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--ion-text-color);
 
   display: flex;
   align-items: center;
@@ -1099,17 +1119,17 @@ async function confirmMove() {
 
 .item-units .qty-btn .material-icons {
   font-size: 14px;
-  color: #2e2e30;
+  color: var(--ion-text-color);
 }
 
 .qty-inline .qty-btn .material-icons {
   font-size: 14px;
-  color: #e2e2e9;
+  color: var(--ion-text-color);
 }
 
 .qty-inline .qty-btn .material-icons {
   font-size: 14px;
-  color: #e2e2e9;
+  color: var(--ion-text-color);
 }
 
 /* Card: borde gris ligero, circular en +/- */
@@ -1118,9 +1138,13 @@ async function confirmMove() {
   --border-width: 1px;
   --border-style: solid;
   --border-color: #d1d5db;
-  --background: #ffffff;
+  --background: var(--ion-background-color);
   width: 26px;
   height: 26px;
+}
+
+body.dark .qty-btn-card {
+  --border-color: #9c9c9c;
 }
 
 .qty-btn-card::part(native) {
@@ -1130,7 +1154,11 @@ async function confirmMove() {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #111827;
+  color: #ffffff;
+}
+
+body.dark .qty-btn-card::part(native) {
+  color: #ffffff;
 }
 
 /* Cantidad en modales: input con -  cantidad  + inline */
@@ -1147,6 +1175,11 @@ async function confirmMove() {
   border-radius: 10px;
   border: 1px solid #e5e7eb;
   padding: 0 10px;
+}
+
+body.dark .qty-inline {
+  background: #2a2a2a;
+  border-color: #444444;
 }
 
 /* Input dentro del contenedor: sin borde propio, centrado */
@@ -1182,9 +1215,9 @@ async function confirmMove() {
 }
 
 .qty-btn-plus {
-  --background: #16a34a;
-  --background-hover: #15803d;
-  --background-activated: #166534;
+  --background: #2fa15e;
+  --background-hover: rgba(var(--md-accent-rgb, 46, 161, 93), 0.92);
+  --background-activated: rgba(var(--md-accent-rgb, 46, 161, 93), 0.86);
   --color: #ffffff;
 }
 
@@ -1204,9 +1237,9 @@ async function confirmMove() {
   --padding-end: 0;
   --padding-top: 0;
   --padding-bottom: 0;
-  --background: #16a34a;
-  --background-hover: #15803d;
-  --background-activated: #166534;
+  --background: var(--md-accent, #2ea15d);
+  --background-hover: rgba(var(--md-accent-rgb, 46, 161, 93), 0.92);
+  --background-activated: rgba(var(--md-accent-rgb, 46, 161, 93), 0.86);
   --color: #ffffff;
   width: 32px;
   height: 32px;
@@ -1285,9 +1318,9 @@ async function confirmMove() {
 
 /* Color personalizado para el botón de añadir a compra */
 .btn-add {
-  --background: #2ea15d;
-  --background-hover: #279150;
-  --background-activated: #228447;
+  --background: var(--md-accent, #2ea15d);
+  --background-hover: rgba(var(--md-accent-rgb, 46, 161, 93), 0.92);
+  --background-activated: rgba(var(--md-accent-rgb, 46, 161, 93), 0.86);
   --color: #fff;
   border-radius: 8px;
   font-weight: 600;
@@ -1308,7 +1341,7 @@ async function confirmMove() {
 }
 
 .add-button {
-  --background: #2ea15d;
+  --background: var(--md-accent, #2ea15d);
 }
 
 .empty {
@@ -1319,7 +1352,7 @@ async function confirmMove() {
   justify-content: center;
   text-align: center;
   padding: 24px 16px;
-  color: #6b7280;
+  color: var(--ion-text-color3);
 }
 
 .empty-suggested {
@@ -1340,20 +1373,20 @@ async function confirmMove() {
 
 .empty-icon .material-icons {
   font-size: 78px;
-  color: #374151;
+  color: var(--ion-text-color2);
 }
 
 .empty-title {
   margin: 0 0 4px;
   font-weight: 700;
   font-size: 18px;
-  color: #111827;
+  color: var(--ion-text-color2);
 }
 
 .empty-subtitle {
   margin: 0;
   font-size: 17px;
-  color: #3f4146;
+  color: var(--ion-text-color2);
   font-weight: 500;
 }
 
@@ -1369,11 +1402,17 @@ async function confirmMove() {
   border-radius: 18px;
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-  background: #ffffff;
+  background: var(--ion-background-color);
+}
+
+:global(body.dark) .product-info-modal::part(content),
+:global(body.dark) .move-product-modal::part(content) {
+  background: #1e1e1e;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
 }
 
 .product-info-content {
-  --background: #ffffff;
+  --background: var(--ion-background-color);
 }
 
 .product-info-wrapper {
@@ -1386,7 +1425,7 @@ async function confirmMove() {
   text-align: center;
   font-size: 20px;
   font-weight: 700;
-  color: #111827;
+  color: var(--ion-text-color);
   margin-bottom: 6%;
 }
 
@@ -1416,7 +1455,7 @@ async function confirmMove() {
   top: 85px;
   right: 1px;
   font-size: 25px;
-  background: #16a34a;
+  background: var(--md-accent, #2ea15d);
   border-radius: 50%;
   padding: 2px;
   color: #fff;
@@ -1426,7 +1465,7 @@ async function confirmMove() {
 .info-product-name {
   font-size: 18px;
   font-weight: 600;
-  color: #111827;
+  color: var(--ion-text-color);
   margin-top: 4%;
 }
 
@@ -1457,51 +1496,56 @@ async function confirmMove() {
 .info-label {
   font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: var(--ion-text-color2);
 }
 
 .info-input-exception {
-  --background: #f9fafb;
-  --padding-start: 15px;
+  --background: #f7f9fa;
+  --padding-start: 1px;
   --padding-top: 6px;
   --padding-bottom: 6px;
   border-radius: 10px;
   font-size: 14px;
+  --highlight-color-focused: var(--md-accent, #2ea15d);
+  --highlight-color: var(--md-accent, #2ea15d);
+  --highlight-color-valid: var(--md-accent, #2ea15d);
+  --highlight-height: 2px;
+}
+
+body.dark .info-input-exception {
+  --background: #292929;
 }
 
 .info-input,
 .info-select {
-  --background: #f9fafb;
-  --padding-start: 8px;
-  --padding-end: 8px;
-  --padding-top: 6px;
-  --padding-bottom: 6px;
   border-radius: 10px;
-  border: 1px solid #e5e7eb;
-  font-size: 14px;
+  border: 1px solid #e5e7eb21;
 }
 
 .info-input,
 .info-select {
-  --background: #f9fafb;
+  --background: #f7f9fa;
   --padding-start: 8px;
   --padding-end: 8px;
   --padding-top: 6px;
   --padding-bottom: 6px;
-
-  /* borde “normal” */
   --border-radius: 10px;
-  --border-color: #e5e7eb;
-  --border-width: 1px;
-  --border-style: solid;
 
   /* color de la barra de enfoque */
-  --highlight-color-focused: #16a34a;
-  --highlight-color: #16a34a;
-  --highlight-color-valid: #16a34a;
+  --highlight-color-focused: var(--md-accent, #2ea15d);
+  --highlight-color: var(--md-accent, #2ea15d);
+  --highlight-color-valid: var(--md-accent, #2ea15d);
   --highlight-height: 2px;
 
   font-size: 14px;
+}
+
+body.dark .info-input {
+  --background: #292929;
+}
+
+body.dark .info-select {
+  --background: #292929;
 }
 
 .info-input-readonly {
@@ -1510,7 +1554,7 @@ async function confirmMove() {
 
 .info-helper {
   font-size: 11px;
-  color: #6b7280;
+  color: var(--ion-text-color2);
   margin-top: 4px;
 }
 
@@ -1522,9 +1566,9 @@ async function confirmMove() {
 
 .btn-info-cancel {
   flex: 1;
-  --background: #ffffff;
-  --border-color: #16a34a;
-  --color: #16a34a;
+  --background: var(--ion-background-color);
+  --border-color: var(--md-accent, #2ea15d);
+  --color: var(--md-accent, #2ea15d);
   --border-width: 1px;
   --box-shadow: none;
   font-weight: 600;
@@ -1532,11 +1576,15 @@ async function confirmMove() {
   border-radius: 999px;
 }
 
+body.dark .btn-info-cancel  {
+  --background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.08) !important;
+}
+
 .btn-info-save {
   flex: 1;
-  --background: #16a34a;
-  --background-hover: #15803d;
-  --background-activated: #166534;
+  --background: var(--md-accent, #2ea15d);
+  --background-hover: rgba(var(--md-accent-rgb, 46, 161, 93), 0.92);
+  --background-activated: rgba(var(--md-accent-rgb, 46, 161, 93), 0.86);
   --color: #ffffff;
   font-weight: 600;
   text-transform: none;

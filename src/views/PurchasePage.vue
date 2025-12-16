@@ -316,6 +316,20 @@ async function showErrorToast(message: string) {
   margin-bottom: 8px;
 }
 
+ion-searchbar {
+  --border-radius: 999px;
+}
+
+body.dark ion-searchbar {
+  --background: #2d2e2e;
+  --placeholder-color: #ffffff;
+  --color: #ffffff;
+  --icon-color: #ffffffaf;
+  --clear-icon-color: #888888;
+  --border-color: #444444;
+  --border-radius: 999px;
+}
+
 /* Lista estilo cards en fila */
 .list-cards {
   display: grid;
@@ -335,6 +349,13 @@ async function showErrorToast(message: string) {
   padding: 10px 12px;
 }
 
+body.dark .item-row{
+  background: var(--ion-background-color);
+  border-color: #333333;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+
 /* SOLO CUANDO LA FOTO VENGA DE GALERIA */
 .item-row .img-galery {
   width: 80%;
@@ -352,7 +373,9 @@ async function showErrorToast(message: string) {
   width: 36px;
   height: 36px;
   object-fit: contain;
+  filter: drop-shadow(0 0 6px #cacaca5e);
 }
+
 
 .info {
   align-self: center;
@@ -362,19 +385,19 @@ async function showErrorToast(message: string) {
   margin: 0;
   font-weight: 700;
   font-size: 14px;
-  color: #111827;
+  color: var(--ion-text-color);
 }
 
 .info .units {
   margin: 2px 0 0;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--ion-text-color2);
 }
 
 .note-icon {
   --padding-start: 6px;
   --padding-end: 6px;
-  color: #000000;
+  color: var(--ion-text-color2);
 }
 
 .trash {
@@ -393,6 +416,11 @@ async function showErrorToast(message: string) {
   border-radius: 8px;
   font-size: 14px;
   border: 1px solid #cacaca;
+}
+
+body.dark .note-row {
+  background: #2d2e2e;
+  border-color: #555555cc;
 }
 
 .note-text {
@@ -479,20 +507,20 @@ async function showErrorToast(message: string) {
 
 .empty-icon .material-icons {
   font-size: 78px;
-  color: #374151;
+  color: var(--ion-text-color3);
 }
 
 .empty-title {
   margin: 0 0 4px;
   font-weight: 700;
   font-size: 18px;
-  color: #111827;
+  color: var(--ion-text-color3);
 }
 
 .empty-subtitle {
   margin: 0;
   font-size: 14px;
-  color: #3f4146;
+  color: var(--ion-text-color2);
   font-weight: 500;
 }
 

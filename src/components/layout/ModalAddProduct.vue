@@ -435,12 +435,13 @@ watch(
 
 <style scoped>
 .add-button {
-    --background: #2ea15d;
+    --background: var(--md-accent, #2ea15d);
+    --color: #fff;
 }
 
 /* MODAL CREAR O AÑADIR PRODUCTO START */
 .create-modal-toolbar {
-    --background: #2ea15d;
+    --background: var(--md-accent, #2ea15d);
     --border-width: 0;
 }
 
@@ -458,7 +459,7 @@ watch(
 }
 
 .create-modal-content {
-    --background: #f5faf7;
+    --background: var(--ion-background-color);
 }
 
 .create-modal-item {
@@ -469,20 +470,20 @@ watch(
 .create-modal-label {
     font-weight: 700;
     font-size: 19px;
-    color: #111827;
+    color: var(--ion-text-color);
     margin-left: 2%;
 }
 
 .create-modal-input {
     margin-top: 4%;
     border-radius: 5%;
-    --background: #ffffff;
+    --background: var(--ion-background-color2);
     --padding-start: 12px;
     --padding-end: 12px;
     --padding-top: 10px;
     --padding-bottom: 10px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-    border: 1px solid #d1d5db36;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+    border: 1px solid var(--ion-border-color);
 }
 
 .create-modal-actions {
@@ -497,16 +498,14 @@ watch(
     flex: 1;
     --background: transparent;
     --box-shadow: none;
-    --color: #2ea15d;
+    --color: var(--md-accent, #2ea15d);
     font-weight: 600;
     text-transform: uppercase;
 }
 
 .btn-create-solid {
     flex: 1;
-    --background: #2ea15d;
-    --background-hover: #27663f;
-    --background-activated: #228447;
+    --background: var(--md-accent, #2ea15d);
     --color: #ffffff;
     font-weight: 600;
     text-transform: uppercase;
@@ -537,9 +536,9 @@ watch(
     justify-items: center;
     text-align: center;
     padding: 8px;
-    border: 1px solid #eef2f4;
+    border: 1px solid var(--ion-border-color);
     border-radius: 12px;
-    background: #fff;
+    background: var(--ion-background-color);
 }
 
 /* SOLO CUANDO LA FOTO VENGA DE GALERIA */
@@ -575,7 +574,6 @@ watch(
     overflow: hidden;
 }
 
-/* El botón baja al fondo de la tarjeta */
 .suggested-card .btn-add {
     margin-top: auto;
     align-self: stretch;
@@ -603,20 +601,20 @@ watch(
 
 .empty-icon .material-icons {
     font-size: 78px;
-    color: #374151;
+    color: var(--ion-text-color3);
 }
 
 .empty-title {
     margin: 0 0 4px;
     font-weight: 700;
     font-size: 18px;
-    color: #111827;
+    color: var(--ion-text-color3);
 }
 
 .empty-subtitle {
     margin: 0;
     font-size: 14px;
-    color: #3f4146;
+    color: var(--ion-text-color2);
     font-weight: 500;
 }
 
@@ -626,11 +624,8 @@ watch(
     min-height: 40vh;
 }
 
-/* Color personalizado para el botón de añadir a compra/inventario */
 .btn-add {
-    --background: #2ea15d;
-    --background-hover: #279150;
-    --background-activated: #228447;
+    --background: var(--md-accent, #2ea15d);
     --color: #fff;
     border-radius: 8px;
     font-weight: 600;
@@ -639,12 +634,10 @@ watch(
 }
 
 /* FILTRO RADIO BUTTONS START */
-/* Contenedor del bloque de filtros */
 .filter-radios {
     margin: 16px 4px 22px;
 }
 
-/* Layout del grupo de radios */
 .filter-radios.mydict>div {
     display: flex;
     flex-wrap: wrap;
@@ -663,27 +656,35 @@ watch(
 
 .filter-radios.mydict input[type="radio"]:focus+span {
     outline: 0;
-    border-color: #2ea15d;
-    box-shadow: 0 0 0 4px #bcdbc9;
+    border-color: var(--md-accent, #2ea15d);
+    box-shadow: 0 0 0 4px color-mix(in srgb, #fff 80%, var(--md-accent, #2ea15d) 20%);
 }
 
 .filter-radios.mydict input[type="radio"]:checked+span {
-    box-shadow: 0 0 0 0.0625em #2ea15d;
-    background-color: #cefde2af;
+    box-shadow: 0 0 0 0.0625em var(--md-accent, #2ea15d);
+    background-color: color-mix(in srgb, #fff 80%, var(--md-accent, #2ea15d) 20%);
     z-index: 1;
-    color: #2ea15d;
+    color: var(--md-accent, #2ea15d);
+}
+
+body.dark .filter-radios.mydict input[type="radio"]:checked+span {
+    box-shadow: 0 0 0 0.0625em var(--md-accent, #2ea15d);
+    background-color: #2ea15e1a;
+    z-index: 1;
+    color: color-mix(in srgb, #fff 92%, var(--md-accent, #2ea15d) 8%);
+
 }
 
 .filter-radios.mydict label span {
     display: block;
     cursor: pointer;
-    background-color: #fff;
+    background-color: var( --ion-background-color);
     padding: 0.3em 0.8em;
     position: relative;
     margin-left: 0.0625em;
-    box-shadow: 0 0 0 0.0625em #b5c9af;
+    box-shadow: 0 0 0 0.0625em color-mix(in srgb, #fff 35%, var(--md-accent, #2ea15d) 25%);
     letter-spacing: 0.05em;
-    color: #7caa8f;
+    color: color-mix(in srgb, #fff 55%, var(--md-accent, #2ea15d) 45%);
     text-align: center;
     font-size: 17px;
     transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
