@@ -3,6 +3,7 @@ http://ionicframework.com/docs/theming/ */
 :root {
   /* Tema claro por defecto */
   --ion-background-color: #ffffff;
+  --ion-background-color2: #ffffff;
   --ion-background-color-rgb: 255,255,255;
   --ion-text-color: #0f172a;
   --ion-text-color2: #464646; 
@@ -17,6 +18,7 @@ http://ionicframework.com/docs/theming/ */
 /* Tema oscuro activable con clase en <body> */
 .dark {
   --ion-background-color: #1f2324;
+  --ion-background-color2: #292a2b;
   --ion-background-color-rgb: 18,18,18;
   --ion-text-color: #e5e7eb;
   --ion-text-color2: #f7faff;
