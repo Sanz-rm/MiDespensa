@@ -242,7 +242,7 @@ async function onConfirm() {
 /* Cabecera verde */
 .modal-head {
   position: relative;
-  background: #2e9b52;
+  background: var(--md-accent, #2ea15d);
   color: #fff;
   padding: 28px 20px 22px;
   border-bottom-left-radius: 22px;
@@ -339,12 +339,16 @@ body.dark .field-item {
 
 .btn-outline {
   background: var(--ion-background-color);
-  color: #2e9b52;
-  border-color: #2e9b52;
+  color: var(--md-accent, #2ea15d);
+  border-color: var(--md-accent, #2ea15d);
+}
+
+body.dark .btn-outline  {
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.08) !important;
 }
 
 .btn-solid {
-  background: #2e9b52;
+  background: var(--md-accent, #2ea15d);
   color: #fff;
 }
 

@@ -94,7 +94,7 @@ function onConfirm() {
 }
 
 .confirm-actions .btn-danger {
-  background: #2ea15d;
+  background: var(--md-accent, #2ea15d);
   color: #ffffff;
 }
 
