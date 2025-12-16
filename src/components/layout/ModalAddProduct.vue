@@ -30,8 +30,13 @@
                     <ion-label position="stacked" class="create-modal-label">
                         Nombre del producto
                     </ion-label>
-                    <ion-input v-model="newProductName" class="create-modal-input"
-                        placeholder="Ej. Leche, Huevos, Arroz" @keyup.enter="confirmCreate" autofocus />
+                    <ion-input
+                        v-model="newProductName"
+                        class="create-modal-input"
+                        placeholder="Ej. Leche, Huevos, Arroz"
+                        @keyup.enter="confirmCreate"
+                        autofocus
+                    />
                 </ion-item>
                 <div class="create-modal-actions">
                     <ion-button expand="block" fill="clear" class="btn-cancel-outline" @click="clearInput">
@@ -88,10 +93,6 @@
                                 <span>Todos</span>
                             </label>
                             <label>
-                                <input type="radio" name="filterMode" value="common" v-model="filterMode" />
-                                <span>Comunes</span>
-                            </label>
-                            <label>
                                 <input type="radio" name="filterMode" value="inventory" v-model="filterMode" />
                                 <span>Inventario</span>
                             </label>
@@ -99,19 +100,31 @@
                     </div>
                     <!-- Filtros radio END -->
 
-
                     <!-- Lista combinada START-->
                     <div v-if="combinedItems && combinedItems.length" class="suggested-grid">
-                        <div v-for="item in combinedItems" :key="item.kind + '-' + item.id" class="suggested-card">
-                            <img :src="getOptimizedUrl(item.imageUrl)" :alt="item.name" class="suggested-img" :class="{ 'img-galery': isImageGalery(item.imageUrl) }"/>
+                        <div
+                            v-for="item in combinedItems"
+                            :key="item.kind + '-' + item.id"
+                            class="suggested-card"
+                        >
+                            <img
+                                :src="getOptimizedUrl(item.imageUrl)"
+                                :alt="item.name"
+                                class="suggested-img"
+                                :class="{ 'img-galery': isImageGalery(item.imageUrl) }"
+                            />
                             <p class="suggested-name">{{ item.name }}</p>
 
                             <!-- Botón según tipo -->
-                            <ion-button size="small" class="btn-add" @click="
-                                item.kind === 'common'
-                                    ? addItemFromPantry(item.name, item.imageUrl)
-                                    : addExistingToPurchase(item.id)
-                                ">
+                            <ion-button
+                                size="small"
+                                class="btn-add"
+                                @click="
+                                    item.kind === 'common'
+                                        ? addItemFromPantry(item.name, item.imageUrl)
+                                        : addExistingToPurchase(item.id)
+                                "
+                            >
                                 <ion-icon :icon="addOutline" slot="start" />Añadir
                             </ion-button>
                         </div>
@@ -189,7 +202,7 @@ const comunItems = ref<ComunItem[]>([])
 const loading = ref<boolean>(false)
 const pantryDocId = ref<string | null>(null)
 
-const filterMode = ref<'all' | 'common' | 'inventory'>('all')
+const filterMode = ref<'all' | 'inventory'>('all')
 
 const norm = (s: string) =>
     s
@@ -229,9 +242,7 @@ const combinedItems = computed(() => {
 
     let merged = [...commons, ...inv]
 
-    if (filterMode.value === 'common') {
-        merged = merged.filter(i => i.kind === 'common')
-    } else if (filterMode.value === 'inventory') {
+    if (filterMode.value === 'inventory') {
         merged = merged.filter(i => i.kind === 'inventory')
     }
 
@@ -254,6 +265,7 @@ const defaultInPurchase = computed<boolean>(() => props.view === 'purcharse')
 
 // Modal crear producto
 function openCreateModal() {
+    filterMode.value = 'all'
     getComunItems()
     isCreateOpen.value = true
 }
@@ -283,7 +295,11 @@ async function getComunItems() {
         const snap = await getDocs(q)
 
         const existing = new Set(
-            (props.items ?? []).map((i: Item) => String(i?.name ?? '').trim().toLowerCase())
+            (props.items ?? []).map((i: Item) => {
+                const n = String(i?.name ?? '').trim().toLowerCase()
+                const img = String(i?.imageUrl ?? '')
+                return `${n}__${img}`
+            })
         )
 
         comunItems.value = snap.docs
@@ -295,7 +311,12 @@ async function getComunItems() {
                     imageUrl: String(data?.imageUrl ?? ''),
                 } as ComunItem
             })
-            .filter(ci => !existing.has(ci.name.trim().toLowerCase()))
+            .filter(ci => {
+                const n = ci.name.trim().toLowerCase()
+                const img = String(ci.imageUrl ?? '')
+                const key = `${n}__${img}`
+                return !existing.has(key)
+            })
     } catch (err) {
         console.error('Error al obtener productos comunes:', err)
         await showToast('Error al cargar los productos sugeridos.', 'danger')
@@ -306,51 +327,62 @@ async function getComunItems() {
 
 // Añade un nuevo item a la despensa (crea documento nuevo)
 async function addItemFromPantry(nameItem: string, imageUrl: string) {
-    const name = (nameItem ?? '').trim()
-    if (!name) {
-        await showToast('Escribe un nombre de producto.', 'danger')
-        return
+  const name = (nameItem ?? '').trim()
+  if (!name) {
+    await showToast('Escribe un nombre de producto.', 'danger')
+    return
+  }
+
+  loading.value = true
+  try {
+    // Comprobar que no exista ya un item con ese nombre Y misma imagen en la despensa
+    // (si tiene mismo nombre pero distinta imagen, SÍ se permite crear)
+    const dupQ = query(
+      collection(db, 'items'),
+      where('pantryCode', '==', props.pantryCode),
+      where('name', '==', name)
+    )
+    const dupSnap = await getDocs(dupQ)
+
+    const existsSameNameAndImage =
+      !dupSnap.empty &&
+      dupSnap.docs.some(d => {
+        const data = d.data() as any
+        const existingImg = String(data?.imageUrl ?? '')
+        const newImg = String(imageUrl ?? '')
+        return existingImg === newImg
+      })
+
+    if (existsSameNameAndImage) {
+      await showToast(`El producto ${name} ya existe en la despensa.`, 'danger')
+      return
     }
 
-    loading.value = true
-    try {
-        // Comprobar que no exista ya un item con ese nombre en la despensa
-        const dupQ = query(
-            collection(db, 'items'),
-            where('pantryCode', '==', props.pantryCode),
-            where('name', '==', name)
-        )
-        const dupSnap = await getDocs(dupQ)
-        if (!dupSnap.empty) {
-            await showToast(`El producto ${name} ya existe en la despensa.`, 'danger')
-            return
-        }
+    const batch = writeBatch(db)
+    const newItemRef = doc(collection(db, 'items'))
+    const itemName = name.charAt(0).toUpperCase() + name.slice(1)
 
-        const batch = writeBatch(db)
-        const newItemRef = doc(collection(db, 'items'))
-        const itemName = name.charAt(0).toUpperCase() + name.slice(1)
+    batch.set(newItemRef, {
+      name: itemName,
+      pantryCode: props.pantryCode,
+      quantity: 1,
+      unit: 'Unidad',
+      inPurchase: defaultInPurchase.value,
+      imageUrl: imageUrl,
+    })
 
-        batch.set(newItemRef, {
-            name: itemName,
-            pantryCode: props.pantryCode,
-            quantity: 1,
-            unit: 'Unidad',
-            inPurchase: defaultInPurchase.value,
-            imageUrl: imageUrl,
-        })
+    const pantryRef = await getPantryRefByCode()
+    batch.update(pantryRef, { totalItems: increment(1) })
 
-        const pantryRef = await getPantryRefByCode()
-        batch.update(pantryRef, { totalItems: increment(1) })
+    await batch.commit()
 
-        await batch.commit()
-
-        await showToast(`Producto ${name} añadido.`, 'success')
-    } catch (err) {
-        console.error('Error al añadir producto:', err)
-        await showToast(`No se pudo añadir el producto ${name}.`, 'danger')
-    } finally {
-        loading.value = false
-    }
+    await showToast(`Producto ${name} añadido.`, 'success')
+  } catch (err) {
+    console.error('Error al añadir producto:', err)
+    await showToast(`No se pudo añadir el producto ${name}.`, 'danger')
+  } finally {
+    loading.value = false
+  }
 }
 
 // Marca un item existente como en compra (inPurchase = true)
@@ -549,14 +581,6 @@ watch(
     align-self: stretch;
 }
 
-/* .empty-suggested {
-    opacity: 0.7;
-    margin-top: 10vh;
-    text-align: center;
-    align-items: center;
-} */
-
-
 .empty {
     flex: 1;
     display: flex;
@@ -601,7 +625,6 @@ watch(
     place-content: center;
     min-height: 40vh;
 }
-
 
 /* Color personalizado para el botón de añadir a compra/inventario */
 .btn-add {
@@ -673,9 +696,7 @@ watch(
 .filter-radios.mydict label:last-child span {
     border-radius: 0 0.375em 0.375em 0;
 }
-
 /* FILTRO RADIO BUTTONS END */
-
 
 /* MODAL CREAR O AÑADIR PRODUCTO END */
 </style>
