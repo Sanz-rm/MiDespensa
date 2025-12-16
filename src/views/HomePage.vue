@@ -602,6 +602,11 @@ body.dark .pantry-content {
   transform: translateY(-1px);
 }
 
+body.dark .btn-outline {
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.08) !important;
+}
+
+
 .btn-outline:last-child {
   margin-bottom: 5%;
 }
@@ -636,20 +641,19 @@ body.dark .pantry-content {
   transition: transform 0.12s ease, box-shadow 0.12s ease;
 }
 
+.pantry-card {
+  background: var(--md-card-bg) !important;
+  border-color: var(--md-card-border) !important;
+  box-shadow: var(--md-card-shadow) !important;
+}
+
+body.dark .pantry-card {
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.08) !important;
+}
+
 .pantry-card:hover {
   transform: translateY(-1px);
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
-}
-
-/* DARK: tarjeta */
-:global(body.dark) .pantry-card {
-  background: var(--ion-background-color);
-  border-color: rgba(var(--md-accent-rgb, 46, 161, 93), 0.55);
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
-}
-
-:global(body.dark) .pantry-card:hover {
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.45);
 }
 
 /* Botón esquina */
@@ -861,7 +865,7 @@ body.dark .pantry-content {
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
 }
 
-:global(body.dark) .item-card {
+body.dark.item-card {
   background: var(--ion-background-color);
   border-color: rgba(255, 255, 255, 0.08);
   box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
@@ -928,12 +932,7 @@ ion-content.pantry-content {
   --md-card-muted: rgba(229, 231, 235, 0.78);
 }
 
-/* Aplica variables a la card (gana a .pantry-card[data-v-...] ) */
-.pantry-card {
-  background: var(--md-card-bg) !important;
-  border-color: var(--md-card-border) !important;
-  box-shadow: var(--md-card-shadow) !important;
-}
+
 
 /* Textos dentro de la card */
 .name {
