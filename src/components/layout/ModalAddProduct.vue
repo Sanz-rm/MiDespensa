@@ -403,13 +403,13 @@ watch(
 
 <style scoped>
 .add-button {
-    --background: #2ea15d;
+    --background: var(--md-accent, #2ea15d);
     --color: #fff;
 }
 
 /* MODAL CREAR O AÑADIR PRODUCTO START */
 .create-modal-toolbar {
-    --background: #2ea15d;
+    --background: var(--md-accent, #2ea15d);
     --border-width: 0;
 }
 
@@ -466,16 +466,14 @@ watch(
     flex: 1;
     --background: transparent;
     --box-shadow: none;
-    --color: #2ea15d;
+    --color: var(--md-accent, #2ea15d);
     font-weight: 600;
     text-transform: uppercase;
 }
 
 .btn-create-solid {
     flex: 1;
-    --background: #2ea15d;
-    --background-hover: #27663f;
-    --background-activated: #228447;
+    --background: var(--md-accent, #2ea15d);
     --color: #ffffff;
     font-weight: 600;
     text-transform: uppercase;
@@ -544,19 +542,10 @@ watch(
     overflow: hidden;
 }
 
-/* El botón baja al fondo de la tarjeta */
 .suggested-card .btn-add {
     margin-top: auto;
     align-self: stretch;
 }
-
-/* .empty-suggested {
-    opacity: 0.7;
-    margin-top: 10vh;
-    text-align: center;
-    align-items: center;
-} */
-
 
 .empty {
     flex: 1;
@@ -603,12 +592,8 @@ watch(
     min-height: 40vh;
 }
 
-
-/* Color personalizado para el botón de añadir a compra/inventario */
 .btn-add {
-    --background: #2ea15d;
-    --background-hover: #279150;
-    --background-activated: #228447;
+    --background: var(--md-accent, #2ea15d);
     --color: #fff;
     border-radius: 8px;
     font-weight: 600;
@@ -617,12 +602,10 @@ watch(
 }
 
 /* FILTRO RADIO BUTTONS START */
-/* Contenedor del bloque de filtros */
 .filter-radios {
     margin: 16px 4px 22px;
 }
 
-/* Layout del grupo de radios */
 .filter-radios.mydict>div {
     display: flex;
     flex-wrap: wrap;
@@ -641,22 +624,23 @@ watch(
 
 .filter-radios.mydict input[type="radio"]:focus+span {
     outline: 0;
-    border-color: #2ea15d;
-    box-shadow: 0 0 0 4px #bcdbc9;
+    border-color: var(--md-accent, #2ea15d);
+    box-shadow: 0 0 0 4px color-mix(in srgb, #fff 80%, var(--md-accent, #2ea15d) 20%);
 }
 
 .filter-radios.mydict input[type="radio"]:checked+span {
-    box-shadow: 0 0 0 0.0625em #2ea15d;
-    background-color: #cefde2af;
+    box-shadow: 0 0 0 0.0625em var(--md-accent, #2ea15d);
+    background-color: color-mix(in srgb, #fff 80%, var(--md-accent, #2ea15d) 20%);
     z-index: 1;
-    color: #2ea15d;
+    color: var(--md-accent, #2ea15d);
 }
 
 body.dark .filter-radios.mydict input[type="radio"]:checked+span {
-    box-shadow: 0 0 0 0.0625em #2ea15d;
+    box-shadow: 0 0 0 0.0625em var(--md-accent, #2ea15d);
     background-color: #2ea15e1a;
     z-index: 1;
-    color: #c3e0cf;
+    color: color-mix(in srgb, #fff 92%, var(--md-accent, #2ea15d) 8%);
+
 }
 
 .filter-radios.mydict label span {
@@ -666,9 +650,9 @@ body.dark .filter-radios.mydict input[type="radio"]:checked+span {
     padding: 0.3em 0.8em;
     position: relative;
     margin-left: 0.0625em;
-    box-shadow: 0 0 0 0.0625em #b5c9af;
+    box-shadow: 0 0 0 0.0625em color-mix(in srgb, #fff 35%, var(--md-accent, #2ea15d) 25%);
     letter-spacing: 0.05em;
-    color: #7caa8f;
+    color: color-mix(in srgb, #fff 55%, var(--md-accent, #2ea15d) 45%);
     text-align: center;
     font-size: 17px;
     transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;

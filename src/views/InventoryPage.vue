@@ -1135,7 +1135,6 @@ body.dark .qty-inline {
   --padding-top: 0;
   --padding-bottom: 0;
   margin: 0;
-  
 }
 
 /* Botones +/- modales: tamaño redondo y colores */
@@ -1150,9 +1149,9 @@ body.dark .qty-inline {
 }
 
 .qty-btn-plus {
-  --background: #16a34a;
-  --background-hover: #15803d;
-  --background-activated: #166534;
+  --background: #2fa15e;
+  --background-hover: rgba(var(--md-accent-rgb, 46, 161, 93), 0.92);
+  --background-activated: rgba(var(--md-accent-rgb, 46, 161, 93), 0.86);
   --color: #ffffff;
 }
 
@@ -1172,9 +1171,9 @@ body.dark .qty-inline {
   --padding-end: 0;
   --padding-top: 0;
   --padding-bottom: 0;
-  --background: #16a34a;
-  --background-hover: #15803d;
-  --background-activated: #166534;
+  --background: var(--md-accent, #2ea15d);
+  --background-hover: rgba(var(--md-accent-rgb, 46, 161, 93), 0.92);
+  --background-activated: rgba(var(--md-accent-rgb, 46, 161, 93), 0.86);
   --color: #ffffff;
   width: 32px;
   height: 32px;
@@ -1253,9 +1252,9 @@ body.dark .qty-inline {
 
 /* Color personalizado para el botón de añadir a compra */
 .btn-add {
-  --background: #2ea15d;
-  --background-hover: #279150;
-  --background-activated: #228447;
+  --background: var(--md-accent, #2ea15d);
+  --background-hover: rgba(var(--md-accent-rgb, 46, 161, 93), 0.92);
+  --background-activated: rgba(var(--md-accent-rgb, 46, 161, 93), 0.86);
   --color: #fff;
   border-radius: 8px;
   font-weight: 600;
@@ -1276,7 +1275,7 @@ body.dark .qty-inline {
 }
 
 .add-button {
-  --background: #2ea15d;
+  --background: var(--md-accent, #2ea15d);
 }
 
 .empty {
@@ -1325,7 +1324,6 @@ body.dark .qty-inline {
   font-weight: 500;
 }
 
-
 /* MODAL INFO PRODUCTO / MOVER PRODUCTO */
 .product-info-modal::part(content),
 .move-product-modal::part(content) {
@@ -1338,7 +1336,7 @@ body.dark .qty-inline {
   border-radius: 18px;
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-  background: var(--ion-background-color)
+  background: var(--ion-background-color);
 }
 
 :global(body.dark) .product-info-modal::part(content),
@@ -1348,7 +1346,7 @@ body.dark .qty-inline {
 }
 
 .product-info-content {
-  --background: var(--ion-background-color)
+  --background: var(--ion-background-color);
 }
 
 .product-info-wrapper {
@@ -1391,7 +1389,7 @@ body.dark .qty-inline {
   top: 85px;
   right: 1px;
   font-size: 25px;
-  background: #16a34a;
+  background: var(--md-accent, #2ea15d);
   border-radius: 50%;
   padding: 2px;
   color: #fff;
@@ -1442,9 +1440,9 @@ body.dark .qty-inline {
   --padding-bottom: 6px;
   border-radius: 10px;
   font-size: 14px;
-  --highlight-color-focused: #16a34a;
-  --highlight-color: #16a34a;
-  --highlight-color-valid: #16a34a;
+  --highlight-color-focused: var(--md-accent, #2ea15d);
+  --highlight-color: var(--md-accent, #2ea15d);
+  --highlight-color-valid: var(--md-accent, #2ea15d);
   --highlight-height: 2px;
 }
 
@@ -1468,21 +1466,22 @@ body.dark .info-input-exception {
   --border-radius: 10px;
 
   /* color de la barra de enfoque */
-  --highlight-color-focused: #16a34a;
-  --highlight-color: #16a34a;
-  --highlight-color-valid: #16a34a;
+  --highlight-color-focused: var(--md-accent, #2ea15d);
+  --highlight-color: var(--md-accent, #2ea15d);
+  --highlight-color-valid: var(--md-accent, #2ea15d);
   --highlight-height: 2px;
 
   font-size: 14px;
 }
 
-body.dark .info-input{
+body.dark .info-input {
   --background: #292929;
 }
 
 body.dark .info-select {
   --background: #292929;
 }
+
 .info-input-readonly {
   --background: #f3f4f6;
 }
@@ -1502,8 +1501,8 @@ body.dark .info-select {
 .btn-info-cancel {
   flex: 1;
   --background: var(--ion-background-color);
-  --border-color: #16a34a;
-  --color: #16a34a;
+  --border-color: var(--md-accent, #2ea15d);
+  --color: var(--md-accent, #2ea15d);
   --border-width: 1px;
   --box-shadow: none;
   font-weight: 600;
@@ -1511,11 +1510,15 @@ body.dark .info-select {
   border-radius: 999px;
 }
 
+body.dark .btn-info-cancel  {
+  --background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.08) !important;
+}
+
 .btn-info-save {
   flex: 1;
-  --background: #16a34a;
-  --background-hover: #15803d;
-  --background-activated: #166534;
+  --background: var(--md-accent, #2ea15d);
+  --background-hover: rgba(var(--md-accent-rgb, 46, 161, 93), 0.92);
+  --background-activated: rgba(var(--md-accent-rgb, 46, 161, 93), 0.86);
   --color: #ffffff;
   font-weight: 600;
   text-transform: none;
@@ -1540,5 +1543,4 @@ body.dark .info-select {
   font-weight: 700;
   color: #111827;
 }
-
 </style>

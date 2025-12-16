@@ -932,8 +932,6 @@ ion-content.pantry-content {
   --md-card-muted: rgba(229, 231, 235, 0.78);
 }
 
-
-
 /* Textos dentro de la card */
 .name {
   color: var(--md-accent, #2ea15d) !important;
