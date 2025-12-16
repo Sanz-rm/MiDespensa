@@ -17,13 +17,8 @@
 
       <!-- Productos de la despensa seleccionada START -->
       <div v-if="!loading && itemsFiltered.length" class="items-grid">
-        <div
-          v-for="item in itemsFiltered"
-          :key="item.id"
-          class="item-card"
-          :class="{ 'item-card-expiring': isExpiringSoon(item) }"
-          @click="openInfoModal(item)"
-        >
+        <div v-for="item in itemsFiltered" :key="item.id" class="item-card"
+          :class="{ 'item-card-expiring': isExpiringSoon(item) }" @click="openInfoModal(item)">
           <!-- Botón mover -->
           <ion-button class="move-btn" fill="clear" size="small" aria-label="Mover producto"
             @click.stop="openMoveModal(item)">
@@ -153,12 +148,7 @@
               <div class="info-row2">
                 <div class="info-field">
                   <label class="info-label">Caducidad</label>
-                  <ion-input
-                    type="date"
-                    class="info-input"
-                    v-model="editExpirationDateInput"
-                    :disabled="savingItem"
-                  />
+                  <ion-input type="date" class="info-input" v-model="editExpirationDateInput" :disabled="savingItem" />
                 </div>
               </div>
 
@@ -313,6 +303,8 @@ import { getMeasurementUnit, getOptimizedUrl, isImageGalery } from '@/composable
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
 import ModalAddProduct from '@/components/layout/ModalAddProduct.vue'
 import InventoryAndPurcharseHeader from '@/components/ui/InventoryAndPurcharseHeader.vue'
+import { Capacitor } from '@capacitor/core'
+import { actionSheetController } from '@ionic/vue'
 
 const props = defineProps<{ code: string; name: string }>()
 console.log('Codigo y nombre de la despensa:', props.code, props.name)
@@ -397,6 +389,32 @@ const unitOptions = ['Unidad', 'Kilogramo', 'Gramo', 'Litro', 'Mililitro']
 // refs para manejar la imagen pendiente de guardar
 const pendingImageFile = ref<File | null>(null)
 const pendingImagePublicId = ref<string | null>(null)
+
+// ✅ NUEVO: guardar la imagen anterior para poder restaurar si falla el update
+const prevImageUrl = ref<string | null>(null)
+const prevImageItemId = ref<string | null>(null)
+
+function rememberPrevImage(item: Item) {
+  prevImageUrl.value = item.imageUrl ?? null
+  prevImageItemId.value = item.id ?? null
+}
+
+function restorePrevImageIfNeeded(item: Item) {
+  if (!prevImageItemId.value || item.id !== prevImageItemId.value) return
+  if (prevImageUrl.value !== null) item.imageUrl = prevImageUrl.value
+  pendingImageFile.value = null
+  pendingImagePublicId.value = null
+  prevImageUrl.value = null
+  prevImageItemId.value = null
+}
+
+function clearPrevImageIfNeeded(item: Item) {
+  if (!prevImageItemId.value || item.id !== prevImageItemId.value) return
+  pendingImageFile.value = null
+  pendingImagePublicId.value = null
+  prevImageUrl.value = null
+  prevImageItemId.value = null
+}
 
 // ----------- CADUCIDAD / ALERTA EN CARD -----------
 function daysUntilExpiration(expiration: string): number {
@@ -484,7 +502,6 @@ function getStepForUnit(unitRaw: string | undefined | null): number {
     return 1
   }
 
-  // Por defecto 1 si algo raro
   return 1
 }
 
@@ -526,7 +543,7 @@ function getAdjustedQuantity(
   return target
 }
 
-// Ajuste de cantidad directo en la card (actualiza Firestore)
+// Ajuste de cantidad directo en la card
 async function adjustItemQuantity(item: Item, deltaSign: 1 | -1) {
   const step = getStepForUnit(item.unit)
   const newQty = getAdjustedQuantity(item.quantity, step, deltaSign, 0)
@@ -576,6 +593,11 @@ async function openInfoModal(item: Item) {
 
 // Cierra el modal de información y resetea los campos
 function closeInfoModal() {
+  // Si tenía una imagen en preview sin guardar, la restauramos al cerrar
+  if (selectedItem.value) {
+    restorePrevImageIfNeeded(selectedItem.value)
+  }
+
   isInfoOpen.value = false
   selectedItem.value = null
   editQuantity.value = null
@@ -630,13 +652,15 @@ async function saveItemInfo() {
       )
       if (!url) {
         await showToast('Error al subir la imagen a la nube.', 'danger')
+        // Restaurar si falla la subida
+        restorePrevImageIfNeeded(selectedItem.value)
         return
       }
       selectedItem.value.imageUrl = url
     }
 
     const expirationToSave = editExpirationDate.value ? editExpirationDate.value.trim() : null
-
+    console.log('selectedItem.value.imageUrl', selectedItem.value.imageUrl)
     const refItem = doc(db, 'items', selectedItem.value.id)
     await updateDoc(refItem, {
       quantity: editQuantity.value,
@@ -648,32 +672,67 @@ async function saveItemInfo() {
 
     ;(selectedItem.value as any).expirationDate = expirationToSave
 
-    pendingImageFile.value = null
-    pendingImagePublicId.value = null
+    // ✅ éxito -> limpiamos el estado de preview (ya es imagen real)
+    clearPrevImageIfNeeded(selectedItem.value)
 
     await showToast('Producto actualizado.', 'success')
     closeInfoModal()
   } catch (err) {
     console.error('Error al actualizar producto:', err)
+    // ✅ si falla el update, restaurar imagen anterior
+    if (selectedItem.value) {
+      restorePrevImageIfNeeded(selectedItem.value)
+    }
     await showToast('No se pudo actualizar el producto.', 'danger')
   } finally {
     savingItem.value = false
   }
 }
 
+// Solo para WEB: muestra un menú y devuelve la fuente elegida
+async function pickWebSource(): Promise<CameraSource | null> {
+  return new Promise(async (resolve) => {
+    const sheet = await actionSheetController.create({
+      header: 'Seleccionar imagen',
+      buttons: [
+        {
+          text: 'Galería',
+          handler: () => resolve(CameraSource.Photos)
+        },
+        {
+          text: 'Cámara',
+          handler: () => resolve(CameraSource.Camera)
+        }
+      ],
+      backdropDismiss: true
+    })
+
+    await sheet.present()
+
+    // ✅ si lo cierra tocando fuera / back => null (no cambia nada)
+    sheet.onDidDismiss().then(() => resolve(null))
+  })
+}
 
 // Obtiene una imagen de la cámara/galería y la deja solo en memoria como preview hasta que el usuario pulse Guardar
 async function pickImage(item: Item) {
   try {
+    const isWeb = Capacitor.getPlatform() === 'web'
+    const source = isWeb ? await pickWebSource() : CameraSource.Prompt
+    if (!source) return
+
     const photo = await Camera.getPhoto({
       quality: 80,
       allowEditing: false,
       resultType: CameraResultType.DataUrl,
-      source: CameraSource.Prompt,
-      promptLabelHeader: 'Seleccionar imagen',
-      promptLabelPhoto: 'Galería',
-      promptLabelPicture: 'Cámara',
-      promptLabelCancel: 'Cancelar'
+      source,
+      ...(isWeb
+        ? {}
+        : {
+            promptLabelHeader: 'Seleccionar imagen',
+            promptLabelPhoto: 'Galería',
+            promptLabelPicture: 'Cámara'
+          })
     })
 
     if (!photo.dataUrl) return
@@ -688,11 +747,17 @@ async function pickImage(item: Item) {
       type: blob.type || 'image/jpeg'
     })
 
+    // ✅ guardamos la imagen anterior SOLO la primera vez para ese item
+    if (prevImageItemId.value !== item.id) {
+      rememberPrevImage(item)
+    }
+
     pendingImageFile.value = file
     pendingImagePublicId.value = publicId
     item.imageUrl = photo.dataUrl
   } catch (err) {
-    await showToast('Cancelado o error al elegir imagen', 'danger')
+    console.error('Error al elegir imagen:', err)
+    //await showToast('Cancelado o error al elegir imagen', 'danger')
   }
 }
 
@@ -821,6 +886,7 @@ function openMoveModal(item: Item) {
   isMoveOpen.value = true
 }
 
+// Cierra el modal de información y resetea los campos
 function closeMoveModal() {
   isMoveOpen.value = false
   moveItem.value = null
@@ -867,7 +933,7 @@ async function confirmMove() {
   try {
     const destCode = selectedPantryCode.value
 
-    // Buscamos si ya existe el item en la despensa destino con el mismo nombre
+    // Buscamos si ya existe el item en la despensa destino con el mismo nombre e imagen
     const qDest = query(
       collection(db, 'items'),
       where('pantryCode', '==', destCode),
@@ -901,7 +967,7 @@ async function confirmMove() {
         notePurchase: (moveItem.value as any).notePurchase ?? '',
         expirationDate: (moveItem.value as any).expirationDate ?? null
       })
-
+      
       // Nuevo producto en esa despensa: aumentar totalItems en despensa destino
       const destPantryRef = await getPantryRefByCodeGeneric(destCode)
       batch.update(destPantryRef, { totalItems: increment(1) })
