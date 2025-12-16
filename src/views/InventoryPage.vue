@@ -1489,7 +1489,7 @@ body.dark .info-select {
 
 .info-helper {
   font-size: 11px;
-  color: #6b7280;
+  color: var(--ion-text-color2);
   margin-top: 4px;
 }
 
