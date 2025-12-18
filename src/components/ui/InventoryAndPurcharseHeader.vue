@@ -34,33 +34,39 @@ const backHref = computed(() => props.backHref ?? '/home')
 </script>
 
 <style scoped>
-ion-header.rounded-header {
+/* HEADER */
+.rounded-header {
   --ion-background-color: var(--md-accent, #2ea15d);
-  --color: #fff;
+  --color: #ffffff;
   --box-shadow: none;
+
   background: var(--md-accent, #2ea15d) !important;
   box-shadow: none !important;
+
   border: 0;
   padding: 0;
   overflow: visible;
 }
 
-.back-toolbar {
+/* TOOLBAR */
+.toolbar {
   --background: transparent;
   --border-width: 0;
   padding-inline: 4px;
 }
 
-ion-header.rounded-header ion-buttons ion-button {
-  --color: #fff;
+/* BOTON VOLVER  */
+ion-header.rounded-header ion-buttons ion-button { 
+  --color: #fff; 
 }
 
-ion-header.rounded-header ion-icon {
-  color: #fff;
-}
+ion-header.rounded-header ion-icon { 
+  color: #fff; 
+  font-weight: 900; }
 
-ion-header.rounded-header ion-title {
-  color: #fff;
-  font-weight: 700;
-}
+/* TITULO */
+ion-header.rounded-header ion-title { 
+  color: #fff; 
+  font-weight: 700; 
+  }
 </style>
