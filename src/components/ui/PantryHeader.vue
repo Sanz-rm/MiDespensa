@@ -146,122 +146,192 @@ onBeforeUnmount(() => {
 })
 </script>
 
+
 <style scoped>
-/* ✅ En tu app ya estás seteando --md-accent y --md-accent-rgb */
+/* HEADER */
 .banner {
+  position: relative;
+  z-index: 10;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+
   padding: 14px 18px;
   padding-top: 8%;
+
   background: var(--md-accent, #2ea15d);
   color: #fff;
+
   border-bottom-left-radius: 18px;
   border-bottom-right-radius: 18px;
-  box-shadow: 0 2px 6px rgba(0,0,0,.12);
-  position: relative;
-  z-index: 10;
+
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
-.left { display: flex; align-items: center; gap: 12px; }
+.left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
+/* LOGO */
 .logo {
-  width: 84px; height: 84px; display: block; object-fit: contain;
+  width: 84px;
+  height: 84px;
+  display: block;
+  object-fit: contain;
   filter: brightness(0) invert(1);
 }
 
+/* TÍTULO PRINCIPAL */
 .title {
   margin: 0;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
   font-size: 20px;
   font-weight: 800;
-  letter-spacing: .4px;
-  text-transform: uppercase;
-  line-height: 1;
 }
 
-.right { position: relative; }
+.right {
+  position: relative;
+}
 
+/* MENU */
 .menu-btn {
+  width: 38px;
+  height: 38px;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 38px;
-  height: 38px;
+
   border-radius: 10px;
-  border: 1px solid rgba(255,255,255,.22);
-  background: rgba(255,255,255,.18);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.18);
+
   cursor: pointer;
-  transition: background .2s ease, transform .08s ease, border-color .2s ease;
+  transition: background 0.2s ease, transform 0.08s ease, border-color 0.2s ease;
 }
-.menu-btn:hover { background: rgba(255,255,255,.28); }
 
-.hamb { display: inline-flex; flex-direction: column; gap: 4px; }
-.hamb > span { display: block; width: 18px; height: 2px; background: #fff; border-radius: 2px; }
+.menu-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
 
-/* ✅ Menú: claro por defecto */
+body.dark .menu-btn {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* MENU HAMBURGUESA */
+.hamb {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hamb > span {
+  width: 18px;
+  height: 2px;
+  display: block;
+  border-radius: 2px;
+  background: #fff;
+}
+
 .menu {
   position: absolute;
   top: calc(100% + 8px);
   right: 0;
+  z-index: 20;
+
   min-width: 180px;
+  padding: 6px;
+
   background: #fff;
   color: #222;
+
   border-radius: 12px;
-  box-shadow: 0 10px 26px rgba(0,0,0,.18);
-  padding: 6px;
-  z-index: 20;
-  border: 1px solid rgba(0,0,0,.08);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
 }
 
 body.dark .menu {
-  background: #292a2b;
-  color: #ffffff;
-}
-
-.menu ul { list-style: none; margin: 0; padding: 4px; }
-.menu li + li { margin-top: 4px; }
-
-.menu button[role="menuitem"] {
-  width: 100%;
-  text-align: left;
-  background: transparent;
-  border: none;
-  padding: 10px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  font: inherit;
-  color: inherit;
-  transition: background .15s ease, color .15s ease;
-}
-.menu button[role="menuitem"]:hover { background: rgba(0,0,0,.06); }
-
-/* ✅ Modo oscuro "como la vista": menú oscuro, bordes suaves, hover gris */
-:global(body.dark) .menu {
   background: rgba(20, 20, 20, 0.92);
-  color: rgba(255,255,255,0.92);
-  border: 1px solid rgba(255,255,255,0.10);
-  box-shadow: 0 14px 34px rgba(0,0,0,.55);
+  color: rgba(255, 255, 255, 0.92);
+
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+
   backdrop-filter: blur(10px);
 }
 
-:global(body.dark) .menu button[role="menuitem"]:hover {
-  background: rgba(255,255,255,.10);
+.menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
 }
 
-:global(body.dark) .menu-btn {
-  background: rgba(255,255,255,.14);
-  border-color: rgba(255,255,255,.18);
+.menu li + li {
+  margin-top: 4px;
 }
 
+.menu button[role='menuitem'] {
+  width: 100%;
+  padding: 10px 12px;
+
+  text-align: left;
+  font: inherit;
+  color: inherit;
+
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+/* HOVER EN MODO CLARO */
+.menu button[role='menuitem']:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* HOVER EN MODO OSCURO */
+body.dark .menu button[role='menuitem']:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/*ACCESSIBILITY (SR-ONLY) */
 .sr-only {
-  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-  overflow: hidden; clip: rect(0,0,1px,1px); white-space: nowrap; border: 0;
+  position: absolute;
+
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+
+  overflow: hidden;
+  clip: rect(0, 0, 1px, 1px);
+  white-space: nowrap;
+  border: 0;
 }
 
+/* RESPONSIVE (Ajustes para pantallas un poco más grandes) */
 @media (min-width: 420px) {
-  .banner { padding: 16px 22px; }
-  .logo { width: 38px; height: 38px; }
-  .title { font-size: 22px; }
+  .banner {
+    padding: 16px 22px;
+  }
+
+  .logo {
+    width: 38px;
+    height: 38px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
 }
 </style>
+
