@@ -595,8 +595,6 @@ const onImportFileSelected = async (ev: Event) => {
     importModalLoading.value = true
     importingBackup.value = false
 
-    await showToast('Leyendo archivo…', 'medium')
-
     let text = ''
     try {
       text = await file.text()
@@ -727,7 +725,7 @@ const onConfirmImportSelection = async () => {
     const totalDone = createdCount + joinedCount
 
     if (totalDone === 0) {
-      await showToast('Importación cancelada (no se importó nada)', 'danger')
+      await showToast('No se ha importado ninguna despensa', 'danger')
     } else {
       await showToast(`Importación completada: ${createdCount} creadas, ${joinedCount} unidas`, 'success')
       notifyPantriesChanged()
