@@ -1385,11 +1385,9 @@ body.dark .accent-toggle {
 }
 
 body.dark .reset-pill {
-  --background: rgba(255, 255, 255, 0.12);
-  --background-hover: rgba(255, 255, 255, 0.16);
-  --color: #ffffff;
-
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  --background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.14);
+  --background-hover: rgba(var(--md-accent-rgb, 46, 161, 93), 0.2);
+  --color: var(--md-accent, #2ea15d);
 }
 
 /* SELECTOR DE COLOR */
@@ -1602,6 +1600,7 @@ body.dark .color-chip {
     transform: translateY(0) scale(1);
   }
 }
+
 .about-app {
   margin: 0 0 12px;
   font-size: 14px;
@@ -1636,5 +1635,4 @@ body.dark .color-chip {
   color: var(--ion-text-color2);
   opacity: 0.9;
 }
-
 </style>
