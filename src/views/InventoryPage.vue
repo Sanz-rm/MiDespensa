@@ -258,45 +258,13 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonPage,
-  IonContent,
-  IonSpinner,
-  IonButton,
-  IonIcon,
-  IonSearchbar,
-  IonModal,
-  IonInput,
-  IonSelect,
-  IonSelectOption
-} from '@ionic/vue'
+import { IonPage, IonContent, IonSpinner, IonButton, IonIcon, IonSearchbar, IonModal, IonInput, IonSelect, IonSelectOption } from '@ionic/vue'
 import { cartOutline, trashOutline, swapHorizontalOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
 import type { Location } from '@/models/location'
 import type { Pantry } from '@/models/pantry'
-import {
-  onMounted,
-  onBeforeUnmount,
-  ref,
-  computed,
-  inject,
-  watch,
-  type Ref
-} from 'vue'
-import {
-  collection,
-  query,
-  where,
-  updateDoc,
-  doc,
-  getDocs,
-  writeBatch,
-  increment,
-  onSnapshot,
-  limit,
-  type Unsubscribe,
-  orderBy
-} from 'firebase/firestore'
+import { onMounted, onBeforeUnmount, ref, computed, inject, watch, type Ref } from 'vue'
+import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe, orderBy } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showToast } from '@/composables/showToast'
 import { getMeasurementUnit, getOptimizedUrl, isImageGalery } from '@/composables/itemUtils'
@@ -390,7 +358,7 @@ const unitOptions = ['Unidad', 'Kilogramo', 'Gramo', 'Litro', 'Mililitro']
 const pendingImageFile = ref<File | null>(null)
 const pendingImagePublicId = ref<string | null>(null)
 
-// ✅ NUEVO: guardar la imagen anterior para poder restaurar si falla el update
+// Guardar la imagen anterior para poder restaurar si falla el update
 const prevImageUrl = ref<string | null>(null)
 const prevImageItemId = ref<string | null>(null)
 
@@ -416,7 +384,7 @@ function clearPrevImageIfNeeded(item: Item) {
   prevImageItemId.value = null
 }
 
-// ----------- CADUCIDAD / ALERTA EN CARD -----------
+// CADUCIDAD / ALERTA EN CARD 
 function daysUntilExpiration(expiration: string): number {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -435,7 +403,7 @@ function isExpiringSoon(item: Item): boolean {
   return d >= 0 && d < 3
 }
 
-// ----------- CARGA DE DESPENSAS POR CÓDIGOS EN LOCALSTORAGE -----------
+// CARGA DE DESPENSAS POR CÓDIGOS EN LOCALSTORAGE 
 async function loadPantries() {
   try {
     const raw = localStorage.getItem('myPantries')
@@ -482,7 +450,7 @@ async function loadPantries() {
   }
 }
 
-// ----------- HELPERS DE CANTIDAD -----------
+//  HELPERS DE CANTIDAD 
 function getStepForUnit(unitRaw: string | undefined | null): number {
   const u = (unitRaw || '').toLowerCase()
 
@@ -581,7 +549,7 @@ function changeMoveQuantity(deltaSign: 1 | -1) {
   moveQuantity.value = newQty
 }
 
-// ----------- MODAL INFO PRODUCTO -----------
+// MODAL INFO PRODUCTO 
 async function openInfoModal(item: Item) {
   selectedItem.value = item
   editQuantity.value = item.quantity
@@ -672,14 +640,14 @@ async function saveItemInfo() {
 
     ;(selectedItem.value as any).expirationDate = expirationToSave
 
-    // ✅ éxito -> limpiamos el estado de preview (ya es imagen real)
+    // limpiamos el estado de preview (ya es imagen real)
     clearPrevImageIfNeeded(selectedItem.value)
 
     await showToast('Producto actualizado.', 'success')
     closeInfoModal()
   } catch (err) {
     console.error('Error al actualizar producto:', err)
-    // ✅ si falla el update, restaurar imagen anterior
+    // si falla el update, restaurar imagen anterior
     if (selectedItem.value) {
       restorePrevImageIfNeeded(selectedItem.value)
     }
@@ -709,7 +677,7 @@ async function pickWebSource(): Promise<CameraSource | null> {
 
     await sheet.present()
 
-    // ✅ si lo cierra tocando fuera / back => null (no cambia nada)
+    // si lo cierra tocando fuera / back => null (no cambia nada)
     sheet.onDidDismiss().then(() => resolve(null))
   })
 }
@@ -747,7 +715,7 @@ async function pickImage(item: Item) {
       type: blob.type || 'image/jpeg'
     })
 
-    // ✅ guardamos la imagen anterior SOLO la primera vez para ese item
+    // guardamos la imagen anterior SOLO la primera vez para ese item
     if (prevImageItemId.value !== item.id) {
       rememberPrevImage(item)
     }
@@ -877,7 +845,7 @@ async function getPantryRefByCodeGeneric(code: string) {
   return snap.docs[0].ref
 }
 
-// ----------- MODAL MOVER PRODUCTO -----------
+// MODAL MOVER PRODUCTO 
 function openMoveModal(item: Item) {
   moveItem.value = item
   moveMaxQuantity.value = item.quantity

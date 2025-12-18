@@ -1,6 +1,6 @@
-<!-- src/views/OptionsView.vue -->
 <template>
   <ion-page>
+    <!-- Cabecera start -->
     <ion-header translucent>
       <ion-toolbar class="top-toolbar">
         <ion-buttons slot="start">
@@ -9,6 +9,7 @@
         <ion-title>Ajustes</ion-title>
       </ion-toolbar>
     </ion-header>
+    <!-- Cabecera end -->
 
     <ion-content fullscreen class="options-content">
       <ion-header collapse="condense">
@@ -18,7 +19,7 @@
       </ion-header>
 
       <div class="container">
-        <!-- Tarjeta cabecera -->
+        <!-- Tarjeta cabecera start -->
         <ion-card class="hero-card">
           <ion-card-content class="hero-content">
             <div class="hero-left">
@@ -34,8 +35,9 @@
             <ion-note class="hero-version">v{{ appVersion }}</ion-note>
           </ion-card-content>
         </ion-card>
+        <!-- Tarjeta cabecera start -->
 
-        <!-- Apariencia -->
+        <!-- Seccion Apariencia start -->
         <ion-list inset class="list-card">
           <ion-item-divider class="section-divider">Apariencia</ion-item-divider>
 
@@ -72,8 +74,9 @@
             </div>
           </ion-item>
         </ion-list>
+        <!-- Seccion Apariencia end -->
 
-        <!-- Datos -->
+        <!-- Seccion Datos start -->
         <ion-list inset class="list-card">
           <ion-item-divider class="section-divider">Datos</ion-item-divider>
 
@@ -93,8 +96,9 @@
             </ion-label>
           </ion-item>
         </ion-list>
+        <!-- Seccion Datos end -->
 
-        <!-- App -->
+        <!-- Seccion App start -->
         <ion-list inset class="list-card">
           <ion-item-divider class="section-divider">App</ion-item-divider>
 
@@ -114,8 +118,11 @@
             </ion-label>
           </ion-item>
         </ion-list>
+        <!-- Seccion App end -->
 
+        <!-- Espacio footer start -->
         <div class="footer-space" />
+        <!-- Espacio footer end -->
       </div>
     </ion-content>
   </ion-page>

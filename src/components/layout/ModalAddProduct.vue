@@ -1,4 +1,3 @@
-<!-- components/layout/ModalAddProduct.vue -->
 <template>
     <!-- Botón flotante START -->
     <ion-fab slot="fixed" vertical="bottom" horizontal="end">
@@ -150,36 +149,11 @@
 </template>
 
 <script setup lang="ts">
-import {
-    IonFab,
-    IonFabButton,
-    IonModal,
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonButtons,
-    IonButton,
-    IonContent,
-    IonList,
-    IonItem,
-    IonInput,
-    IonLabel,
-    IonIcon
+import { IonFab, IonFabButton, IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonList, IonItem, IonInput, IonLabel, IonIcon
 } from '@ionic/vue'
 import { addOutline } from 'ionicons/icons'
 import { ref, computed, watch } from 'vue'
-import {
-    collection,
-    query,
-    where,
-    getDocs,
-    writeBatch,
-    doc,
-    increment,
-    orderBy,
-    limit,
-    updateDoc,
-} from 'firebase/firestore'
+import { collection, query, where, getDocs, writeBatch, doc, increment, orderBy, limit, updateDoc,} from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showToast } from '@/composables/showToast'
 import { getImageFirstLetter, getOptimizedUrl, isImageGalery } from '@/composables/itemUtils'

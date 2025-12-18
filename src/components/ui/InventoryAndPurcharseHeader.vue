@@ -1,4 +1,3 @@
-<!-- src/components/InventoryAndPurcharseHeader.vue -->
 <template>
   <ion-header class="rounded-header">
     <ion-toolbar class="back-toolbar">

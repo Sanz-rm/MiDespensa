@@ -1,4 +1,3 @@
-<!-- PurcharsePage.vue (vista de compra) -->
 <template>
   <ion-page>
     <InventoryAndPurcharseHeader :title="`Compra de ${props.name}`"
