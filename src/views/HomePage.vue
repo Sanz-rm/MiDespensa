@@ -524,36 +524,52 @@ async function copyPantryCode(code: string) {
 </script>
 
 <style scoped>
-/* Header transparente y sin sombra */
+/* FONDO */
+ion-content.pantry-content {
+  --md-page-bg: var(--ion-background-color, #ffffff);
+
+  --md-card-bg: #ffffff;
+  --md-card-border: var(--md-accent, #2ea15d);
+  --md-card-shadow: 0 2px 0 rgba(var(--md-accent-rgb, 46, 161, 93), 0.12);
+
+  --md-text: #111827;
+  --md-muted: #6b7280;
+
+  --background: var(--md-page-bg);
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+body.dark ion-content.pantry-content {
+  --md-card-bg: var(--md-page-bg);
+  --md-card-border: rgba(var(--md-accent-rgb, 46, 161, 93), 0.55);
+  --md-card-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+
+  --md-text: rgba(255, 255, 255, 0.92);
+  --md-muted: rgba(229, 231, 235, 0.78);
+}
+
+/* HEADER */
 ion-header.rounded-header {
   --background: transparent;
   --ion-background-color: transparent;
   --box-shadow: none;
-  background: transparent !important;
-  box-shadow: none !important;
+
   border: 0;
   padding: 0;
   overflow: visible;
+
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 ion-header.rounded-header::after {
   display: none;
 }
 
-/* Contenedor general */
-.pantry-content {
-  --background: #fff;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-/* DARK: fondo general */
-body.dark .pantry-content {
-  background: var(--ion-background-color);
-}
-
-/* Error */
+/* ERRORES */
 .error-box {
   margin-bottom: 6px;
   text-align: center;
@@ -564,37 +580,41 @@ body.dark .pantry-content {
   font-weight: 700;
 }
 
-/* Acciones */
+/* ACCIONES / BOTONES */
 .actions {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: 12px;
 }
 
-
 .btn {
+  width: 100%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border-radius: 999px;
+
   padding: 10px 14px;
-  font-weight: 700;
+  border-radius: 999px;
+
   font-size: 14px;
+  font-weight: 700;
+
   border: 2px solid var(--md-accent, #2ea15d);
   background: transparent;
   color: var(--md-accent, #2ea15d);
+
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
-  width: 100%;
+  transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
 }
 
-:global(body.dark) .btn {
+body.dark .btn {
   box-shadow: none;
 }
 
 .btn-solid {
   background: var(--md-accent, #2ea15d);
-  color: #fff;
+  color: #ffffff;
 }
 
 .btn-outline:hover,
@@ -603,52 +623,43 @@ body.dark .pantry-content {
 }
 
 body.dark .btn-outline {
-  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.08) !important;
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.08);
 }
-
 
 .btn-outline:last-child {
-  margin-bottom: 5%;
+  margin-bottom: 5%; 
 }
 
-/* Loading */
+/* LOADING */
 .loading-box {
-  display: flex;
-  justify-content: center;
-  align-items: center;
   height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Lista de despensas */
+/* TARJETAS/LISTA DE DESPENSAS */
 .pantry-list {
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
-/* Tarjeta de despensa */
 .pantry-card {
   position: relative;
   display: grid;
   grid-template-columns: 56px 1fr;
   gap: 12px;
+
   padding: 12px;
-  border: 2px solid var(--md-accent, #2ea15d);
-  background: #ffffff;
   border-radius: 14px;
-  box-shadow: 0 2px 0 rgba(var(--md-accent-rgb, 46, 161, 93), 0.12);
+
+  background: var(--md-card-bg);
+  border: 2px solid var(--md-card-border);
+  box-shadow: var(--md-card-shadow);
+
   cursor: pointer;
-  transition: transform 0.12s ease, box-shadow 0.12s ease;
-}
-
-.pantry-card {
-  background: var(--md-card-bg) !important;
-  border-color: var(--md-card-border) !important;
-  box-shadow: var(--md-card-shadow) !important;
-}
-
-body.dark .pantry-card {
-  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.08) !important;
+  transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
 .pantry-card:hover {
@@ -656,48 +667,48 @@ body.dark .pantry-card {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
-/* Botón esquina */
-.corner-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  border: 0;
-  background: #fff;
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  box-shadow: inset 0 0 0 2px #e8eef2;
-  display: grid;
-  place-items: center;
-  pointer-events: none;
+body.dark .pantry-card {
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.08);
 }
 
-.corner-btn.danger {
-  box-shadow: inset 0 0 0 2px #e53935;
-  color: #e53935;
-}
-
-.corner-btn.accent {
-  box-shadow: inset 0 0 0 2px #e53935;
-  color: var(--md-accent, #2ea15d);
-}
-
-/* Botón de salir/eliminar fijo en esquina de las tarjetas */
-.pantry-card {
-  position: relative;
-}
-
+/* BOTON ELIMINAR/SALIR DESPENSA */
 .corner-btn {
   position: absolute;
   top: 8px;
   right: 8px;
   z-index: 10;
+
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+
+  display: grid;
+  place-items: center;
+
+  background: #ffffff;
+  box-shadow: inset 0 0 0 2px #e8eef2;
+
   pointer-events: auto;
 }
 
-/* DARK: botón esquina */
+body.dark .corner-btn,
+body.dark .corner-btn.accent,
+body.dark .corner-btn.danger {
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.08);
+}
 
-/* Icono izquierda */
+.corner-btn.danger {
+  color: #e53935;
+  box-shadow: inset 0 0 0 2px #e53935;
+}
+
+.corner-btn.accent {
+  color: var(--md-accent, #2ea15d);
+  box-shadow: inset 0 0 0 2px var(--md-accent, #2ea15d);
+}
+
+/* ICONO TARJETA DESPENSA */
 .icon-box {
   display: grid;
   place-items: center;
@@ -707,19 +718,20 @@ body.dark .pantry-card {
   width: 44px;
   height: 44px;
   border-radius: 10px;
-  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.12);
-  border: 2px solid rgba(var(--md-accent-rgb, 46, 161, 93), 0.28);
+
   display: grid;
   place-items: center;
-  font-size: 60px;
+
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.12);
+  border: 2px solid rgba(var(--md-accent-rgb, 46, 161, 93), 0.28);
 }
 
-/* DARK: icono */
-:global(body.dark) .icon-house {
+body.dark .icon-house {
   background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.16);
   border-color: rgba(var(--md-accent-rgb, 46, 161, 93), 0.38);
 }
 
+/* CONTENIDO TARJETA DESPENSA */
 .info {
   display: flex;
   flex-direction: column;
@@ -734,17 +746,22 @@ body.dark .pantry-card {
 
 .name {
   margin: 0;
-  color: var(--md-accent, #2ea15d);
   font-size: 18px;
   font-weight: 800;
+  color: var(--md-accent, #2ea15d);
 }
 
 .meta {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #6b7280;
+
   font-size: 13px;
+  color: var(--md-muted);
+}
+
+body.dark .meta {
+  color: var(--md-muted);
 }
 
 .meta-item {
@@ -767,23 +784,34 @@ body.dark .pantry-card {
   margin-top: 2px;
 }
 
-.code-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 10px;
-  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.1);
-  border: 2px solid rgba(var(--md-accent-rgb, 46, 161, 93), 0.18);
-  font-weight: 700;
-  color: #1f2937;
-  font-size: 13px;
-}
-
+/* CODIGO DE DESPENSA */
 .copy-btn {
   cursor: pointer;
   border: none;
   background: none;
+  padding: 0;
+}
+
+.code-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 6px 10px;
+  border-radius: 10px;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  color: var(--md-text);
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.1);
+  border: 2px solid rgba(var(--md-accent-rgb, 46, 161, 93), 0.18);
+}
+
+body.dark .code-chip {
+  color: var(--md-text);
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.14);
+  border-color: rgba(var(--md-accent-rgb, 46, 161, 93), 0.32);
 }
 
 .copy-btn:focus-visible {
@@ -800,19 +828,21 @@ body.dark .pantry-card {
   opacity: 0.8;
 }
 
-/* Empty */
+/* SIN RESULTADOS */
 .empty-state {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
+
   padding: 24px 16px;
+  text-align: center;
+
   color: #6b7280;
 }
 
-:global(body.dark) .empty-state {
+body.dark .empty-state {
   color: rgba(229, 231, 235, 0.75);
 }
 
@@ -820,8 +850,10 @@ body.dark .pantry-card {
   width: 120px;
   height: 120px;
   border-radius: 999px;
+
   display: grid;
   place-items: center;
+
   margin-bottom: 2px;
 }
 
@@ -832,136 +864,24 @@ body.dark .pantry-card {
 
 .empty-title {
   margin: 0 0 4px;
-  font-weight: 700;
   font-size: 18px;
+  font-weight: 700;
   color: var(--ion-text-color3);
 }
 
 .empty-subtitle {
   margin: 0;
   font-size: 14px;
-  color: var(--ion-text-color2);
   font-weight: 500;
+  color: var(--ion-text-color2);
 }
 
-:global(body.dark) .empty-subtitle {
+body.dark .empty-subtitle {
   color: rgba(229, 231, 235, 0.72);
 }
 
-/* Mantengo estos por si en algún momento vuelves a usar cards de items aquí */
-.items-grid {
-  margin-top: 8px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 14px;
-}
-
-.item-card {
-  text-align: center;
-  padding: 10px;
-  border-radius: 12px;
-  border: 1px solid #eef2f4;
-  background: #fff;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-}
-
-body.dark.item-card {
-  background: var(--ion-background-color);
-  border-color: rgba(255, 255, 255, 0.08);
-  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.35);
-}
-
-.item-card img {
-  width: 100%;
-  height: 100px;
-  object-fit: contain;
-  display: block;
-  margin: 0 auto 8px;
-}
-
-.item-name {
-  margin: 0;
-  font-weight: 700;
-  font-size: 14px;
-  color: #111827;
-}
-
-:global(body.dark) .item-name {
-  color: rgba(255, 255, 255, 0.92);
-}
-
-.item-units {
-  margin: 2px 0 0;
-  font-size: 12px;
-  color: #6b7280;
-}
-
-:global(body.dark) .item-units {
-  color: rgba(229, 231, 235, 0.72);
-}
-
+/* ICONOS */
 .icons-red {
   color: #e94031;
 }
-
-/* =========================
-   CARD THEME VARS (NO TOCA EL FONDO)
-   ========================= */
-
-/* Valores por defecto (light) */
-ion-content.pantry-content {
-  --md-page-bg: var(--ion-background-color, #ffffff);
-  --background: var(--md-page-bg);
-  --md-card-border: var(--md-accent, #2ea15d);
-  --md-card-shadow: 0 2px 0 rgba(var(--md-accent-rgb, 46, 161, 93), 0.12);
-
-  --md-card-text: #111827;
-  --md-card-muted: #6b7280;
-}
-
-/* Dark: solo cambia variables de CARD */
-:global(body.dark) ion-content.pantry-content,
-:global(html.dark) ion-content.pantry-content,
-:global(ion-app.dark) ion-content.pantry-content,
-:global(.dark) ion-content.pantry-content {
-  --md-card-bg: var(--md-page-bg);
-  --md-card-border: rgba(var(--md-accent-rgb, 46, 161, 93), 0.55);
-  --md-card-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
-
-  --md-card-text: rgba(255, 255, 255, 0.92);
-  --md-card-muted: rgba(229, 231, 235, 0.78);
-}
-
-/* Textos dentro de la card */
-.name {
-  color: var(--md-accent, #2ea15d) !important;
-}
-
-.meta {
-  color: var(--md-card-muted) !important;
-}
-
-.code-chip {
-  color: var(--md-card-text) !important;
-}
-</style>
-
-<style>
-/* Estilos globales para dark mode */
-body.dark .meta {
-  color: #ffffff !important;
-}
-
-body.dark .code-chip {
-  color: #ffffff !important;
-  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.14) !important;
-  border-color: rgba(var(--md-accent-rgb, 46, 161, 93), 0.32) !important;
-}
-
-body.dark .corner-btn,
-body.dark .corner-btn.accent,
-body.dark .corner-btn.danger{
-  background: var(--ion-background-color);
-}
-
 </style>
