@@ -667,6 +667,10 @@ body.dark .btn-outline {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
+body.dark .pantry-card {
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.08);
+}
+
 /* BOTON ELIMINAR/SALIR DESPENSA */
 .corner-btn {
   position: absolute;
@@ -691,7 +695,7 @@ body.dark .btn-outline {
 body.dark .corner-btn,
 body.dark .corner-btn.accent,
 body.dark .corner-btn.danger {
-  background: var(--ion-background-color);
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.08);
 }
 
 .corner-btn.danger {

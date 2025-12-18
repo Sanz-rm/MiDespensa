@@ -202,162 +202,189 @@ async function onConfirm() {
 </script>
 
 <style scoped>
-/* Dar forma al contenedor interno del modal */
-:global(.mds-modal::part(content)) {
-  width: 92vw;
-  max-width: 420px;
-  height: 100vw;
-  max-height: 100vh;
-  border-radius: 22px;
-  overflow: visible;
-  background: transparent;
-}
-
-/* Oscurecer fondo del modal*/
-:global(.mds-modal::part(backdrop)) {
-  background: rgba(0,0,0,.4);
-  opacity: 1;
-}
-
-/* Force the overlay backdrop to cover the entire viewport (defensive) */
-:global(.mds-modal::part(backdrop)) {
-  position: fixed;
-  inset: 0;
-}
-
-/* Dejar el content transparente (el “card” pone el blanco) */
-:global(.mds-modal ion-content) {
-  --background: transparent;
-}
-
-
-/* arjeta por dentro */
-.modal-card {
-  background: var(--ion-background-color2);
-  border-radius: 22px;
-  overflow: hidden;
-  box-shadow: var(--box-shadow);
-}
-
-/* Cabecera verde */
-.modal-head {
+/* HEADER */
+.banner {
   position: relative;
+  z-index: 10;
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+
+  padding: 14px 18px;
+  padding-top: 8%;
+
   background: var(--md-accent, #2ea15d);
   color: #fff;
-  padding: 28px 20px 22px;
-  border-bottom-left-radius: 22px;
-  border-bottom-right-radius: 22px;
+
+  border-bottom-left-radius: 18px;
+  border-bottom-right-radius: 18px;
+
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
-.close-btn {
-  position: absolute;
-  top: 12px;
-  right: 12px;
-  background: transparent;
-  border: 0;
-  color: #fff;
-  padding: 6px;
-  border-radius: 999px;
-  line-height: 0;
+.left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.head-icon {
-  width: 44px;
-  height: 44px;
-  border-radius: 999px;
-  background: rgba(255,255,255,.2);
-  display: grid;
-  place-items: center;
-  margin: 0 auto 10px;
+/* LOGO */
+.logo {
+  width: 84px;
+  height: 84px;
+  display: block;
+  object-fit: contain;
+  filter: brightness(0) invert(1);
 }
 
-.head-icon .material-icons { font-size: 24px; color: #fff; }
-
-.head-title {
-  text-align: center;
+/* TÍTULO PRINCIPAL */
+.title {
+  margin: 0;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
   font-size: 20px;
   font-weight: 800;
-  letter-spacing: .2px;
-  margin: 0;
 }
 
-/* Cuerpo del modal */
-.modal-body {
-  padding: 16px 18px 18px;
+.right {
+  position: relative;
 }
 
-.field-label {
-  display: block;
-  font-weight: 700;
-  color: var(--ion-text-color);
-  margin: 8px 2px 8px;
-}
+/* MENU */
+.menu-btn {
+  width: 38px;
+  height: 38px;
 
-.field-item {
-  --background: #f7f9fa;
-  --inner-padding-end: 0;
-  --inner-padding-start: 0;
-  --padding-start: 10px;
-  --padding-end: 0;
-  border-radius: 12px;
-  box-shadow: 0 4px 14px rgba(0,0,0,.08);
-  margin-bottom: 14px;
-}
-
-body.dark .field-item {
-  --background: #3a3838;
-}
-
-.field-item ion-input::part(native) {
-  padding: 12px 14px;
-  font-size: 16px;
-}
-
-/* Botones */
-.modal-actions {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-top: 6%;
-}
-
-.btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  column-gap: 8px;
-  width: 100%;
-  padding: 12px 14px;
+
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.18);
+
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.08s ease, border-color 0.2s ease;
+}
+
+.menu-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+body.dark .menu-btn {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* MENU HAMBURGUESA */
+.hamb {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hamb > span {
+  width: 18px;
+  height: 2px;
+  display: block;
+  border-radius: 2px;
+  background: #fff;
+}
+
+.menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+
+  min-width: 180px;
+  padding: 6px;
+
+  background: #fff;
+  color: #222;
+
   border-radius: 12px;
-  font-weight: 700;
-  font-size: 15px;
-  border: 2px solid transparent;
-  transition: transform .04s ease;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
 }
 
-.btn:active { transform: translateY(1px); }
+body.dark .menu {
+  background: rgba(20, 20, 20, 0.92);
+  color: rgba(255, 255, 255, 0.92);
 
-.btn-outline {
-  background: var(--ion-background-color);
-  color: var(--md-accent, #2ea15d);
-  border-color: var(--md-accent, #2ea15d);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+
+  backdrop-filter: blur(10px);
 }
 
-body.dark .btn-outline  {
-  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.08) !important;
+.menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
 }
 
-.btn-solid {
-  background: var(--md-accent, #2ea15d);
-  color: #fff;
+.menu li + li {
+  margin-top: 4px;
 }
 
-.spinner {
-  margin-right: 6px;
-  --color: #fff;
+.menu button[role='menuitem'] {
+  width: 100%;
+  padding: 10px 12px;
+
+  text-align: left;
+  font: inherit;
+  color: inherit;
+
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+
+  cursor: pointer;
+  transition: background 0.15s ease;
 }
 
-.inner-scroll scroll-y{
-  padding: 0px;
+/* HOVER EN MODO CLARO */
+.menu button[role='menuitem']:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* HOVER EN MODO OSCURO */
+body.dark .menu button[role='menuitem']:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/*ACCESSIBILITY (SR-ONLY) */
+.sr-only {
+  position: absolute;
+
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+
+  overflow: hidden;
+  clip: rect(0, 0, 1px, 1px);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* RESPONSIVE (Ajustes para pantallas un poco más grandes) */
+@media (min-width: 420px) {
+  .banner {
+    padding: 16px 22px;
+  }
+
+  .logo {
+    width: 38px;
+    height: 38px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
 }
 </style>
