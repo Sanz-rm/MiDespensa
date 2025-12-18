@@ -932,6 +932,8 @@ async function saveBackupToFile(backup: ExportBackup) {
   try {
     const mod = await import('@capacitor/filesystem')
     const { Filesystem, Directory, Encoding } = mod as any
+
+    // Guardar en Documents (como ya hacías)
     await Filesystem.writeFile({
       path: fileName,
       data: content,
@@ -939,6 +941,42 @@ async function saveBackupToFile(backup: ExportBackup) {
       encoding: Encoding.UTF8
     })
     console.log('[saveBackupToFile] backup guardado en Documents', fileName)
+
+    // NUEVO: abrir "Compartir" para que puedas guardarlo en Descargas/Drive/Archivos
+    // y normalmente te aparece más fácil en "Recientes" del gestor.
+    try {
+      const shareMod = await import('@capacitor/share')
+      const { Share } = shareMod as any
+
+      // Obtener una URI compartible del fichero
+      let fileUri = ''
+      try {
+        const uriRes = await Filesystem.getUri({
+          directory: Directory.Documents,
+          path: fileName
+        })
+        fileUri = String(uriRes?.uri ?? '')
+      } catch (e) {
+        console.log('[saveBackupToFile] no se pudo obtener uri del fichero', e)
+      }
+
+      if (fileUri) {
+        await Share.share({
+          title: 'Copia de seguridad MiDespensa',
+          text: 'Copia de seguridad (.json) de MiDespensa',
+          url: fileUri,
+          dialogTitle: 'Guardar/Compartir copia'
+        })
+        console.log('[saveBackupToFile] share abierto', fileUri)
+      } else {
+        // Si no hay URI, al menos avisamos dónde está
+        await showToast('Guardado en Documentos. Busca “midespensa_backup”.', 'medium')
+      }
+    } catch (e) {
+      // Si no tienes instalado @capacitor/share o falla, no rompemos export.
+      console.log('[saveBackupToFile] Share no disponible o error', e)
+      await showToast('Guardado en Documentos. Busca “midespensa_backup”.', 'medium')
+    }
   } catch (e) {
     console.log('[saveBackupToFile] Filesystem no disponible o error escribiendo archivo', e)
     await showToast(
