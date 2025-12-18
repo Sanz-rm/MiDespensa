@@ -88,6 +88,15 @@
             </ion-label>
           </ion-item>
 
+          <!-- NUEVO: Importar debajo de exportar -->
+          <ion-item lines="full" class="setting-item" button @click="onImportData">
+            <ion-icon slot="start" :icon="cloudUploadOutline" class="item-icon accent" />
+            <ion-label>
+              <h2>Importar</h2>
+              <p>Restaura tus datos desde un archivo</p>
+            </ion-label>
+          </ion-item>
+
           <ion-item lines="none" class="setting-item" button @click="onClearCache">
             <ion-icon slot="start" :icon="trashOutline" class="item-icon accent" />
             <ion-label>
@@ -120,6 +129,149 @@
         </ion-list>
         <!-- Seccion App end -->
 
+        <!-- NUEVO: input oculto para seleccionar archivo de importación START -->
+        <input
+          ref="importFileInput"
+          type="file"
+          accept="application/json,.json"
+          class="hidden-file-input"
+          @change="onImportFileSelected"
+        />
+        <!-- NUEVO: input oculto para seleccionar archivo de importación END -->
+
+        <!-- NUEVO: Modal selección despensas a exportar START -->
+        <ion-modal :is-open="showExportModal" @didDismiss="closeExportModal">
+          <ion-header translucent>
+            <ion-toolbar class="modal-toolbar">
+              <ion-title>Exportar</ion-title>
+              <ion-buttons slot="end">
+                <ion-button @click="closeExportModal">Cerrar</ion-button>
+              </ion-buttons>
+            </ion-toolbar>
+          </ion-header>
+
+          <ion-content class="ion-padding">
+            <div class="export-hint">
+              <p class="export-title">Selecciona las despensas a exportar</p>
+              <p class="export-subtitle">Debes marcar al menos 1.</p>
+            </div>
+
+            <div v-if="exportLoading" class="loading-box">
+              <ion-spinner name="crescent" style="transform:scale(2);" />
+            </div>
+
+            <ion-list v-else inset class="export-list">
+              <ion-item v-for="p in exportPantries" :key="p.id" lines="full" class="export-item">
+                <ion-checkbox
+                  slot="start"
+                  :checked="selectedExportCodes.has(p.code)"
+                  @ionChange="toggleExportPantry(p.code, $event)"
+                />
+                <ion-label>
+                  <h2 class="export-name">{{ p.name }}</h2>
+                  <p class="export-code">{{ p.code }}</p>
+                </ion-label>
+              </ion-item>
+
+              <ion-item v-if="!exportPantries.length" lines="none">
+                <ion-label>No tienes despensas para exportar.</ion-label>
+              </ion-item>
+            </ion-list>
+
+            <div class="export-actions">
+              <ion-button
+                expand="block"
+                class="export-btn"
+                :disabled="selectedExportCodes.size === 0 || exportingBackup"
+                @click="onConfirmExportSelection"
+              >
+                {{ exportingBackup ? 'Generando...' : 'Continuar' }}
+              </ion-button>
+              <ion-note class="export-note" v-if="selectedExportCodes.size === 0">
+                Selecciona al menos una despensa.
+              </ion-note>
+            </div>
+          </ion-content>
+        </ion-modal>
+        <!-- NUEVO: Modal selección despensas a exportar END -->
+
+        <!-- NUEVO: Modal selección despensas a importar START -->
+        <ion-modal :is-open="showImportModal" @didDismiss="closeImportModal">
+          <ion-header translucent>
+            <ion-toolbar class="modal-toolbar">
+              <ion-title>Importar</ion-title>
+              <ion-buttons slot="end">
+                <ion-button @click="closeImportModal">Cerrar</ion-button>
+              </ion-buttons>
+            </ion-toolbar>
+          </ion-header>
+
+          <ion-content class="ion-padding">
+            <div class="export-hint">
+              <p class="export-title">Selecciona las despensas a importar</p>
+              <p class="export-subtitle">Por defecto están todas seleccionadas. Debes marcar al menos 1.</p>
+            </div>
+
+            <div v-if="importModalLoading" class="loading-box">
+              <ion-spinner name="crescent" style="transform:scale(2);" />
+            </div>
+
+            <ion-list v-else inset class="export-list">
+              <ion-item v-for="b in importBundles" :key="getImportKey(b)" lines="full" class="export-item">
+                <ion-checkbox
+                  slot="start"
+                  :checked="selectedImportKeys.has(getImportKey(b))"
+                  @ionChange="toggleImportBundle(getImportKey(b), $event)"
+                />
+                <ion-label>
+                  <h2 class="export-name">{{ b.pantry?.name }}</h2>
+                  <p class="export-code">{{ b.pantry?.code }}</p>
+                </ion-label>
+              </ion-item>
+
+              <ion-item v-if="!importBundles.length" lines="none">
+                <ion-label>No hay despensas en el archivo.</ion-label>
+              </ion-item>
+            </ion-list>
+
+            <div class="export-actions">
+              <ion-button
+                expand="block"
+                class="export-btn"
+                :disabled="selectedImportKeys.size === 0 || importingBackup"
+                @click="onConfirmImportSelection"
+              >
+                {{ importingBackup ? 'Importando...' : 'Importar' }}
+              </ion-button>
+              <ion-note class="export-note" v-if="selectedImportKeys.size === 0">
+                Selecciona al menos una despensa.
+              </ion-note>
+            </div>
+          </ion-content>
+        </ion-modal>
+        <!-- NUEVO: Modal selección despensas a importar END -->
+
+        <!-- NUEVO: Alert para decidir qué hacer si la despensa existe START -->
+        <div v-if="showImportDecisionPopup" class="confirm-overlay" @click.self="onImportDecisionCancel">
+          <div class="confirm-dialog">
+            <h2>Despensa encontrada</h2>
+            <p class="confirm-message">{{ importDecisionMessage }}</p>
+
+            <div class="confirm-actions">
+              <button type="button" class="btn-secondary" @click="onImportDecisionCancel">
+                Cancelar
+              </button>
+              <button type="button" class="btn-accent" @click="onImportDecisionExisting">
+                Usar existente
+              </button>
+              <button type="button" class="btn-primary" @click="onImportDecisionNew">
+                Crear nueva
+              </button>
+            </div>
+          </div>
+        </div>
+        <!-- NUEVO: Alert para decidir qué hacer si la despensa existe END -->
+
         <!-- Pop up confirmar limpiar caché START -->
         <ConfirmPopup
           v-model="showConfirmClearCache"
@@ -144,6 +296,23 @@ import { onMounted, ref } from 'vue'
 import { Capacitor } from '@capacitor/core'
 import { Preferences } from '@capacitor/preferences'
 import {
+  addDoc,
+  collection,
+  doc,
+  getDoc,
+  getDocs,
+  increment,
+  orderBy,
+  query,
+  updateDoc,
+  where,
+  writeBatch,
+  Timestamp
+} from 'firebase/firestore'
+import { db } from '@/firebase'
+import type { Pantry } from '@/models/pantry'
+import { generatePantryCode } from '@/composables/pantryUtils'
+import {
   IonPage,
   IonHeader,
   IonToolbar,
@@ -161,7 +330,10 @@ import {
   IonToggle,
   IonIcon,
   IonItemDivider,
-  IonButton
+  IonButton,
+  IonModal,
+  IonCheckbox,
+  IonSpinner
 } from '@ionic/vue'
 import { showToast } from '@/composables/showToast'
 import {
@@ -169,6 +341,7 @@ import {
   informationCircleOutline,
   trashOutline,
   downloadOutline,
+  cloudUploadOutline,
   logOutOutline,
   sparklesOutline,
   moonOutline
@@ -199,7 +372,652 @@ const onThemeToggle = () => {
 // const appVersion = computed(() => (import.meta as any).env?.VITE_APP_VERSION ?? '1.0.0')
 const appVersion = '1'
 
-const onExportData = () => showToast('Exportar: por implementar (JSON/CSV)', 'light')
+/* ===========================
+   EXPORTAR / IMPORTAR (UI)
+   =========================== */
+
+// NUEVO: estados modal export
+const showExportModal = ref(false)
+const exportLoading = ref(false)
+const exportingBackup = ref(false)
+const exportPantries = ref<Pantry[]>([])
+const selectedExportCodes = ref<Set<string>>(new Set())
+
+// NUEVO: input file import
+const importFileInput = ref<HTMLInputElement | null>(null)
+const importingBackup = ref(false)
+
+// NUEVO: Modal import selección
+const showImportModal = ref(false)
+const importModalLoading = ref(false)
+const importBundles = ref<ExportPantryBundle[]>([])
+const selectedImportKeys = ref<Set<string>>(new Set())
+
+// NUEVO: Pop up decisión import si existe (estilo app)
+const showImportDecisionPopup = ref(false)
+const importDecisionMessage = ref('')
+let importDecisionResolver: ((v: 'existing' | 'new' | 'cancel') => void) | null = null
+let importDecisionFired = false
+
+// Obtenemos el Identificador de nuestro dispositivo (igual que en el otro código)
+function getDeviceId(): string {
+  let id = localStorage.getItem('deviceId')
+  if (!id) {
+    id = crypto.randomUUID()
+    localStorage.setItem('deviceId', id)
+  }
+  console.log('Disposito actual:', id)
+  return id
+}
+const deviceId = getDeviceId()
+
+// Modelo local para export (evitamos acoplar a otros modelos)
+type ExportItem = {
+  id: string
+  name: string
+  quantity: number
+  unit: string
+  pantryCode: string
+  locationId: string | null
+  inPurchase: boolean
+  imageUrl: string
+  expirationDate: any
+}
+type ExportPantryBundle = {
+  pantry: Pantry
+  items: ExportItem[]
+}
+type ExportBackup = {
+  app: string
+  appVersion: string
+  exportedAt: string
+  pantries: ExportPantryBundle[]
+}
+
+// NUEVO: helper para recuperar los códigos del storage (mis despensas)
+function getStoredPantryCodes(): string[] {
+  try {
+    const raw = localStorage.getItem('myPantries')
+    const codes = JSON.parse(raw ?? '[]')
+    const normalized = Array.isArray(codes)
+      ? codes
+          .map((c) => String(c ?? '').trim().toUpperCase())
+          .filter(Boolean)
+      : []
+    return normalized
+  } catch (e) {
+    console.log('[getStoredPantryCodes] error parse storage myPantries', e)
+    return []
+  }
+}
+
+// NUEVO: notificar cambios para refrescar Home (sin F5)
+function notifyPantriesChanged() {
+  try {
+    const codes = getStoredPantryCodes()
+    window.dispatchEvent(new CustomEvent('myPantriesChanged', { detail: { codes } }))
+    console.log('[notifyPantriesChanged] evento lanzado', codes)
+  } catch (e) {
+    console.log('[notifyPantriesChanged] error', e)
+  }
+}
+
+// Añadir despensa a la lista de despensas del dispositivo (igual que en tu pantalla de despensas)
+function addPantryToStorage(code: string) {
+  try {
+    const existing: string[] = JSON.parse(localStorage.getItem('myPantries') ?? '[]')
+    const normalized = String(code ?? '').trim().toUpperCase()
+    if (!normalized) {
+      console.log('[addPantryToStorage] code vacío, no se guarda')
+      return
+    }
+    if (!existing.includes(normalized)) {
+      existing.push(normalized)
+      localStorage.setItem('myPantries', JSON.stringify(existing))
+      console.log('[addPantryToStorage] añadido', normalized, existing)
+    } else {
+      console.log('[addPantryToStorage] ya existía', normalized)
+    }
+
+    // NUEVO: para que se refresque Home sin recargar
+    notifyPantriesChanged()
+  } catch (e) {
+    console.log('[addPantryToStorage] error', e)
+  }
+}
+
+// NUEVO: helper para trocear (Firestore "in" admite máximo 10)
+function chunkArray<T>(arr: T[], size: number): T[][] {
+  const out: T[][] = []
+  for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size))
+  return out
+}
+
+// Exportar: abre modal con listado de despensas y checkboxes
+const onExportData = async () => {
+  const codes = getStoredPantryCodes()
+  if (!codes.length) {
+    await showToast('No tienes despensas en este dispositivo', 'warning')
+    return
+  }
+
+  showExportModal.value = true
+  exportLoading.value = true
+  exportingBackup.value = false
+  selectedExportCodes.value = new Set()
+  exportPantries.value = []
+
+  try {
+    const chunks = chunkArray(codes, 10)
+    const all: Pantry[] = []
+
+    for (const c of chunks) {
+      const q = query(collection(db, 'pantries'), where('code', 'in', c))
+      const snap = await getDocs(q)
+
+      snap.docs.forEach((d) => {
+        const data = d.data() as any
+        all.push({
+          id: String(d.id),
+          code: String(data.code ?? ''),
+          name: String(data.name ?? ''),
+          memberCount: Number(data.memberCount ?? 1),
+          totalItems: Number(data.totalItems ?? 0),
+          creatorId: String(data.creatorId ?? '0000')
+        } as Pantry)
+      })
+    }
+
+    // Ordenar por nombre
+    exportPantries.value = all.sort((a, b) =>
+      String(a.name ?? '').localeCompare(String(b.name ?? ''), 'es', { sensitivity: 'base' })
+    )
+  } catch (e) {
+    console.log('[onExportData] error cargando despensas', e)
+    exportPantries.value = []
+    await showToast('No se pudieron cargar tus despensas', 'danger')
+  } finally {
+    exportLoading.value = false
+  }
+}
+
+// NUEVO: Importar -> pedir seleccionar fichero
+const onImportData = async () => {
+  try {
+    if (importingBackup.value) {
+      await showToast('Importación en curso…', 'warning')
+      return
+    }
+    const el = importFileInput.value
+    if (!el) {
+      console.log('[onImportData] importFileInput no existe')
+      await showToast('No se pudo abrir el selector de archivo', 'danger')
+      return
+    }
+    // Limpia el valor para poder seleccionar el mismo archivo dos veces seguidas
+    el.value = ''
+    el.click()
+  } catch (e) {
+    console.log('[onImportData] error abriendo selector de archivo', e)
+    await showToast('No se pudo abrir el selector de archivo', 'danger')
+  }
+}
+
+// NUEVO: key estable para cada bundle del fichero
+function getImportKey(b: ExportPantryBundle) {
+  const id = String((b as any)?.pantry?.id ?? '').trim()
+  const code = String((b as any)?.pantry?.code ?? '').trim().toUpperCase()
+  const name = String((b as any)?.pantry?.name ?? '').trim()
+  return id || code || `${name}-${Math.random().toString(16).slice(2)}`
+}
+
+// NUEVO: toggle selección import
+function toggleImportBundle(key: string, ev: CustomEvent) {
+  const checked = !!(ev as any)?.detail?.checked
+  const set = new Set(selectedImportKeys.value)
+  if (checked) set.add(key)
+  else set.delete(key)
+  selectedImportKeys.value = set
+}
+
+// NUEVO: cerrar modal import
+function closeImportModal() {
+  showImportModal.value = false
+}
+
+// NUEVO: leer fichero seleccionado y abrir modal de selección (por defecto todo seleccionado)
+const onImportFileSelected = async (ev: Event) => {
+  try {
+    const input = ev.target as HTMLInputElement | null
+    const file = input?.files?.[0]
+    if (!file) {
+      console.log('[onImportFileSelected] no se seleccionó archivo')
+      return
+    }
+
+    importModalLoading.value = true
+    importingBackup.value = false
+
+    await showToast('Leyendo archivo…', 'medium')
+
+    let text = ''
+    try {
+      text = await file.text()
+    } catch (e) {
+      console.log('[onImportFileSelected] error leyendo file.text()', e)
+      await showToast('No se pudo leer el archivo', 'danger')
+      importModalLoading.value = false
+      return
+    }
+
+    let backup: ExportBackup | null = null
+    try {
+      backup = JSON.parse(text) as ExportBackup
+    } catch (e) {
+      console.log('[onImportFileSelected] JSON inválido', e)
+      await showToast('El archivo no es un JSON válido', 'danger')
+      importModalLoading.value = false
+      return
+    }
+
+    // Validaciones básicas
+    if (!backup || !Array.isArray((backup as any).pantries)) {
+      console.log('[onImportFileSelected] formato inesperado', backup)
+      await showToast('El archivo no tiene el formato esperado', 'danger')
+      importModalLoading.value = false
+      return
+    }
+
+    const bundles = (backup as any).pantries as ExportPantryBundle[]
+    if (!bundles.length) {
+      console.log('[onImportFileSelected] backup sin despensas', backup)
+      await showToast('El archivo no contiene despensas', 'warning')
+      importModalLoading.value = false
+      return
+    }
+
+    // NUEVO: abrir modal con todas seleccionadas
+    importBundles.value = bundles
+    selectedImportKeys.value = new Set(bundles.map((b) => getImportKey(b)))
+    showImportModal.value = true
+  } catch (e) {
+    console.log('[onImportFileSelected] error preparando import', e)
+    await showToast('No se pudo preparar la importación', 'danger')
+  } finally {
+    importModalLoading.value = false
+  }
+}
+
+// NUEVO: confirmar selección import y ejecutar import real
+const onConfirmImportSelection = async () => {
+  try {
+    if (selectedImportKeys.value.size === 0) {
+      await showToast('Selecciona al menos una despensa', 'warning')
+      return
+    }
+
+    importingBackup.value = true
+
+    const selected = importBundles.value.filter((b) => selectedImportKeys.value.has(getImportKey(b)))
+
+    // Proceso: por cada despensa del backup -> si existe por id, preguntar; si no, crear nueva
+    let joinedCount = 0
+    let createdCount = 0
+
+    for (const b of selected) {
+      const pantry = b?.pantry as Pantry
+      const items = Array.isArray((b as any).items) ? ((b as any).items as ExportItem[]) : []
+
+      const pantryId = String((pantry as any)?.id ?? '').trim()
+      const pantryName = String((pantry as any)?.name ?? '').trim()
+      const pantryCode = String((pantry as any)?.code ?? '').trim().toUpperCase()
+
+      if (!pantryId) {
+        console.log('[import] despensa sin id en backup -> se creará nueva', pantry)
+        const created = await createNewPantryFromBackup(pantryName, items)
+        if (created) createdCount++
+        continue
+      }
+
+      const refPantry = doc(db, 'pantries', pantryId)
+      const snap = await getDoc(refPantry)
+
+      if (snap.exists()) {
+        const data = snap.data() as any
+        const liveCode = String(data?.code ?? pantryCode).trim().toUpperCase()
+        const liveName = String(data?.name ?? pantryName).trim()
+
+        // ✅ NUEVO: si ya la tienes en storage, NO preguntes nada y sáltala
+        const alreadyInStorage = getStoredPantryCodes().includes(liveCode)
+        if (alreadyInStorage) {
+          console.log('[import] ya tienes esta despensa en el dispositivo, se omite', liveCode)
+          continue
+        }
+
+        // Preguntar qué hacer
+        const decision = await askImportDecision(liveName, liveCode)
+        if (decision === 'cancel') {
+          console.log('[import] usuario canceló la decisión para', liveName, liveCode)
+          continue
+        }
+
+        if (decision === 'existing') {
+          addPantryToStorage(liveCode)
+
+          try {
+            await updateDoc(refPantry, { memberCount: increment(1) })
+            console.log('[import] unido a despensa existente, memberCount +1', liveCode)
+          } catch (e) {
+            console.log('[import] error incrementando memberCount', { liveCode, e })
+          }
+
+          joinedCount++
+          continue
+        }
+
+        // decision === 'new'
+        const created = await createNewPantryFromBackup(pantryName || liveName, items)
+        if (created) createdCount++
+        continue
+      }
+
+      // No existe ya por id => crear nueva con datos del backup
+      console.log('[import] despensa NO existe por id -> se creará nueva', { pantryId, pantryName, pantryCode })
+      const created = await createNewPantryFromBackup(pantryName, items)
+      if (created) createdCount++
+    }
+
+    const totalDone = createdCount + joinedCount
+
+    if (totalDone === 0) {
+      await showToast('Importación cancelada (no se importó nada)', 'warning')
+    } else {
+      await showToast(`Importación completada: ${createdCount} creadas, ${joinedCount} unidas`, 'success')
+      notifyPantriesChanged()
+    }
+
+    closeImportModal()
+  } catch (e) {
+    console.log('[onConfirmImportSelection] error importando backup', e)
+    await showToast('No se pudo importar el archivo', 'danger')
+  } finally {
+    importingBackup.value = false
+  }
+}
+
+// NUEVO: pedir decisión al usuario cuando la despensa del backup sigue existiendo
+function askImportDecision(name: string, code: string): Promise<'existing' | 'new' | 'cancel'> {
+  return new Promise((resolve) => {
+    try {
+      importDecisionFired = false
+      importDecisionResolver = resolve
+
+      importDecisionMessage.value =
+        `La despensa “${name}” (${code}) ya existe.\n\n` +
+        `Si te unes a la existente, es posible que NO coincida con tu copia de seguridad (puede haber cambios o faltar productos).\n\n` +
+        `¿Qué quieres hacer?`
+
+      // ✅ cerrar modal selección para que el popup no quede por debajo
+      showImportModal.value = false
+      showImportDecisionPopup.value = true
+    } catch (e) {
+      console.log('[askImportDecision] error creando popup', e)
+      resolve('new')
+    }
+  })
+}
+
+function onImportDecisionCancel() {
+  if (importDecisionFired) return
+  importDecisionFired = true
+  console.log('[askImportDecision] cancel')
+  importDecisionResolver?.('cancel')
+  importDecisionResolver = null
+  showImportDecisionPopup.value = false
+}
+
+function onImportDecisionExisting() {
+  if (importDecisionFired) return
+  importDecisionFired = true
+  console.log('[askImportDecision] existing')
+  importDecisionResolver?.('existing')
+  importDecisionResolver = null
+  showImportDecisionPopup.value = false
+}
+
+function onImportDecisionNew() {
+  if (importDecisionFired) return
+  importDecisionFired = true
+  console.log('[askImportDecision] new')
+  importDecisionResolver?.('new')
+  importDecisionResolver = null
+  showImportDecisionPopup.value = false
+}
+
+// NUEVO: normalizar expirationDate desde JSON a Timestamp (si venía como {seconds,nanoseconds})
+function normalizeExpirationDate(val: any) {
+  try {
+    if (!val) return null
+    if (val instanceof Timestamp) return val
+    if (typeof val === 'object' && typeof val.seconds === 'number') {
+      const seconds = Number(val.seconds)
+      const nanos = Number(val.nanoseconds ?? 0)
+      const ms = seconds * 1000 + Math.floor(nanos / 1_000_000)
+      return Timestamp.fromMillis(ms)
+    }
+    return val
+  } catch (e) {
+    console.log('[normalizeExpirationDate] error', e)
+    return null
+  }
+}
+
+// NUEVO: crear despensa nueva + items nuevos con pantryCode nuevo
+async function createNewPantryFromBackup(nameFromBackup: string, itemsFromBackup: ExportItem[]) {
+  try {
+    let name = String(nameFromBackup ?? '').trim()
+    if (!name) name = 'Despensa importada'
+
+    // Generar código nuevo (usa tu util)
+    const newCode = await generatePantryCode()
+
+    // Crear documento de despensa nuevo con ID nuevo (addDoc)
+    const totalItems = Array.isArray(itemsFromBackup) ? itemsFromBackup.length : 0
+    const pantryDoc = await addDoc(collection(db, 'pantries'), {
+      name,
+      code: newCode,
+      memberCount: 1,
+      totalItems: totalItems,
+      creatorId: deviceId
+    })
+
+    console.log('[createNewPantryFromBackup] despensa creada', { id: pantryDoc.id, name, code: newCode })
+
+    // Crear items con el NUEVO pantryCode
+    if (totalItems > 0) {
+      await createItemsForNewPantry(newCode, itemsFromBackup)
+    }
+
+    // Guardar en storage para participar en esa despensa
+    addPantryToStorage(newCode)
+
+    await showToast(`Despensa importada: ${name} (${newCode})`, 'success')
+    return true
+  } catch (e) {
+    console.log('[createNewPantryFromBackup] error', e)
+    await showToast('No se pudo crear la despensa importada', 'danger')
+    return false
+  }
+}
+
+// NUEVO: crear items en batches (por límite de writeBatch)
+async function createItemsForNewPantry(newPantryCode: string, items: ExportItem[]) {
+  try {
+    const safeItems = Array.isArray(items) ? items : []
+    const chunkSize = 400
+
+    for (let i = 0; i < safeItems.length; i += chunkSize) {
+      const batch = writeBatch(db)
+      const slice = safeItems.slice(i, i + chunkSize)
+
+      slice.forEach((it) => {
+        const newRef = doc(collection(db, 'items'))
+        batch.set(newRef, {
+          name: String(it?.name ?? ''),
+          pantryCode: newPantryCode,
+          quantity: Number(it?.quantity ?? 1),
+          unit: String(it?.unit ?? 'Unidad'),
+          inPurchase: Boolean(it?.inPurchase ?? false),
+          imageUrl: String(it?.imageUrl ?? ''),
+          locationId: it?.locationId ?? null,
+          expirationDate: normalizeExpirationDate(it?.expirationDate ?? null)
+        })
+      })
+
+      await batch.commit()
+      console.log('[createItemsForNewPantry] batch commit ok', {
+        pantryCode: newPantryCode,
+        from: i,
+        count: slice.length
+      })
+    }
+  } catch (e) {
+    console.log('[createItemsForNewPantry] error', e)
+    throw e
+  }
+}
+
+// NUEVO: cerrar modal
+function closeExportModal() {
+  showExportModal.value = false
+}
+
+// NUEVO: toggle checkbox
+function toggleExportPantry(code: string, ev: CustomEvent) {
+  const checked = !!(ev as any)?.detail?.checked
+  const set = new Set(selectedExportCodes.value)
+
+  if (checked) set.add(code)
+  else set.delete(code)
+
+  selectedExportCodes.value = set
+}
+
+// NUEVO: descarga backup en web / escribe archivo en móvil si existe plugin
+async function saveBackupToFile(backup: ExportBackup) {
+  const fileName = `midespensa_backup_${new Date().toISOString().replace(/[:.]/g, '-')}.json`
+  const content = JSON.stringify(backup, null, 2)
+
+  // WEB: descargar como fichero
+  if (Capacitor.getPlatform() === 'web') {
+    try {
+      const blob = new Blob([content], { type: 'application/json;charset=utf-8' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = fileName
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      console.log('[saveBackupToFile] backup descargado', fileName)
+      return
+    } catch (e) {
+      console.log('[saveBackupToFile] error descargando backup en web', e)
+      throw e
+    }
+  }
+
+  // MÓVIL: intentar Filesystem si existe (si no, toast)
+  try {
+    const mod = await import('@capacitor/filesystem')
+    const { Filesystem, Directory, Encoding } = mod as any
+    await Filesystem.writeFile({
+      path: fileName,
+      data: content,
+      directory: Directory.Documents,
+      encoding: Encoding.UTF8
+    })
+    console.log('[saveBackupToFile] backup guardado en Documents', fileName)
+  } catch (e) {
+    console.log('[saveBackupToFile] Filesystem no disponible o error escribiendo archivo', e)
+    await showToast(
+      'No se pudo guardar el archivo en este dispositivo (pendiente de configurar Filesystem)',
+      'warning'
+    )
+    throw e
+  }
+}
+
+// NUEVO: recuperar items por pantryCode (getDocs, no snapshot)
+async function getItemsForPantry(pantryCode: string): Promise<ExportItem[]> {
+  try {
+    const q = query(collection(db, 'items'), where('pantryCode', '==', pantryCode), orderBy('name', 'asc'))
+    const snap = await getDocs(q)
+
+    const items = snap.docs.map((d) => {
+      const item = d.data() as any
+      return {
+        id: String(d.id),
+        name: String(item.name ?? ''),
+        quantity: Number(item.quantity ?? 1),
+        unit: String(item.unit ?? 'Unidad'),
+        pantryCode: String(item.pantryCode ?? pantryCode),
+        locationId: item.locationId ?? null,
+        inPurchase: Boolean(item.inPurchase ?? false),
+        imageUrl: String(item.imageUrl ?? ''),
+        expirationDate: item.expirationDate ?? null
+      } as ExportItem
+    })
+
+    console.log(`[getItemsForPantry] items obtenidos para ${pantryCode}:`, items.length)
+    return items
+  } catch (e) {
+    console.log('[getItemsForPantry] error al recuperar items', { pantryCode, e })
+    throw e
+  }
+}
+
+// NUEVO: al confirmar selección -> recuperar items y generar backup
+const onConfirmExportSelection = async () => {
+  if (selectedExportCodes.value.size === 0) {
+    await showToast('Selecciona al menos una despensa', 'warning')
+    return
+  }
+
+  const selected = exportPantries.value.filter((p) => selectedExportCodes.value.has(p.code))
+
+  try {
+    exportingBackup.value = true
+    await showToast('Generando copia de seguridad…', 'medium')
+
+    // Recuperar items de cada despensa seleccionada
+    const bundles: ExportPantryBundle[] = await Promise.all(
+      selected.map(async (p) => {
+        const items = await getItemsForPantry(p.code)
+        return { pantry: p, items }
+      })
+    )
+
+    const backup: ExportBackup = {
+      app: 'MiDespensa',
+      appVersion: String(appVersion ?? '1'),
+      exportedAt: new Date().toISOString(),
+      pantries: bundles
+    }
+
+    // Guardar en fichero (web descarga / móvil Filesystem si está)
+    await saveBackupToFile(backup)
+
+    await showToast('Copia de seguridad generada', 'success')
+    closeExportModal()
+  } catch (e) {
+    console.log('[onConfirmExportSelection] error exportando backup', e)
+    await showToast('No se pudo generar la copia de seguridad', 'danger')
+  } finally {
+    exportingBackup.value = false
+  }
+}
 
 const onClearCache = async () => {
   showConfirmClearCache.value = true
@@ -214,14 +1032,14 @@ async function confirmClearCache() {
     if (Capacitor.getPlatform() === 'web') {
       try {
         localStorage.clear()
-      } catch {
-        console.error('No se pudo limpiar localStorage')
+      } catch (e) {
+        console.log('No se pudo limpiar localStorage', e)
       }
 
       try {
         sessionStorage.clear()
-      } catch {
-        console.error('No se pudo limpiar sessionStorage')
+      } catch (e) {
+        console.log('No se pudo limpiar sessionStorage', e)
       }
 
       // Cache Storage (Service Worker cache)
@@ -230,8 +1048,8 @@ async function confirmClearCache() {
           const keys = await caches.keys()
           await Promise.all(keys.map((k) => caches.delete(k)))
         }
-      } catch {
-        console.error('No se pudo limpiar Cache Storage')
+      } catch (e) {
+        console.log('No se pudo limpiar Cache Storage', e)
       }
 
       // IndexedDB (si el navegador lo permite)
@@ -253,8 +1071,8 @@ async function confirmClearCache() {
               )
           )
         }
-      } catch {
-        console.error('No se pudo limpiar IndexedDB')
+      } catch (e) {
+        console.log('No se pudo limpiar IndexedDB', e)
       }
 
       // Desregistrar service workers (opcional pero útil para “cache”)
@@ -263,8 +1081,8 @@ async function confirmClearCache() {
           const regs = await navigator.serviceWorker.getRegistrations()
           await Promise.all(regs.map((r) => r.unregister()))
         }
-      } catch {
-        console.error('No se pudieron desregistrar los Service Workers')
+      } catch (e) {
+        console.log('No se pudieron desregistrar los Service Workers', e)
       }
     }
 
@@ -274,7 +1092,8 @@ async function confirmClearCache() {
     if (Capacitor.getPlatform() === 'web') {
       setTimeout(() => window.location.reload(), 250)
     }
-  } catch {
+  } catch (e) {
+    console.log('[confirmClearCache] error', e)
     await showToast('No se pudo limpiar la caché', 'danger')
   }
 }
@@ -285,7 +1104,8 @@ const onExitApp = async () => {
   try {
     const mod = await import('@capacitor/app')
     await mod.App.exitApp()
-  } catch {
+  } catch (e) {
+    console.log('[onExitApp] no disponible / error', e)
     showToast('Salir de la app solo está disponible en móvil', 'warning')
   }
 }
@@ -534,5 +1354,165 @@ body.dark .color-chip {
 /* FOOTER ESPACIADO */
 .footer-space {
   height: 18px;
+}
+
+/* NUEVO: input file oculto */
+.hidden-file-input {
+  display: none;
+}
+
+/* NUEVO: estilos modal export */
+.modal-toolbar {
+  --background: var(--md-accent, #2ea15d);
+  --color: #ffffff;
+}
+
+.export-hint {
+  margin-bottom: 10px;
+}
+
+.export-title {
+  font-weight: 700;
+  margin: 0;
+}
+
+.export-subtitle {
+  margin: 4px 0 0;
+  opacity: 0.8;
+  font-size: 13px;
+}
+
+.export-actions {
+  margin-top: 14px;
+}
+
+.export-note {
+  display: block;
+  text-align: center;
+  margin-top: 8px;
+  opacity: 0.75;
+}
+
+.export-name {
+  font-weight: 650;
+}
+
+.export-code {
+  opacity: 0.75;
+}
+
+.export-btn {
+  --border-radius: 14px;
+
+  /* ✅ usar color principal en vez de azul */
+  --background: var(--md-accent, #2ea15d);
+  --color: #ffffff;
+
+  --background-activated: rgba(var(--md-accent-rgb, 46, 161, 93), 0.85);
+  --background-focused: rgba(var(--md-accent-rgb, 46, 161, 93), 0.92);
+}
+
+/* ====== POPUP IMPORT (estilo app, tipo ConfirmPopup) ====== */
+/* OVERLAY CONFIRMAR */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(15, 23, 42, 0.45);
+}
+
+/* CONTENEDOR CONFIRMAR */
+.confirm-dialog {
+  width: min(360px, 90%);
+  padding: 18px 20px 16px;
+
+  background: var(--ion-background-color2);
+  border-radius: 18px;
+
+  box-shadow: 0 15px 40px rgba(15, 23, 42, 0.25);
+  animation: popup-in 180ms ease-out;
+
+  border: 1px solid rgba(var(--md-accent-rgb, 46, 161, 93), 0.18);
+}
+
+.confirm-dialog h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ion-text-color);
+}
+
+.confirm-message {
+  margin: 0 0 16px;
+  font-size: 14px;
+  color: var(--ion-text-color2);
+  white-space: pre-line;
+  /* RESPETA \n */
+}
+
+/* BOTONES */
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.confirm-actions button {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: transform 120ms ease, filter 120ms ease;
+}
+
+.confirm-actions button:active {
+  transform: scale(0.98);
+}
+
+.confirm-actions button:focus-visible {
+  outline: 2px solid rgba(var(--md-accent-rgb, 46, 161, 93), 0.7);
+  outline-offset: 2px;
+}
+
+/* BOTON CANCELAR */
+.btn-secondary {
+  background: rgba(148, 163, 184, 0.35);
+  color: var(--ion-text-color);
+}
+
+/* BOTON USAR EXISTENTE */
+.btn-accent {
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.14);
+  color: var(--md-accent, #2ea15d);
+  border: 1px solid rgba(var(--md-accent-rgb, 46, 161, 93), 0.22);
+}
+
+/* BOTON CREAR NUEVA */
+.btn-primary {
+  background: var(--md-accent, #2ea15d);
+  color: #ffffff;
+}
+
+/* ANIMACIÓN POPUP */
+@keyframes popup-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 </style>

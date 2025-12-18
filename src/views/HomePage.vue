@@ -135,6 +135,7 @@ import { useRouter } from 'vue-router'
 import { showToast } from '@/composables/showToast'
 import PantryModal from '@/components/ui/PantryModal.vue'
 import ConfirmPopup from '@/components/ui/ConfirmPopup.vue'
+import { generatePantryCode } from '@/composables/pantryUtils'
 
 // Estado de apertura modal de cada modo
 const openCreateModal = ref(false)
@@ -414,27 +415,6 @@ async function deletePantryAndItems(pantryRef: string, pantryCode: string) {
     batch.delete(pantryDocRef)
     await batch.commit()
   }
-}
-
-// Generar código aleatorio de 6 caracteres comprobando que no exista ya
-async function generatePantryCode(): Promise<string> {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  let code = ''
-  let exists = true
-
-  while (exists) {
-    code = ''
-    for (let i = 0; i < 6; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-
-    const q = query(collection(db, 'pantries'), where('code', '==', code))
-    const snap = await getDocs(q)
-    exists = !snap.empty
-  }
-
-  console.log('[generatePantryCode] generado', code)
-  return code
 }
 
 // Añadir despensa a la lista de despensas del dispositivo
