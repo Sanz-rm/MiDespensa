@@ -86,7 +86,8 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonContent, IonSpinner, IonButton, IonIcon, IonSearchbar, toastController } from '@ionic/vue'
+import { IonPage, IonContent, IonSpinner, IonButton, IonIcon, IonSearchbar } from '@ionic/vue'
+import { showToast } from '@/composables/showToast'
 import { trashOutline, readerOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
 import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
@@ -175,7 +176,7 @@ async function getPurchaseItems(pantryCode: string) {
     async err => {
       console.error('Error al recuperar los items:', err)
       loading.value = false
-      await showErrorToast('Error al cargar los productos de la compra.')
+      await showToast('Error al cargar los productos de la compra.', 'danger')
     }
   )
 }
@@ -227,7 +228,7 @@ async function saveNote(item: Item) {
   try {
     const text = (noteDraft.value[item.id] || '').trim()
     if (!text) {
-      await showErrorToast('La nota no puede estar vacía.')
+      await showToast('La nota no puede estar vacía.', 'danger')
       return
     }
     const refItem = doc(db, 'items', item.id)
@@ -236,7 +237,7 @@ async function saveNote(item: Item) {
     savedNoteItemId.value = item.id
   } catch (err) {
     console.error('Error al guardar la nota:', err)
-    await showErrorToast('No se pudo guardar la nota.')
+    await showToast('No se pudo guardar la nota.', 'danger')
   }
 }
 
@@ -254,7 +255,7 @@ async function cancelNote(item: Item) {
     noteDraft.value[item.id] = ''
   } catch (err) {
     console.error('Error al borrar la nota:', err)
-    await showErrorToast('No se pudo borrar la nota.')
+    await showToast('No se pudo borrar la nota.', 'danger')
   }
 }
 
@@ -274,7 +275,7 @@ async function deleteItemToPurchase(idItem: string) {
     })
   } catch (err) {
     console.error('Error al quitar de la compra:', err)
-    await showErrorToast('No se pudo quitar el producto de la compra.')
+    await showToast('No se pudo quitar el producto de la compra.', 'danger')
   }
 }
 
@@ -290,20 +291,8 @@ async function clearPurchase() {
     await batch.commit()
   } catch (err) {
     console.error('Error al vaciar la compra:', err)
-    await showErrorToast('No se pudo vaciar la compra.')
+    await showToast('No se pudo vaciar la compra.', 'danger')
   }
-}
-
-
-// Muestra un toast rojo para errores (update o select)
-async function showErrorToast(message: string) {
-  const toast = await toastController.create({
-    message,
-    duration: 2000,
-    color: 'danger',
-    position: 'bottom'
-  })
-  await toast.present()
 }
 </script>
 

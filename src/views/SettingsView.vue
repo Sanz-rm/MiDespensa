@@ -35,7 +35,7 @@
             <ion-note class="hero-version">v{{ appVersion }}</ion-note>
           </ion-card-content>
         </ion-card>
-        <!-- Tarjeta cabecera start -->
+        <!-- Tarjeta cabecera end -->
 
         <!-- Seccion Apariencia start -->
         <ion-list inset class="list-card">
@@ -120,6 +120,17 @@
         </ion-list>
         <!-- Seccion App end -->
 
+        <!-- Pop up confirmar limpiar caché START -->
+        <ConfirmPopup
+          v-model="showConfirmClearCache"
+          title="Limpiar caché"
+          message="Vas a borrar la caché y datos locales de la app en este dispositivo. Esta acción no se puede deshacer. Si quieres conservar tus datos, haz una copia con “Exportar” antes de continuar. ¿Quieres limpiar la caché?"
+          confirmLabel="Limpiar"
+          cancelLabel="Cancelar"
+          @confirm="confirmClearCache"
+        />
+        <!-- Pop up confirmar limpiar caché END -->
+
         <!-- Espacio footer start -->
         <div class="footer-space" />
         <!-- Espacio footer end -->
@@ -129,13 +140,44 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { IonPage, IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton, IonCard, IonCardContent, IonText,
-  IonNote, IonList, IonItem, IonLabel, IonToggle, IonIcon, IonItemDivider, IonButton, toastController } from '@ionic/vue'
-import { colorPaletteOutline, informationCircleOutline, trashOutline, downloadOutline, logOutOutline, sparklesOutline, moonOutline } from 'ionicons/icons'
+import { onMounted, ref } from 'vue'
+import { Capacitor } from '@capacitor/core'
+import { Preferences } from '@capacitor/preferences'
+import {
+  IonPage,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonContent,
+  IonButtons,
+  IonBackButton,
+  IonCard,
+  IonCardContent,
+  IonText,
+  IonNote,
+  IonList,
+  IonItem,
+  IonLabel,
+  IonToggle,
+  IonIcon,
+  IonItemDivider,
+  IonButton
+} from '@ionic/vue'
+import { showToast } from '@/composables/showToast'
+import {
+  colorPaletteOutline,
+  informationCircleOutline,
+  trashOutline,
+  downloadOutline,
+  logOutOutline,
+  sparklesOutline,
+  moonOutline
+} from 'ionicons/icons'
 import { initTheme, toggleTheme, accentColor, setAccentColor, resetAccentColor } from '@/theme/theme'
+import ConfirmPopup from '@/components/ui/ConfirmPopup.vue'
 
 const isDark = ref(false)
+const showConfirmClearCache = ref(false)
 
 function onAccentColorInput() {
   // v-model ya actualiza el ref; esto fuerza validación/normalización por si acaso
@@ -157,28 +199,98 @@ const onThemeToggle = () => {
 // const appVersion = computed(() => (import.meta as any).env?.VITE_APP_VERSION ?? '1.0.0')
 const appVersion = '1'
 
-async function showToast(message: string) {
-  const t = await toastController.create({
-    message,
-    duration: 1600,
-    position: 'bottom',
-  })
-  await t.present()
+const onExportData = () => showToast('Exportar: por implementar (JSON/CSV)', 'light')
+
+const onClearCache = async () => {
+  showConfirmClearCache.value = true
 }
 
-const onExportData = () => showToast('Exportar: por implementar (JSON/CSV)')
-const onClearCache = () => showToast('Caché limpiada (pendiente de implementar)')
-const onAbout = () => showToast(`MiDespensa · v${appVersion.valueOf}`)
+async function confirmClearCache() {
+  try {
+    // Limpieza común (web + móvil): Preferences (Capacitor)
+    await Preferences.clear()
+
+    // WEB: local/session storage + caches + indexedDB + service worker
+    if (Capacitor.getPlatform() === 'web') {
+      try {
+        localStorage.clear()
+      } catch {
+        console.error('No se pudo limpiar localStorage')
+      }
+
+      try {
+        sessionStorage.clear()
+      } catch {
+        console.error('No se pudo limpiar sessionStorage')
+      }
+
+      // Cache Storage (Service Worker cache)
+      try {
+        if ('caches' in window) {
+          const keys = await caches.keys()
+          await Promise.all(keys.map((k) => caches.delete(k)))
+        }
+      } catch {
+        console.error('No se pudo limpiar Cache Storage')
+      }
+
+      // IndexedDB (si el navegador lo permite)
+      try {
+        const anyIDB = indexedDB as any
+        if (anyIDB?.databases) {
+          const dbs = await anyIDB.databases()
+          await Promise.all(
+            (dbs || [])
+              .filter((d: any) => d?.name)
+              .map(
+                (d: any) =>
+                  new Promise<void>((res) => {
+                    const req = indexedDB.deleteDatabase(d.name)
+                    req.onsuccess = () => res()
+                    req.onerror = () => res()
+                    req.onblocked = () => res()
+                  })
+              )
+          )
+        }
+      } catch {
+        console.error('No se pudo limpiar IndexedDB')
+      }
+
+      // Desregistrar service workers (opcional pero útil para “cache”)
+      try {
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations()
+          await Promise.all(regs.map((r) => r.unregister()))
+        }
+      } catch {
+        console.error('No se pudieron desregistrar los Service Workers')
+      }
+    }
+
+    await showToast('Se ha limpiado la caché correctamente', 'success')
+
+    // Recomiendo recargar en web para que se note al instante
+    if (Capacitor.getPlatform() === 'web') {
+      setTimeout(() => window.location.reload(), 250)
+    }
+  } catch {
+    await showToast('No se pudo limpiar la caché', 'danger')
+  }
+}
+
+const onAbout = () => showToast(`MiDespensa · v${appVersion.valueOf()}`, 'medium')
 
 const onExitApp = async () => {
   try {
     const mod = await import('@capacitor/app')
     await mod.App.exitApp()
   } catch {
-    showToast('Salir de la app solo está disponible en móvil')
+    showToast('Salir de la app solo está disponible en móvil', 'warning')
   }
 }
 </script>
+
 <style scoped>
 /* FONDO PAGINA */
 .options-content {

@@ -659,28 +659,32 @@ async function saveItemInfo() {
 
 // Solo para WEB: muestra un menú y devuelve la fuente elegida
 async function pickWebSource(): Promise<CameraSource | null> {
-  return new Promise(async (resolve) => {
-    const sheet = await actionSheetController.create({
-      header: 'Seleccionar imagen',
-      buttons: [
-        {
-          text: 'Galería',
-          handler: () => resolve(CameraSource.Photos)
-        },
-        {
-          text: 'Cámara',
-          handler: () => resolve(CameraSource.Camera)
+  const sheet = await actionSheetController.create({
+    header: 'Seleccionar imagen',
+    buttons: [
+      {
+        text: 'Galería',
+        handler: () => {
+          sheet.dismiss(CameraSource.Photos)
+          return false
         }
-      ],
-      backdropDismiss: true
-    })
-
-    await sheet.present()
-
-    // si lo cierra tocando fuera / back => null (no cambia nada)
-    sheet.onDidDismiss().then(() => resolve(null))
+      },
+      {
+        text: 'Cámara',
+        handler: () => {
+          sheet.dismiss(CameraSource.Camera)
+          return false
+        }
+      }
+    ],
+    backdropDismiss: true
   })
+  await sheet.present()
+
+  const { data } = await sheet.onDidDismiss<CameraSource | null>()
+  return (data ?? null)
 }
+
 
 // Obtiene una imagen de la cámara/galería y la deja solo en memoria como preview hasta que el usuario pulse Guardar
 async function pickImage(item: Item) {
