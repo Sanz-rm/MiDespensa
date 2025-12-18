@@ -256,6 +256,25 @@
         <!-- Pop up confirmar limpiar caché END -->
 
         <!-- Espacio footer start -->
+        <!-- Popup "Acerca de" (estilo app) -->
+        <div v-if="showAboutPopup" class="confirm-overlay" @click.self="closeAboutPopup">
+          <div class="confirm-dialog">
+            <h2>Acerca de MiDespensa v{{ appVersion }}</h2>
+
+            <p class="about-title">Notas de la versión</p>
+            <p class="about-notes">
+              {{ (appReleaseNotes || '').trim() ? appReleaseNotes : 'Sin notas de versión.' }}
+            </p>
+
+            <p class="about-footer">{{ appBaseNote }}</p>
+
+            <div class="confirm-actions">
+              <button type="button" class="btn-primary" @click="closeAboutPopup">Cerrar</button>
+            </div>
+          </div>
+        </div>
+
+
         <div class="footer-space" />
         <!-- Espacio footer end -->
       </div>
@@ -341,8 +360,14 @@ const onThemeToggle = () => {
     document.body.classList.contains('dark') || document.documentElement.classList.contains('dark')
 }
 
-// const appVersion = computed(() => (import.meta as any).env?.VITE_APP_VERSION ?? '1.0.0')
-const appVersion = '1'
+const appVersion = (import.meta as any).env?.VITE_APP_VERSION ?? '1.0'
+const appReleaseNotes = (import.meta as any).env?.VITE_APP_RELEASE_NOTES ?? ''
+const appBaseNote = (import.meta as any).env?.VITE_APP_ABOUT_FOOTER ?? ''
+
+const showAboutPopup = ref(false)
+
+const onAbout = () => (showAboutPopup.value = true)
+const closeAboutPopup = () => (showAboutPopup.value = false)
 
 /* ===========================
    EXPORTAR / IMPORTAR (UI)
@@ -469,7 +494,7 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
 const onExportData = async () => {
   const codes = getStoredPantryCodes()
   if (!codes.length) {
-    await showToast('No tienes despensas en este dispositivo', 'warning')
+    await showToast('No tienes despensas en este dispositivo', 'danger')
     return
   }
 
@@ -517,7 +542,7 @@ const onExportData = async () => {
 const onImportData = async () => {
   try {
     if (importingBackup.value) {
-      await showToast('Importación en curso…', 'warning')
+      await showToast('Importación en curso…', 'danger')
       return
     }
     const el = importFileInput.value
@@ -603,7 +628,7 @@ const onImportFileSelected = async (ev: Event) => {
     const bundles = (backup as any).pantries as ExportPantryBundle[]
     if (!bundles.length) {
       console.log('[onImportFileSelected] backup sin despensas', backup)
-      await showToast('El archivo no contiene despensas', 'warning')
+      await showToast('El archivo no contiene despensas', 'danger')
       importModalLoading.value = false
       return
     }
@@ -624,7 +649,7 @@ const onImportFileSelected = async (ev: Event) => {
 const onConfirmImportSelection = async () => {
   try {
     if (selectedImportKeys.value.size === 0) {
-      await showToast('Selecciona al menos una despensa', 'warning')
+      await showToast('Selecciona al menos una despensa', 'danger')
       return
     }
 
@@ -702,7 +727,7 @@ const onConfirmImportSelection = async () => {
     const totalDone = createdCount + joinedCount
 
     if (totalDone === 0) {
-      await showToast('Importación cancelada (no se importó nada)', 'warning')
+      await showToast('Importación cancelada (no se importó nada)', 'danger')
     } else {
       await showToast(`Importación completada: ${createdCount} creadas, ${joinedCount} unidas`, 'success')
       notifyPantriesChanged()
@@ -953,7 +978,7 @@ async function saveBackupToFile(backup: ExportBackup) {
     console.log('[saveBackupToFile] Filesystem no disponible o error escribiendo archivo', e)
     await showToast(
       'No se pudo guardar el archivo en este dispositivo (pendiente de configurar Filesystem)',
-      'warning'
+      'danger'
     )
     throw e
   }
@@ -991,7 +1016,7 @@ async function getItemsForPantry(pantryCode: string): Promise<ExportItem[]> {
 // NUEVO: al confirmar selección -> recuperar items y generar backup
 const onConfirmExportSelection = async () => {
   if (selectedExportCodes.value.size === 0) {
-    await showToast('Selecciona al menos una despensa', 'warning')
+    await showToast('Selecciona al menos una despensa', 'danger')
     return
   }
 
@@ -1117,7 +1142,9 @@ async function confirmDeleteData() {
               // Si no era fichero, intento como carpeta
               try {
                 await Filesystem.rmdir({ path: name, directory, recursive: true })
-              } catch { }
+              } catch {
+                console.log(`[confirmDeleteData] rmdir falló ${label} ${name}`)
+              }
             }
             console.log(`[confirmDeleteData] wipe contenido OK ${label}`)
           } catch (e) {
@@ -1161,7 +1188,6 @@ async function confirmDeleteData() {
   }
 }
 
-const onAbout = () => showToast(`MiDespensa · v${appVersion.valueOf()}`, 'medium')
 
 const onExitApp = async () => {
   try {
@@ -1169,7 +1195,7 @@ const onExitApp = async () => {
     await mod.App.exitApp()
   } catch (e) {
     console.log('[onExitApp] no disponible / error', e)
-    showToast('Salir de la app solo está disponible en móvil', 'warning')
+    showToast('Salir de la app solo está disponible en móvil', 'danger')
   }
 }
 </script>
@@ -1576,4 +1602,39 @@ body.dark .color-chip {
     transform: translateY(0) scale(1);
   }
 }
+.about-app {
+  margin: 0 0 12px;
+  font-size: 14px;
+  color: var(--ion-text-color2);
+}
+
+.about-name {
+  font-weight: 800;
+  color: var(--ion-text-color);
+}
+
+.about-title {
+  margin: 0 0 6px;
+  font-weight: 700;
+  font-size: 14px;
+  color: var(--ion-text-color);
+}
+
+.about-notes {
+  margin: 0 0 14px;
+  font-size: 14px;
+  color: var(--ion-text-color2);
+  white-space: pre-line;
+  max-height: 180px;
+  overflow: auto;
+  padding-right: 6px;
+}
+
+.about-footer {
+  margin: 0 0 14px;
+  font-size: 13px;
+  color: var(--ion-text-color2);
+  opacity: 0.9;
+}
+
 </style>
