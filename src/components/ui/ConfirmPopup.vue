@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-const props = defineProps({
+defineProps({
   modelValue: { type: Boolean, required: true },
   title: { type: String, default: '' },
   message: { type: String, default: '' },

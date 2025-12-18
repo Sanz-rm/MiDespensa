@@ -1,7 +1,9 @@
 {
   "name": "MiDespensa",
   "private": true,
-  "version": "0.0.1",
+  "version": "1.1",
+  "releaseNotes": "• Organiza tus productos por despensas\n• Prepara tu cesta de la compra\n• Comparte y sincroniza tu despensa en tiempo real con tu familia o amigos\n• Personaliza los colores de la app\n• Exporta copias de seguridad de tus despensas",
+  "aboutFooter": "Esta app ha sido creada por Manuel Sanz y Silvia Aparicio.",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -16,8 +18,11 @@
     "@capacitor/app": "7.1.0",
     "@capacitor/camera": "^7.0.3",
     "@capacitor/core": "7.4.3",
+    "@capacitor/filesystem": "^7.1.6",
     "@capacitor/haptics": "7.0.2",
     "@capacitor/keyboard": "7.0.3",
+    "@capacitor/preferences": "^7.0.3",
+    "@capacitor/share": "^7.0.3",
     "@capacitor/status-bar": "7.0.3",
     "@ionic/vue": "^8.0.0",
     "@ionic/vue-router": "^8.0.0",
@@ -29,6 +34,7 @@
   },
   "devDependencies": {
     "@capacitor/cli": "7.4.3",
+    "@jridgewell/trace-mapping": "^0.3.31",
     "@vitejs/plugin-legacy": "^5.0.0",
     "@vitejs/plugin-vue": "^4.0.0",
     "@vue/eslint-config-typescript": "^12.0.0",

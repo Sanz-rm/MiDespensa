@@ -125,16 +125,29 @@
 
 <script setup lang="ts">
 import PantryHeader from '@/components/ui/PantryHeader.vue'
-import { IonPage, IonHeader, IonContent, IonSpinner } from '@ionic/vue'
+import { IonPage, IonHeader, IonContent, IonSpinner, onIonViewWillEnter } from '@ionic/vue'
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
-import { collection, query, where, getDocs, addDoc, updateDoc, onSnapshot,
- type Unsubscribe, increment, orderBy, doc, writeBatch } from 'firebase/firestore'
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  updateDoc,
+  onSnapshot,
+  type Unsubscribe,
+  increment,
+  orderBy,
+  doc,
+  writeBatch
+} from 'firebase/firestore'
 import { db } from '@/firebase'
 import { Pantry } from '@/models/pantry'
 import { useRouter } from 'vue-router'
 import { showToast } from '@/composables/showToast'
 import PantryModal from '@/components/ui/PantryModal.vue'
 import ConfirmPopup from '@/components/ui/ConfirmPopup.vue'
+import { generatePantryCode } from '@/composables/pantryUtils'
 
 // Estado de apertura modal de cada modo
 const openCreateModal = ref(false)
@@ -176,9 +189,69 @@ let stop: Unsubscribe | null = null
 const deviceId = getDeviceId()
 const router = useRouter()
 
+/**
+ * ✅ NUEVO (IMPORTANTE):
+ * Ionic suele "cachear" las vistas y no se vuelve a ejecutar onMounted al volver atrás.
+ * Además, localStorage NO es reactivo: si se cambia desde otra vista (Ajustes),
+ * Home no se entera a menos que:
+ *  - escuche un evento (myPantriesChanged) y/o
+ *  - se sincronice al entrar de nuevo a la vista.
+ */
+
+// Normaliza y deduplica códigos
+function normalizeCodes(input: any): string[] {
+  const arr = Array.isArray(input) ? input : []
+  const normalized = arr
+    .map((c) => String(c ?? '').trim().toUpperCase())
+    .filter(Boolean)
+  // dedupe manteniendo orden
+  return Array.from(new Set(normalized))
+}
+
+// Lee storage y sincroniza el ref codes (esto dispara el watch y resubscribe)
+function syncCodesFromStorage() {
+  try {
+    const raw = localStorage.getItem('myPantries')
+    const parsed = JSON.parse(raw ?? '[]')
+    const normalized = normalizeCodes(parsed)
+
+    // Solo reasignar si realmente cambia para evitar resuscripciones innecesarias
+    const current = normalizeCodes(codes.value)
+    const sameLength = current.length === normalized.length
+    const sameContent = sameLength && current.every((v, i) => v === normalized[i])
+
+    if (!sameContent) {
+      console.log('[syncCodesFromStorage] codes updated from storage', normalized)
+      codes.value = normalized
+    } else {
+      console.log('[syncCodesFromStorage] codes already in sync', normalized)
+    }
+  } catch (e) {
+    console.log('[syncCodesFromStorage] error parsing myPantries', e)
+  }
+}
+
+// Handler estable para poder hacer removeEventListener
+const onMyPantriesChanged = () => {
+  // Si algún día quisieras usar el detail, lo tienes aquí:
+  // const detail = (ev as CustomEvent)?.detail
+  // console.log('[myPantriesChanged] detail:', detail)
+  syncCodesFromStorage()
+}
+
 // Recuperamos toda la información necesaria
 onMounted(() => {
+  // ✅ NUEVO: escuchar evento global lanzado desde Ajustes (import/export/lo que sea)
+  window.addEventListener('myPantriesChanged', onMyPantriesChanged as any)
+
+  // Carga inicial (sincroniza y suscribe)
+  syncCodesFromStorage()
   getUserPantries()
+})
+
+// ✅ NUEVO: al volver a entrar a Home (Ionic cache), sincroniza otra vez
+onIonViewWillEnter(() => {
+  syncCodesFromStorage()
 })
 
 // Al cerrar la ventana dejaremos de escuchar a firestore
@@ -187,6 +260,13 @@ onBeforeUnmount(() => {
     stop?.()
   } catch (e) {
     console.log('[onBeforeUnmount] error stopping listener', e)
+  }
+
+  // ✅ NUEVO: quitar listener de evento global
+  try {
+    window.removeEventListener('myPantriesChanged', onMyPantriesChanged as any)
+  } catch (e) {
+    console.log('[onBeforeUnmount] error removing myPantriesChanged listener', e)
   }
 })
 
@@ -219,14 +299,16 @@ function resubscribe(codesList: string[]) {
     console.log('[resubscribe] error stopping previous listener', e)
   }
 
-  if (!codesList || codesList.length === 0) {
+  const safeCodes = normalizeCodes(codesList)
+
+  if (!safeCodes || safeCodes.length === 0) {
     console.log('[resubscribe] no codes -> clear list')
     pantries.value = []
     loading.value = false
     return
   }
 
-  const q = query(collection(db, 'pantries'), where('code', 'in', codesList), orderBy('name', 'asc'))
+  const q = query(collection(db, 'pantries'), where('code', 'in', safeCodes), orderBy('name', 'asc'))
   stop = onSnapshot(
     q,
     (snap) => {
@@ -238,13 +320,13 @@ function resubscribe(codesList: string[]) {
           name: String(pantryData.name ?? ''),
           memberCount: Number(pantryData.memberCount ?? 1),
           totalItems: Number(pantryData.totalItems ?? 0),
-          creatorId: String(pantryData.creatorId ?? '0000'),
+          creatorId: String(pantryData.creatorId ?? '0000')
         } as Pantry
         return pantry
       })
 
       // Si alguna despensa ya no existe, la eliminamos del almacenamiento local
-      for (const code of [...codesList]) {
+      for (const code of [...safeCodes]) {
         if (!pantries.value.some((p) => p.code === code)) {
           deletePantryFromStorage(code)
         }
@@ -320,7 +402,7 @@ async function createPantry() {
       code,
       memberCount: 1,
       totalItems: 0,
-      creatorId: deviceId,
+      creatorId: deviceId
     })
 
     console.log('Despensa creada en Firestore:', { id: docRef.id, name, code })
@@ -416,34 +498,15 @@ async function deletePantryAndItems(pantryRef: string, pantryCode: string) {
   }
 }
 
-// Generar código aleatorio de 6 caracteres comprobando que no exista ya
-async function generatePantryCode(): Promise<string> {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  let code = ''
-  let exists = true
-
-  while (exists) {
-    code = ''
-    for (let i = 0; i < 6; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-
-    const q = query(collection(db, 'pantries'), where('code', '==', code))
-    const snap = await getDocs(q)
-    exists = !snap.empty
-  }
-
-  console.log('[generatePantryCode] generado', code)
-  return code
-}
-
 // Añadir despensa a la lista de despensas del dispositivo
 function addPantryToStorage(code: string) {
   const existing: string[] = JSON.parse(localStorage.getItem('myPantries') ?? '[]')
   if (!existing.includes(code)) {
     existing.push(code)
     localStorage.setItem('myPantries', JSON.stringify(existing))
-    codes.value = existing
+
+    // ✅ Importante: actualizar el ref para que se resuscriba la lista
+    codes.value = normalizeCodes(existing)
   } else {
     console.log('[addPantryToStorage] ya existía', code)
   }
@@ -452,9 +515,12 @@ function addPantryToStorage(code: string) {
 // Eliminar despensa de la lista de despensas del dispositivo
 function deletePantryFromStorage(code: string) {
   const existing: string[] = JSON.parse(localStorage.getItem('myPantries') ?? '[]')
-  const updated = existing.filter((c) => c !== code)
+  const updated = existing.filter((c) => String(c ?? '').trim().toUpperCase() !== String(code ?? '').trim().toUpperCase())
   localStorage.setItem('myPantries', JSON.stringify(updated))
-  codes.value = updated
+
+  // ✅ Importante: actualizar el ref para que se resuscriba la lista
+  codes.value = normalizeCodes(updated)
+
   console.log('[deletePantryFromStorage] actualizado storage', updated)
 }
 
@@ -474,10 +540,7 @@ async function confirmPantry() {
     await showToast(isOwner ? 'Despensa eliminada' : 'Has salido de la despensa', 'success')
   } catch (e: any) {
     console.log('[confirmPantry] error', e)
-    await showToast(
-      isOwner ? 'Error al eliminar despensa.' : 'Error al abandonar despensa.',
-      'danger'
-    )
+    await showToast(isOwner ? 'Error al eliminar despensa.' : 'Error al abandonar despensa.', 'danger')
   } finally {
     selectedPantry.value = null
   }
@@ -627,7 +690,7 @@ body.dark .btn-outline {
 }
 
 .btn-outline:last-child {
-  margin-bottom: 5%; 
+  margin-bottom: 5%;
 }
 
 /* LOADING */
