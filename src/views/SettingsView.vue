@@ -1,6 +1,6 @@
-<!-- src/views/OptionsView.vue -->
 <template>
   <ion-page>
+    <!-- Cabecera start -->
     <ion-header translucent>
       <ion-toolbar class="top-toolbar">
         <ion-buttons slot="start">
@@ -9,6 +9,7 @@
         <ion-title>Ajustes</ion-title>
       </ion-toolbar>
     </ion-header>
+    <!-- Cabecera end -->
 
     <ion-content fullscreen class="options-content">
       <ion-header collapse="condense">
@@ -18,7 +19,7 @@
       </ion-header>
 
       <div class="container">
-        <!-- Tarjeta cabecera -->
+        <!-- Tarjeta cabecera start -->
         <ion-card class="hero-card">
           <ion-card-content class="hero-content">
             <div class="hero-left">
@@ -34,8 +35,9 @@
             <ion-note class="hero-version">v{{ appVersion }}</ion-note>
           </ion-card-content>
         </ion-card>
+        <!-- Tarjeta cabecera start -->
 
-        <!-- Apariencia -->
+        <!-- Seccion Apariencia start -->
         <ion-list inset class="list-card">
           <ion-item-divider class="section-divider">Apariencia</ion-item-divider>
 
@@ -72,8 +74,9 @@
             </div>
           </ion-item>
         </ion-list>
+        <!-- Seccion Apariencia end -->
 
-        <!-- Datos -->
+        <!-- Seccion Datos start -->
         <ion-list inset class="list-card">
           <ion-item-divider class="section-divider">Datos</ion-item-divider>
 
@@ -93,8 +96,9 @@
             </ion-label>
           </ion-item>
         </ion-list>
+        <!-- Seccion Datos end -->
 
-        <!-- App -->
+        <!-- Seccion App start -->
         <ion-list inset class="list-card">
           <ion-item-divider class="section-divider">App</ion-item-divider>
 
@@ -114,8 +118,11 @@
             </ion-label>
           </ion-item>
         </ion-list>
+        <!-- Seccion App end -->
 
+        <!-- Espacio footer start -->
         <div class="footer-space" />
+        <!-- Espacio footer end -->
       </div>
     </ion-content>
   </ion-page>
@@ -172,19 +179,22 @@ const onExitApp = async () => {
   }
 }
 </script>
-
 <style scoped>
+/* FONDO PAGINA */
 .options-content {
-  --background: linear-gradient( 180deg,
-                rgba(var(--md-accent-rgb, 46, 161, 93), 0.08),
-                rgba(0, 0, 0, 0)
+  --background: linear-gradient(
+    180deg,
+    rgba(var(--md-accent-rgb, 46, 161, 93), 0.08),
+    rgba(0, 0, 0, 0)
   );
 }
 
+/* TOOLBARS */
 .top-toolbar,
 .condense-toolbar {
   --background: var(--md-accent, #2ea15d);
-  --color: #ffffff !important;
+  --color: #ffffff;
+
   backdrop-filter: blur(10px);
   border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
@@ -203,15 +213,18 @@ ion-back-button {
   --color: #ffffff;
 }
 
+/* CONTENEDOR */
 .container {
   padding: 14px 14px 0;
 }
 
+/* HEADER */
 .hero-card {
+  margin: 8px 0 14px;
   border-radius: 18px;
+
   border: 1px solid rgba(var(--md-accent-rgb, 46, 161, 93), 0.18);
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);
-  margin: 8px 0 14px;
 }
 
 .hero-content {
@@ -227,14 +240,17 @@ ion-back-button {
   gap: 12px;
 }
 
+/* ICONO BCON BADGE */
 .app-badge {
   width: 44px;
   height: 44px;
-  border-radius: 14px;
+
   display: grid;
   place-items: center;
+
+  border-radius: 14px;
   border: 1px solid var(--md-accent, #2ea15d);
-  background: var(--md-accent, #2ea15d);
+  background: var(--md-accent, #a12e2e);
 
   font-size: 22px;
 }
@@ -245,13 +261,13 @@ ion-back-button {
 
 .hero-text {
   display: grid;
-  line-height: 1.1;
   gap: 4px;
+  line-height: 1.1;
 }
 
 .hero-title {
-  font-weight: 600;
   font-size: 22px;
+  font-weight: 600;
   color: var(--ion-text-color2);
 }
 
@@ -266,19 +282,24 @@ ion-back-button {
   opacity: 1;
 }
 
+/* CONTENEDOR DE TARJETAS */
 .list-card {
+  margin: 0 0 14px;
+
   border-radius: 18px;
   overflow: hidden;
+
   border: 1px solid rgba(0, 0, 0, 0.06);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.04);
-  margin: 0 0 14px;
 }
 
+/* DIVISOR DE SECCIONES */
 .section-divider {
   font-size: 12px;
   letter-spacing: 0.5px;
   text-transform: uppercase;
-  color: var(--ion-text-color), !important;
+
+  color: var(--ion-text-color) !important;
 }
 
 .setting-item {
@@ -287,6 +308,7 @@ ion-back-button {
   --min-height: 56px;
 }
 
+/* ICONOS */
 .item-icon {
   font-size: 26px;
   margin-left: 3%;
@@ -296,22 +318,27 @@ ion-back-button {
   color: var(--md-accent, #2ea15d) !important;
 }
 
-/* Toggle */
+/* ACTIVA TEMA OSCURO */
 .accent-toggle {
+  margin-left: 4%;
+
   --handle-background: #ffffff;
   --handle-background-checked: var(--md-accent, #2ea15d);
+
   --track-background: rgba(169, 169, 169, 0.35);
-  --track-background-checked: #5c5c5c6c;
+  --track-background-checked: rgba(92, 92, 92, 0.42);
+
   --background: rgba(169, 169, 169, 0.35);
   --background-checked: rgba(169, 169, 169, 0.35);
-  margin-left: 4%;
 }
 
-:global(body.dark) .accent-toggle {
+body.dark .accent-toggle {
   --track-background: rgba(255, 255, 255, 0.22);
   --track-background-checked: rgba(206, 206, 206, 0.22);
+
   --background: rgba(255, 255, 255, 0.22);
   --background-checked: rgba(255, 255, 255, 0.22);
+
   --handle-background: #ffffff;
   --handle-background-checked: var(--md-accent, #2ea15d);
 }
@@ -322,37 +349,46 @@ ion-back-button {
   gap: 10px;
 }
 
+/* RESETAR TEMA POR DEFECTO */
 .reset-pill {
-  --background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.14);
-  --background-hover: rgba(var(--md-accent-rgb, 46, 161, 93), 0.2);
-  --color: var(--md-accent, #2ea15d);
+  height: 30px;
+
+  font-weight: 800;
+  text-transform: none;
+
   --border-radius: 999px;
   --padding-start: 12px;
   --padding-end: 12px;
-  height: 30px;
-  font-weight: 800;
-  text-transform: none;
+
+  --background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.14);
+  --background-hover: rgba(var(--md-accent-rgb, 46, 161, 93), 0.2);
+  --color: var(--md-accent, #2ea15d);
 }
 
-:global(body.dark) .reset-pill {
+body.dark .reset-pill {
   --background: rgba(255, 255, 255, 0.12);
   --background-hover: rgba(255, 255, 255, 0.16);
   --color: #ffffff;
+
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+/* SELECTOR DE COLOR */
 .color-chip {
   width: 34px;
   height: 34px;
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.9);
-  overflow: hidden;
+
   display: inline-grid;
   place-items: center;
-  background: #fff;
+
+  border-radius: 10px;
+  overflow: hidden;
+
+  background: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.9);
 }
 
-:global(body.dark) .color-chip {
+body.dark .color-chip {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid #000000;
 }
@@ -360,12 +396,15 @@ ion-back-button {
 .color-input {
   width: 34px;
   height: 34px;
+
   border: 0;
   padding: 0;
   margin: 0;
+
   background: transparent;
   cursor: pointer;
   outline: none;
+
   -webkit-appearance: none;
   appearance: none;
 }
@@ -375,11 +414,12 @@ ion-back-button {
 }
 
 .color-input::-webkit-color-swatch,
-.color-input::-moz-color-swatch{
+.color-input::-moz-color-swatch {
   border: 0;
   border-radius: 10px;
 }
 
+/* FOOTER ESPACIADO */
 .footer-space {
   height: 18px;
 }

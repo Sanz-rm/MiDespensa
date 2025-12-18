@@ -1,4 +1,3 @@
-<!-- PurcharsePage.vue (vista de compra) -->
 <template>
   <ion-page>
     <InventoryAndPurcharseHeader :title="`Compra de ${props.name}`"
@@ -309,13 +308,13 @@ async function showErrorToast(message: string) {
 </script>
 
 <style scoped>
-/* Acciones */
 .actions {
   display: grid;
   gap: 12px;
   margin-bottom: 8px;
 }
 
+/* BUSCADOR */
 ion-searchbar {
   --border-radius: 999px;
 }
@@ -324,67 +323,65 @@ body.dark ion-searchbar {
   --background: #2d2e2e;
   --placeholder-color: #ffffff;
   --color: #ffffff;
-  --icon-color: #ffffffaf;
+  --icon-color: rgba(255, 255, 255, 0.69);
   --clear-icon-color: #888888;
   --border-color: #444444;
   --border-radius: 999px;
 }
 
-/* Lista estilo cards en fila */
+/* LISTA DE COMPRA */
 .list-cards {
   display: grid;
   gap: 12px;
 }
 
-/* Fila de item */
 .item-row {
   display: grid;
   grid-template-columns: 40px 1fr auto auto;
   align-items: flex-start;
   gap: 8px 12px;
-  background: #fff;
+
+  padding: 10px 12px;
+
+  background: #ffffff;
   border-radius: 12px;
   border: 1px solid #eef2f4;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-  padding: 10px 12px;
 }
 
-body.dark .item-row{
+body.dark .item-row {
   background: var(--ion-background-color);
   border-color: #333333;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
-
-/* SOLO CUANDO LA FOTO VENGA DE GALERIA */
-.item-row .img-galery {
-  width: 80%;
-  object-fit: contain;
-  display: block;
-  margin: 0 8px;
-}
-
-.item-row img.img-galery {
-  border-radius: 5%;
-  object-fit: cover;
-}
-
+/* IMAGEN */
 .icon {
   width: 36px;
   height: 36px;
   object-fit: contain;
-  filter: drop-shadow(0 0 6px #cacaca5e);
+  filter: drop-shadow(0 0 6px rgba(202, 202, 202, 0.37));
 }
 
+/* IMAGEN GALERÍA */
+.item-row img.img-galery {
+  width: 80%;
+  margin: 0 8px;
+  display: block;
 
+  border-radius: 5%;
+  object-fit: cover;
+}
+
+/* INFORMACION PRODUCTO COMPRA */
 .info {
   align-self: center;
 }
 
 .info .name {
   margin: 0;
-  font-weight: 700;
   font-size: 14px;
+  font-weight: 700;
   color: var(--ion-text-color);
 }
 
@@ -394,64 +391,59 @@ body.dark .item-row{
   color: var(--ion-text-color2);
 }
 
-.note-icon {
-  --padding-start: 6px;
-  --padding-end: 6px;
-  color: var(--ion-text-color2);
-}
-
+/* ICONOS DE NOTA Y BORRAR DE COMPRA */
+.note-icon,
 .trash {
   --padding-start: 6px;
   --padding-end: 6px;
 }
 
+.note-icon {
+  color: var(--ion-text-color2);
+}
+
 .note-row {
   grid-column: 1 / -1;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   margin-top: 1%;
-  padding: 0px 8px;
+  padding: 0 8px;
+
   background: #f3f4f6;
-  border-radius: 8px;
-  font-size: 14px;
   border: 1px solid #cacaca;
+  border-radius: 8px;
+
+  font-size: 14px;
 }
 
 body.dark .note-row {
   background: #2d2e2e;
-  border-color: #555555cc;
-}
-
-.note-text {
-  flex: 1;
-  white-space: pre-wrap;
-  word-break: break-word;
-  max-height: 6em;
-  overflow-y: auto;
+  border-color: rgba(85, 85, 85, 0.8);
 }
 
 .note-textarea {
   flex: 1;
-  border: none;
-  background: transparent;
-  font-size: 14px;
-  outline: none;
   box-sizing: border-box;
 
-  /* textarea sin redimensionar */
+  border: none;
+  outline: none;
+  background: transparent;
+
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+
   min-height: 44px;
   max-height: 80px;
   resize: none;
-  line-height: 1.4;
-  white-space: pre-wrap;
-  align-items: center;
 }
 
 .note-textarea--center {
   padding-top: 4%;
 }
-
 
 .note-actions {
   display: flex;
@@ -459,50 +451,63 @@ body.dark .note-row {
   margin-left: 8px;
 }
 
+/* BOTON NOTA */
 .note {
   width: 22px;
   height: 22px;
-  border-radius: 5px;
-  border: none;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
+  border: none;
+  border-radius: 5px;
+
   font-size: 11px;
   cursor: pointer;
 }
 
+/* BORRAR NOTA */
 .note-cancel {
   background: #ef4444;
   color: #ffffff;
 }
 
+/* GUARDAR NOTA */
 .note-ok {
   background: #16a34a;
   color: #ffffff;
 }
 
+/* NOTA GUARDADA */
 .note-ok-saved {
   background: rgba(85, 141, 106, 0.87);
 }
 
+/* SIN RESULTADOS */
 .empty {
   flex: 1;
+
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
+
   padding: 24px 16px;
+  text-align: center;
+
   color: #6b7280;
 }
 
 .empty-icon {
   width: 120px;
   height: 120px;
-  border-radius: 999px;
+  margin-bottom: 2px;
+
   display: grid;
   place-items: center;
-  margin-bottom: 2px;
+
+  border-radius: 999px;
 }
 
 .empty-icon .material-icons {
@@ -512,18 +517,19 @@ body.dark .note-row {
 
 .empty-title {
   margin: 0 0 4px;
-  font-weight: 700;
   font-size: 18px;
+  font-weight: 700;
   color: var(--ion-text-color3);
 }
 
 .empty-subtitle {
   margin: 0;
   font-size: 14px;
-  color: var(--ion-text-color2);
   font-weight: 500;
+  color: var(--ion-text-color2);
 }
 
+/* LOADING */
 .loading-box {
   display: grid;
   place-content: center;

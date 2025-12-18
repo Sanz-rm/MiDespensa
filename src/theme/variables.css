@@ -1,7 +1,5 @@
-/* For information on how to create your own theme, please see:
-http://ionicframework.com/docs/theming/ */
 :root {
-  /* Tema claro por defecto */
+  /* TEMA CLARO */
   --ion-background-color: #ffffff;
   --ion-background-color2: #ffffff;
   --ion-background-color-rgb: 255,255,255;
@@ -13,10 +11,9 @@ http://ionicframework.com/docs/theming/ */
   --ion-color-primary: #3b82f6;
   --ion-color-primary-contrast: #ffffff;
   --ion-border-color: #eef2f4;
-  /* ...el resto de tus variables */
 }
 
-/* Tema oscuro activable con clase en <body> */
+/* TEMA OSCURO */
 .dark {
   --ion-background-color: #1f2324;
   --ion-background-color2: #292a2b;
@@ -31,7 +28,6 @@ http://ionicframework.com/docs/theming/ */
   --ion-border-color: #a0a2a35b;
 }
 
-/* Asegura que ion-content use el fondo del tema */
 ion-content { --background: var(--ion-background-color); }
 
 
