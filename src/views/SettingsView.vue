@@ -989,8 +989,6 @@ const onConfirmExportSelection = async () => {
 
   try {
     exportingBackup.value = true
-    await showToast('Generando copia de seguridad…', 'medium')
-
     // Recuperar items de cada despensa seleccionada
     const bundles: ExportPantryBundle[] = await Promise.all(
       selected.map(async (p) => {
