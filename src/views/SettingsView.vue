@@ -63,13 +63,8 @@
               </ion-button>
 
               <label class="color-chip" :title="accentColor">
-                <input
-                  class="color-input"
-                  type="color"
-                  v-model="accentColor"
-                  @input="onAccentColorInput"
-                  aria-label="Seleccionar color principal"
-                />
+                <input class="color-input" type="color" v-model="accentColor" @input="onAccentColorInput"
+                  aria-label="Seleccionar color principal" />
               </label>
             </div>
           </ion-item>
@@ -97,11 +92,11 @@
             </ion-label>
           </ion-item>
 
-          <ion-item lines="none" class="setting-item" button @click="onClearCache">
+          <ion-item lines="none" class="setting-item" button @click="onDeleteData">
             <ion-icon slot="start" :icon="trashOutline" class="item-icon accent" />
             <ion-label>
-              <h2>Limpiar caché</h2>
-              <p>Soluciona cargas lentas o errores</p>
+              <h2>Borrar datos</h2>
+              <p>Elimina todos los datos locales de la app</p>
             </ion-label>
           </ion-item>
         </ion-list>
@@ -130,13 +125,8 @@
         <!-- Seccion App end -->
 
         <!-- NUEVO: input oculto para seleccionar archivo de importación START -->
-        <input
-          ref="importFileInput"
-          type="file"
-          accept="application/json,.json"
-          class="hidden-file-input"
-          @change="onImportFileSelected"
-        />
+        <input ref="importFileInput" type="file" accept="application/json,.json" class="hidden-file-input"
+          @change="onImportFileSelected" />
         <!-- NUEVO: input oculto para seleccionar archivo de importación END -->
 
         <!-- NUEVO: Modal selección despensas a exportar START -->
@@ -162,11 +152,8 @@
 
             <ion-list v-else inset class="export-list">
               <ion-item v-for="p in exportPantries" :key="p.id" lines="full" class="export-item">
-                <ion-checkbox
-                  slot="start"
-                  :checked="selectedExportCodes.has(p.code)"
-                  @ionChange="toggleExportPantry(p.code, $event)"
-                />
+                <ion-checkbox slot="start" :checked="selectedExportCodes.has(p.code)"
+                  @ionChange="toggleExportPantry(p.code, $event)" />
                 <ion-label>
                   <h2 class="export-name">{{ p.name }}</h2>
                   <p class="export-code">{{ p.code }}</p>
@@ -179,12 +166,8 @@
             </ion-list>
 
             <div class="export-actions">
-              <ion-button
-                expand="block"
-                class="export-btn"
-                :disabled="selectedExportCodes.size === 0 || exportingBackup"
-                @click="onConfirmExportSelection"
-              >
+              <ion-button expand="block" class="export-btn"
+                :disabled="selectedExportCodes.size === 0 || exportingBackup" @click="onConfirmExportSelection">
                 {{ exportingBackup ? 'Generando...' : 'Continuar' }}
               </ion-button>
               <ion-note class="export-note" v-if="selectedExportCodes.size === 0">
@@ -218,11 +201,8 @@
 
             <ion-list v-else inset class="export-list">
               <ion-item v-for="b in importBundles" :key="getImportKey(b)" lines="full" class="export-item">
-                <ion-checkbox
-                  slot="start"
-                  :checked="selectedImportKeys.has(getImportKey(b))"
-                  @ionChange="toggleImportBundle(getImportKey(b), $event)"
-                />
+                <ion-checkbox slot="start" :checked="selectedImportKeys.has(getImportKey(b))"
+                  @ionChange="toggleImportBundle(getImportKey(b), $event)" />
                 <ion-label>
                   <h2 class="export-name">{{ b.pantry?.name }}</h2>
                   <p class="export-code">{{ b.pantry?.code }}</p>
@@ -235,12 +215,8 @@
             </ion-list>
 
             <div class="export-actions">
-              <ion-button
-                expand="block"
-                class="export-btn"
-                :disabled="selectedImportKeys.size === 0 || importingBackup"
-                @click="onConfirmImportSelection"
-              >
+              <ion-button expand="block" class="export-btn" :disabled="selectedImportKeys.size === 0 || importingBackup"
+                @click="onConfirmImportSelection">
                 {{ importingBackup ? 'Importando...' : 'Importar' }}
               </ion-button>
               <ion-note class="export-note" v-if="selectedImportKeys.size === 0">
@@ -273,14 +249,10 @@
         <!-- NUEVO: Alert para decidir qué hacer si la despensa existe END -->
 
         <!-- Pop up confirmar limpiar caché START -->
-        <ConfirmPopup
-          v-model="showConfirmClearCache"
-          title="Limpiar caché"
-          message="Vas a borrar la caché y datos locales de la app en este dispositivo. Esta acción no se puede deshacer. Si quieres conservar tus datos, haz una copia con “Exportar” antes de continuar. ¿Quieres limpiar la caché?"
-          confirmLabel="Limpiar"
-          cancelLabel="Cancelar"
-          @confirm="confirmClearCache"
-        />
+        <ConfirmPopup v-model="showConfirmDeleteData" title="Borrar datos"
+          message="Vas a borrar TODOS los datos locales de MiDespensa en este dispositivo (ajustes, caché y almacenamiento interno). Esta acción no se puede deshacer. Si quieres conservar tus datos, haz una copia con “Exportar” antes de continuar. ¿Quieres borrar los datos?"
+          confirmLabel="Borrar" cancelLabel="Cancelar" @confirm="confirmDeleteData" />
+
         <!-- Pop up confirmar limpiar caché END -->
 
         <!-- Espacio footer start -->
@@ -350,7 +322,7 @@ import { initTheme, toggleTheme, accentColor, setAccentColor, resetAccentColor }
 import ConfirmPopup from '@/components/ui/ConfirmPopup.vue'
 
 const isDark = ref(false)
-const showConfirmClearCache = ref(false)
+const showConfirmDeleteData = ref(false)
 
 function onAccentColorInput() {
   // v-model ya actualiza el ref; esto fuerza validación/normalización por si acaso
@@ -441,8 +413,8 @@ function getStoredPantryCodes(): string[] {
     const codes = JSON.parse(raw ?? '[]')
     const normalized = Array.isArray(codes)
       ? codes
-          .map((c) => String(c ?? '').trim().toUpperCase())
-          .filter(Boolean)
+        .map((c) => String(c ?? '').trim().toUpperCase())
+        .filter(Boolean)
       : []
     return normalized
   } catch (e) {
@@ -1055,63 +1027,114 @@ const onConfirmExportSelection = async () => {
   }
 }
 
-const onClearCache = async () => {
-  showConfirmClearCache.value = true
+const onDeleteData = async () => {
+  showConfirmDeleteData.value = true
 }
 
-async function confirmClearCache() {
+async function confirmDeleteData() {
   try {
-    // Limpieza común (web + móvil): Preferences (Capacitor)
+    // 1) Limpieza común (web + móvil): Preferences (Capacitor)
     await Preferences.clear()
 
-    // WEB: local/session storage + caches + indexedDB + service worker
+    // 2) Local / Session storage (también en móvil: WebView usa estos storages)
+    try {
+      localStorage.clear()
+    } catch (e) {
+      console.log('No se pudo limpiar localStorage', e)
+    }
+
+    try {
+      sessionStorage.clear()
+    } catch (e) {
+      console.log('No se pudo limpiar sessionStorage', e)
+    }
+
+    // 3) Cache Storage (si existe)
+    try {
+      if ('caches' in window) {
+        const keys = await caches.keys()
+        await Promise.all(keys.map((k) => caches.delete(k)))
+      }
+    } catch (e) {
+      console.log('No se pudo limpiar Cache Storage', e)
+    }
+
+    // 4) IndexedDB (WEB y también Android WebView)
+    try {
+      const anyIDB = indexedDB as any
+      if (anyIDB?.databases) {
+        const dbs = await anyIDB.databases()
+        await Promise.all(
+          (dbs || [])
+            .filter((d: any) => d?.name)
+            .map(
+              (d: any) =>
+                new Promise<void>((res) => {
+                  const req = indexedDB.deleteDatabase(d.name)
+                  req.onsuccess = () => res()
+                  req.onerror = () => res()
+                  req.onblocked = () => res()
+                })
+            )
+        )
+      }
+    } catch (e) {
+      console.log('No se pudo limpiar IndexedDB', e)
+    }
+
+    // 5) MÓVIL: borrar almacenamiento interno (Cache/Data) si Filesystem está disponible
+    // (Esto es lo que te faltaba para que en APK “borrase de verdad”)
+    if (Capacitor.getPlatform() !== 'web') {
+      try {
+        const fsMod = await import('@capacitor/filesystem')
+        const { Filesystem, Directory } = fsMod as any
+
+        // Helper: intenta borrar raíz del directorio; si falla, borra contenido.
+        const wipeDir = async (directory: any, label: string) => {
+          try {
+            await Filesystem.rmdir({ path: '', directory, recursive: true })
+            console.log(`[confirmDeleteData] rmdir OK ${label}`)
+            return
+          } catch (e) {
+            console.log(`[confirmDeleteData] rmdir falló ${label}, intento borrar contenido`, e)
+          }
+
+          try {
+            const res = await Filesystem.readdir({ path: '', directory })
+            const list = (res as any)?.files ?? (res as any)?.entries ?? []
+            for (const it of list) {
+              const name = typeof it === 'string' ? it : String(it?.name ?? '')
+              if (!name) continue
+
+              // Intento como fichero
+              try {
+                await Filesystem.deleteFile({ path: name, directory })
+                continue
+              } catch {
+                console.log(`[confirmDeleteData] deleteFile falló ${label} ${name}, intento como carpeta`)
+              }
+
+              // Si no era fichero, intento como carpeta
+              try {
+                await Filesystem.rmdir({ path: name, directory, recursive: true })
+              } catch { }
+            }
+            console.log(`[confirmDeleteData] wipe contenido OK ${label}`)
+          } catch (e) {
+            console.log(`[confirmDeleteData] no se pudo borrar contenido ${label}`, e)
+          }
+        }
+
+        // OJO: NO tocamos Directory.Documents para no borrar tus backups exportados
+        await wipeDir(Directory.Cache, 'Directory.Cache')
+        await wipeDir(Directory.Data, 'Directory.Data')
+      } catch (e) {
+        console.log('[confirmDeleteData] Filesystem no disponible o error', e)
+      }
+    }
+
+    // 6) Service Workers (solo web)
     if (Capacitor.getPlatform() === 'web') {
-      try {
-        localStorage.clear()
-      } catch (e) {
-        console.log('No se pudo limpiar localStorage', e)
-      }
-
-      try {
-        sessionStorage.clear()
-      } catch (e) {
-        console.log('No se pudo limpiar sessionStorage', e)
-      }
-
-      // Cache Storage (Service Worker cache)
-      try {
-        if ('caches' in window) {
-          const keys = await caches.keys()
-          await Promise.all(keys.map((k) => caches.delete(k)))
-        }
-      } catch (e) {
-        console.log('No se pudo limpiar Cache Storage', e)
-      }
-
-      // IndexedDB (si el navegador lo permite)
-      try {
-        const anyIDB = indexedDB as any
-        if (anyIDB?.databases) {
-          const dbs = await anyIDB.databases()
-          await Promise.all(
-            (dbs || [])
-              .filter((d: any) => d?.name)
-              .map(
-                (d: any) =>
-                  new Promise<void>((res) => {
-                    const req = indexedDB.deleteDatabase(d.name)
-                    req.onsuccess = () => res()
-                    req.onerror = () => res()
-                    req.onblocked = () => res()
-                  })
-              )
-          )
-        }
-      } catch (e) {
-        console.log('No se pudo limpiar IndexedDB', e)
-      }
-
-      // Desregistrar service workers (opcional pero útil para “cache”)
       try {
         if ('serviceWorker' in navigator) {
           const regs = await navigator.serviceWorker.getRegistrations()
@@ -1122,15 +1145,19 @@ async function confirmClearCache() {
       }
     }
 
-    await showToast('Se ha limpiado la caché correctamente', 'success')
+    await showToast('Datos borrados correctamente', 'success')
 
-    // Recomiendo recargar en web para que se note al instante
-    if (Capacitor.getPlatform() === 'web') {
-      setTimeout(() => window.location.reload(), 250)
-    }
+    // 7) Recargar para arrancar “como recién instalada”
+    setTimeout(() => {
+      try {
+        window.location.reload()
+      } catch (e) {
+        console.log('[confirmDeleteData] no se pudo recargar', e)
+      }
+    }, 250)
   } catch (e) {
-    console.log('[confirmClearCache] error', e)
-    await showToast('No se pudo limpiar la caché', 'danger')
+    console.log('[confirmDeleteData] error', e)
+    await showToast('No se pudieron borrar los datos', 'danger')
   }
 }
 
@@ -1150,11 +1177,9 @@ const onExitApp = async () => {
 <style scoped>
 /* FONDO PAGINA */
 .options-content {
-  --background: linear-gradient(
-    180deg,
-    rgba(var(--md-accent-rgb, 46, 161, 93), 0.08),
-    rgba(0, 0, 0, 0)
-  );
+  --background: linear-gradient(180deg,
+      rgba(var(--md-accent-rgb, 46, 161, 93), 0.08),
+      rgba(0, 0, 0, 0));
 }
 
 /* TOOLBARS */
