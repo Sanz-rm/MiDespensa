@@ -63,8 +63,13 @@
               </ion-button>
 
               <label class="color-chip" :title="accentColor">
-                <input class="color-input" type="color" v-model="accentColor" @input="onAccentColorInput"
-                  aria-label="Seleccionar color principal" />
+                <input
+                  class="color-input"
+                  type="color"
+                  v-model="accentColor"
+                  @input="onAccentColorInput"
+                  aria-label="Seleccionar color principal"
+                />
               </label>
             </div>
           </ion-item>
@@ -125,8 +130,13 @@
         <!-- Seccion App end -->
 
         <!-- NUEVO: input oculto para seleccionar archivo de importación START -->
-        <input ref="importFileInput" type="file" accept="application/json,.json" class="hidden-file-input"
-          @change="onImportFileSelected" />
+        <input
+          ref="importFileInput"
+          type="file"
+          accept="application/json,.json"
+          class="hidden-file-input"
+          @change="onImportFileSelected"
+        />
         <!-- NUEVO: input oculto para seleccionar archivo de importación END -->
 
         <!-- NUEVO: Modal selección despensas a exportar START -->
@@ -151,9 +161,19 @@
             </div>
 
             <ion-list v-else inset class="export-list">
-              <ion-item v-for="p in exportPantries" :key="p.id" lines="full" class="export-item">
-                <ion-checkbox slot="start" :checked="selectedExportCodes.has(p.code)"
-                  @ionChange="toggleExportPantry(p.code, $event)" />
+              <ion-item
+                v-for="p in exportPantries"
+                :key="p.id"
+                lines="none"
+                class="export-item"
+                :class="{ 'export-item--selected': selectedExportCodes.has(p.code) }"
+              >
+                <ion-checkbox
+                  slot="start"
+                  class="accent-checkbox"
+                  :checked="selectedExportCodes.has(p.code)"
+                  @ionChange="toggleExportPantry(p.code, $event)"
+                />
                 <ion-label>
                   <h2 class="export-name">{{ p.name }}</h2>
                   <p class="export-code">{{ p.code }}</p>
@@ -166,8 +186,12 @@
             </ion-list>
 
             <div class="export-actions">
-              <ion-button expand="block" class="export-btn"
-                :disabled="selectedExportCodes.size === 0 || exportingBackup" @click="onConfirmExportSelection">
+              <ion-button
+                expand="block"
+                class="export-btn"
+                :disabled="selectedExportCodes.size === 0 || exportingBackup"
+                @click="onConfirmExportSelection"
+              >
                 {{ exportingBackup ? 'Generando...' : 'Continuar' }}
               </ion-button>
               <ion-note class="export-note" v-if="selectedExportCodes.size === 0">
@@ -192,7 +216,9 @@
           <ion-content class="ion-padding">
             <div class="export-hint">
               <p class="export-title">Selecciona las despensas a importar</p>
-              <p class="export-subtitle">Por defecto están todas seleccionadas. Debes marcar al menos 1.</p>
+              <p class="export-subtitle">
+                Por defecto están todas seleccionadas. Debes marcar al menos 1.
+              </p>
             </div>
 
             <div v-if="importModalLoading" class="loading-box">
@@ -200,9 +226,19 @@
             </div>
 
             <ion-list v-else inset class="export-list">
-              <ion-item v-for="b in importBundles" :key="getImportKey(b)" lines="full" class="export-item">
-                <ion-checkbox slot="start" :checked="selectedImportKeys.has(getImportKey(b))"
-                  @ionChange="toggleImportBundle(getImportKey(b), $event)" />
+              <ion-item
+                v-for="b in importBundles"
+                :key="getImportKey(b)"
+                lines="none"
+                class="export-item"
+                :class="{ 'export-item--selected': selectedImportKeys.has(getImportKey(b)) }"
+              >
+                <ion-checkbox
+                  slot="start"
+                  class="accent-checkbox"
+                  :checked="selectedImportKeys.has(getImportKey(b))"
+                  @ionChange="toggleImportBundle(getImportKey(b), $event)"
+                />
                 <ion-label>
                   <h2 class="export-name">{{ b.pantry?.name }}</h2>
                   <p class="export-code">{{ b.pantry?.code }}</p>
@@ -215,8 +251,12 @@
             </ion-list>
 
             <div class="export-actions">
-              <ion-button expand="block" class="export-btn" :disabled="selectedImportKeys.size === 0 || importingBackup"
-                @click="onConfirmImportSelection">
+              <ion-button
+                expand="block"
+                class="export-btn"
+                :disabled="selectedImportKeys.size === 0 || importingBackup"
+                @click="onConfirmImportSelection"
+              >
                 {{ importingBackup ? 'Importando...' : 'Importar' }}
               </ion-button>
               <ion-note class="export-note" v-if="selectedImportKeys.size === 0">
@@ -249,9 +289,14 @@
         <!-- NUEVO: Alert para decidir qué hacer si la despensa existe END -->
 
         <!-- Pop up confirmar limpiar caché START -->
-        <ConfirmPopup v-model="showConfirmDeleteData" title="Borrar datos"
+        <ConfirmPopup
+          v-model="showConfirmDeleteData"
+          title="Borrar datos"
           message="Vas a borrar TODOS los datos locales de MiDespensa en este dispositivo (ajustes, caché y almacenamiento interno). Esta acción no se puede deshacer. Si quieres conservar tus datos, haz una copia con “Exportar” antes de continuar. ¿Quieres borrar los datos?"
-          confirmLabel="Borrar" cancelLabel="Cancelar" @confirm="confirmDeleteData" />
+          confirmLabel="Borrar"
+          cancelLabel="Cancelar"
+          @confirm="confirmDeleteData"
+        />
 
         <!-- Pop up confirmar limpiar caché END -->
 
@@ -273,7 +318,6 @@
             </div>
           </div>
         </div>
-
 
         <div class="footer-space" />
         <!-- Espacio footer end -->
@@ -423,6 +467,7 @@ type ExportItem = {
 type ExportPantryBundle = {
   pantry: Pantry
   items: ExportItem[]
+  wasCreator: boolean
 }
 type ExportBackup = {
   app: string
@@ -437,9 +482,7 @@ function getStoredPantryCodes(): string[] {
     const raw = localStorage.getItem('myPantries')
     const codes = JSON.parse(raw ?? '[]')
     const normalized = Array.isArray(codes)
-      ? codes
-        .map((c) => String(c ?? '').trim().toUpperCase())
-        .filter(Boolean)
+      ? codes.map((c) => String(c ?? '').trim().toUpperCase()).filter(Boolean)
       : []
     return normalized
   } catch (e) {
@@ -490,6 +533,43 @@ function chunkArray<T>(arr: T[], size: number): T[][] {
   return out
 }
 
+// ✅ NUEVO: al borrar datos, abandonar todas las despensas del dispositivo (memberCount -1)
+async function leaveAllPantriesBeforeWipe() {
+  try {
+    const codes = getStoredPantryCodes()
+    if (!codes.length) {
+      console.log('[leaveAllPantriesBeforeWipe] no hay despensas en storage')
+      return
+    }
+
+    const chunks = chunkArray(codes, 10)
+
+    for (const c of chunks) {
+      try {
+        const q = query(collection(db, 'pantries'), where('code', 'in', c))
+        const snap = await getDocs(q)
+
+        for (const d of snap.docs) {
+          try {
+            const refPantry = doc(db, 'pantries', d.id)
+            await updateDoc(refPantry, { memberCount: increment(-1) })
+            console.log('[leaveAllPantriesBeforeWipe] memberCount -1', {
+              id: d.id,
+              code: (d.data() as any)?.code
+            })
+          } catch (e) {
+            console.log('[leaveAllPantriesBeforeWipe] error updateDoc memberCount -1', e)
+          }
+        }
+      } catch (e) {
+        console.log('[leaveAllPantriesBeforeWipe] error getDocs chunk', e)
+      }
+    }
+  } catch (e) {
+    console.log('[leaveAllPantriesBeforeWipe] error general', e)
+  }
+}
+
 // Exportar: abre modal con listado de despensas y checkboxes
 const onExportData = async () => {
   const codes = getStoredPantryCodes()
@@ -529,9 +609,15 @@ const onExportData = async () => {
     exportPantries.value = all.sort((a, b) =>
       String(a.name ?? '').localeCompare(String(b.name ?? ''), 'es', { sensitivity: 'base' })
     )
+
+    // ✅ NUEVO: por defecto todos los checkboxes marcados
+    selectedExportCodes.value = new Set(
+      exportPantries.value.map((p) => String(p.code ?? '').trim().toUpperCase())
+    )
   } catch (e) {
     console.log('[onExportData] error cargando despensas', e)
     exportPantries.value = []
+    selectedExportCodes.value = new Set()
     await showToast('No se pudieron cargar tus despensas', 'danger')
   } finally {
     exportLoading.value = false
@@ -698,6 +784,21 @@ const onConfirmImportSelection = async () => {
 
         if (decision === 'existing') {
           addPantryToStorage(liveCode)
+
+          // Si en el backup ESTE dispositivo era el creador, reasignamos el creatorId al nuevo deviceId
+          try {
+            const wasCreator = !!(b as any)?.wasCreator
+            const backupCreatorId = String((pantry as any)?.creatorId ?? '').trim()
+            const currentCreatorId = String((data as any)?.creatorId ?? '').trim()
+
+            // Seguridad: solo reasigna si el creatorId actual coincide con el del backup
+            if (wasCreator && backupCreatorId && currentCreatorId === backupCreatorId) {
+              await updateDoc(refPantry, { creatorId: deviceId })
+              console.log('[import] creatorId reasignado al nuevo deviceId', { liveCode, deviceId })
+            }
+          } catch (e) {
+            console.log('[import] error reasignando creatorId', e)
+          }
 
           try {
             await updateDoc(refPantry, { memberCount: increment(1) })
@@ -1026,7 +1127,8 @@ const onConfirmExportSelection = async () => {
     const bundles: ExportPantryBundle[] = await Promise.all(
       selected.map(async (p) => {
         const items = await getItemsForPantry(p.code)
-        return { pantry: p, items }
+        const wasCreator = String((p as any)?.creatorId ?? '').trim() === String(deviceId).trim()
+        return { pantry: p, items, wasCreator }
       })
     )
 
@@ -1056,6 +1158,9 @@ const onDeleteData = async () => {
 
 async function confirmDeleteData() {
   try {
+    // ✅ NUEVO: Antes de borrar todo, abandonar todas las despensas del dispositivo (memberCount -1)
+    await leaveAllPantriesBeforeWipe()
+
     // 1) Limpieza común (web + móvil): Preferences (Capacitor)
     await Preferences.clear()
 
@@ -1186,7 +1291,6 @@ async function confirmDeleteData() {
   }
 }
 
-
 const onExitApp = async () => {
   try {
     const mod = await import('@capacitor/app')
@@ -1201,9 +1305,7 @@ const onExitApp = async () => {
 <style scoped>
 /* FONDO PAGINA */
 .options-content {
-  --background: linear-gradient(180deg,
-      rgba(var(--md-accent-rgb, 46, 161, 93), 0.08),
-      rgba(0, 0, 0, 0));
+  --background: linear-gradient(180deg, rgba(var(--md-accent-rgb, 46, 161, 93), 0.08), rgba(0, 0, 0, 0));
 }
 
 /* TOOLBARS */
@@ -1319,7 +1421,7 @@ ion-list.list-card {
   color: var(--ion-text-color) !important;
 }
 
-ion-list.setting-item {
+ion-item.setting-item {
   --padding-start: 14px;
   --inner-padding-end: 15px;
   --min-height: 56px;
@@ -1493,6 +1595,51 @@ body.dark .color-chip {
 
   --background-activated: rgba(var(--md-accent-rgb, 46, 161, 93), 0.85);
   --background-focused: rgba(var(--md-accent-rgb, 46, 161, 93), 0.92);
+}
+
+/* ✅ NUEVO: filas (export/import) con borde y “card” + resalte */
+:deep(ion-list.export-list) {
+  --background: transparent;
+}
+
+:deep(ion-item.export-item) {
+  margin: 10px 0;
+  border-radius: 16px;
+  overflow: hidden;
+
+  border: 1px solid rgba(0, 0, 0, 0.06);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.06);
+
+  --background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.06);
+  --padding-start: 14px;
+  --inner-padding-end: 14px;
+  --min-height: 66px;
+}
+
+:deep(ion-item.export-item.export-item--selected) {
+  border-color: rgba(var(--md-accent-rgb, 46, 161, 93), 0.45);
+  --background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.10);
+}
+
+:deep(body.dark ion-item.export-item) {
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.25);
+  --background: rgba(255, 255, 255, 0.04);
+}
+
+:deep(body.dark ion-item.export-item.export-item--selected) {
+  border-color: rgba(var(--md-accent-rgb, 46, 161, 93), 0.55);
+  box-shadow: 0 0 0 3px rgba(var(--md-accent-rgb, 46, 161, 93), 0.22);
+  --background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.12);
+}
+
+/* ✅ checkbox verde principal */
+:deep(ion-checkbox.accent-checkbox) {
+  --checkbox-background: var(--md-accent, #2ea15d);
+  --checkbox-background-checked: var(--md-accent, #2ea15d);
+  --border-color: rgba(var(--md-accent-rgb, 46, 161, 93), 0.45);
+  --border-color-checked: var(--md-accent, #2ea15d);
+  --checkmark-color: #ffffff;
 }
 
 /* ====== POPUP IMPORT (estilo app, tipo ConfirmPopup) ====== */
