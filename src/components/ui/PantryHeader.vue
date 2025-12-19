@@ -61,8 +61,6 @@ const btnRef = ref<HTMLButtonElement | null>(null)
 const title = computed(() => props.title)
 const alt = computed(() => props.alt)
 
-
-// Detección de plataforma nativa (Capacitor v5+)
 const isNative = () =>
   typeof (Capacitor as any).isNativePlatform === 'function'
     ? (Capacitor as any).isNativePlatform()
@@ -72,7 +70,6 @@ const toggle = () => { isOpen.value = !isOpen.value }
 const close = () => { isOpen.value = false }
 
 const gracefulWebExit = async () => {
-  // En web, intentamos volver atrás; si no hay historial, vamos a la raíz
   if (window.history.length > 1) {
     window.history.back()
   } else {
@@ -89,9 +86,7 @@ const exitApp = async () => {
     try {
       await App.exitApp()
       return
-    } catch {
-      // Fallback por si no está disponible (iOS no soporta cerrar)
-    }
+    } catch {}
   }
   await gracefulWebExit()
 }
@@ -119,7 +114,6 @@ const onDocClick = (e: MouseEvent) => {
   if (clickedOutsideMenu && clickedOutsideBtn) close()
 }
 
-// Manejo del botón físico "Atrás" en Android (Capacitor)
 let removeBackListener: (() => void) | null = null
 
 onMounted(async () => {
@@ -128,12 +122,10 @@ onMounted(async () => {
   if (isNative()) {
     try {
       const { remove } = await App.addListener('backButton', ({ canGoBack }) => {
-        // 1) Si el menú está abierto, ciérralo
         if (isOpen.value) {
           close()
           return
         }
-        // 2) Si el router puede retroceder, vuelve atrás; si no, sal de la app
         if (canGoBack) {
           router.back()
         } else {
@@ -141,9 +133,7 @@ onMounted(async () => {
         }
       })
       removeBackListener = remove
-    } catch {
-      // Ignorar si no está disponible
-    }
+    } catch {}
   }
 })
 
@@ -156,70 +146,192 @@ onBeforeUnmount(() => {
 })
 </script>
 
+
 <style scoped>
-
-
+/* HEADER */
 .banner {
+  position: relative;
+  z-index: 10;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
+
   padding: 14px 18px;
   padding-top: 8%;
-  background: #2ea15d;
+
+  background: var(--md-accent, #2ea15d);
   color: #fff;
+
   border-bottom-left-radius: 18px;
   border-bottom-right-radius: 18px;
-  box-shadow: 0 2px 6px rgba(0,0,0,.12);
-  position: relative;
-  z-index: 10;
+
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.12);
 }
 
-.left { display: flex; align-items: center; gap: 12px; }
+.left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
 
+/* LOGO */
 .logo {
-  width: 84px; height: 84px; display: block; object-fit: contain;
+  width: 84px;
+  height: 84px;
+  display: block;
+  object-fit: contain;
   filter: brightness(0) invert(1);
 }
 
-.title { margin: 0; font-size: 20px; font-weight: 800; letter-spacing: .4px; text-transform: uppercase; line-height: 1; }
-
-.right { position: relative; }
-
-.menu-btn {
-  display: inline-flex; align-items: center; justify-content: center;
-  width: 38px; height: 38px; border-radius: 10px; border: none;
-  background: rgba(255,255,255,.18); cursor: pointer; transition: background .2s ease;
+/* TÍTULO PRINCIPAL */
+.title {
+  margin: 0;
+  line-height: 1;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  font-size: 20px;
+  font-weight: 800;
 }
-.menu-btn:hover { background: rgba(255,255,255,.28); }
-.menu-btn:focus { outline: 2px solid rgba(255,255,255,.7); outline-offset: 2px; }
 
-.hamb { display: inline-flex; flex-direction: column; gap: 4px; }
-.hamb > span { display: block; width: 18px; height: 2px; background: #fff; border-radius: 2px; }
+.right {
+  position: relative;
+}
+
+/* MENU */
+.menu-btn {
+  width: 38px;
+  height: 38px;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.18);
+
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.08s ease, border-color 0.2s ease;
+}
+
+.menu-btn:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+body.dark .menu-btn {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.18);
+}
+
+/* MENU HAMBURGUESA */
+.hamb {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.hamb > span {
+  width: 18px;
+  height: 2px;
+  display: block;
+  border-radius: 2px;
+  background: #fff;
+}
 
 .menu {
-  position: absolute; top: calc(100% + 8px); right: 0; min-width: 180px;
-  background: #fff; color: #222; border-radius: 12px; box-shadow: 0 8px 24px rgba(0,0,0,.18);
-  padding: 6px; z-index: 20;
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 20;
+
+  min-width: 180px;
+  padding: 6px;
+
+  background: #fff;
+  color: #222;
+
+  border-radius: 12px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 10px 26px rgba(0, 0, 0, 0.18);
 }
 
-.menu ul { list-style: none; margin: 0; padding: 4px; }
-.menu li + li { margin-top: 4px; }
+body.dark .menu {
+  background: rgba(20, 20, 20, 0.92);
+  color: rgba(255, 255, 255, 0.92);
 
-.menu button[role="menuitem"] {
-  width: 100%; text-align: left; background: transparent; border: none;
-  padding: 10px 12px; border-radius: 8px; cursor: pointer; font: inherit; color: inherit; transition: background .15s ease;
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.55);
+
+  backdrop-filter: blur(10px);
 }
-.menu button[role="menuitem"]:hover { background: rgba(0,0,0,.06); }
 
+.menu ul {
+  list-style: none;
+  margin: 0;
+  padding: 4px;
+}
+
+.menu li + li {
+  margin-top: 4px;
+}
+
+.menu button[role='menuitem'] {
+  width: 100%;
+  padding: 10px 12px;
+
+  text-align: left;
+  font: inherit;
+  color: inherit;
+
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+/* HOVER EN MODO CLARO */
+.menu button[role='menuitem']:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+/* HOVER EN MODO OSCURO */
+body.dark .menu button[role='menuitem']:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/*ACCESSIBILITY (SR-ONLY) */
 .sr-only {
-  position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px;
-  overflow: hidden; clip: rect(0,0,1px,1px); white-space: nowrap; border: 0;
+  position: absolute;
+
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+
+  overflow: hidden;
+  clip: rect(0, 0, 1px, 1px);
+  white-space: nowrap;
+  border: 0;
 }
 
+/* RESPONSIVE (Ajustes para pantallas un poco más grandes) */
 @media (min-width: 420px) {
-  .banner { padding: 16px 22px; }
-  .logo { width: 38px; height: 38px; }
-  .title { font-size: 22px; }
+  .banner {
+    padding: 16px 22px;
+  }
+
+  .logo {
+    width: 38px;
+    height: 38px;
+  }
+
+  .title {
+    font-size: 22px;
+  }
 }
 </style>
+

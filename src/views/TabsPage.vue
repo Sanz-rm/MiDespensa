@@ -24,16 +24,7 @@
 </template>
 
 <script setup lang="ts">
-import {
-  IonPage,
-  IonTabs,
-  IonRouterOutlet,
-  IonTabBar,
-  IonTabButton,
-  IonIcon,
-  IonLabel,
-  IonBadge
-} from '@ionic/vue'
+import { IonPage, IonTabs, IonRouterOutlet, IonTabBar, IonTabButton, IonIcon, IonLabel, IonBadge } from '@ionic/vue'
 import { cubeOutline, cartOutline } from 'ionicons/icons'
 import { computed, ref, provide } from 'vue'
 import { useRoute } from 'vue-router'
@@ -42,16 +33,17 @@ const route = useRoute()
 const code = computed(() => String(route.params.code ?? ''))
 const name = computed(() => String(route.params.name ?? ''))
 
-// 🔹 Contador compartido
+// Contador compartido
 const purchaseCount = ref(0)
 provide('purchaseCount', purchaseCount)
 </script>
 
 <style scoped>
+/* BARRA DE TABS */
 .tabs {
-  --background: #fff;
-  --color: #000;
-  --color-selected: #2ea15d;
+  --background: var(--ion-background-color);
+  --color: var(--ion-text-color);
+  --color-selected: var(--md-accent, #2ea15d);
   box-shadow: 0 -2px 8px rgba(0, 0, 0, .06);
 }
 
@@ -70,13 +62,12 @@ provide('purchaseCount', purchaseCount)
   width: 18px;
   height: 18px;
   border-radius: 50%;
-  background-color: #2ea15d;
-  color: #ffffff;
+  background-color: var(--md-accent, #2ea15d);
+  --color: var(--ion-text-color4);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 10px;
   padding: 0;
 }
-
 </style>

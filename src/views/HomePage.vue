@@ -46,33 +46,14 @@
 
         <!-- Lista de tarjetas start-->
         <div v-else class="pantry-list">
-          <div
-            v-for="(pantry, i) in pantries"
-            :key="i"
-            class="pantry-card"
-            @click="onCardClick($event, pantry)"
-          >
+          <div v-for="(pantry, i) in pantries" :key="i" class="pantry-card" @click="onCardClick($event, pantry)">
             <!-- Botón salir/elimaniar start -->
-            <button
-              type="button"
-              class="corner-btn"
-              :class="pantry.creatorId === deviceId ? 'danger' : 'accent'"
-              @click.stop="onCornerAction(pantry)"
-            >
-              <span
-                class="material-icons icons-red"
-                v-if="pantry.creatorId === deviceId"
-                title="Eliminar despensa"
-                aria-label="Eliminar despensa"
-                >delete</span
-              >
-              <span
-                class="material-icons icons-red"
-                v-else
-                title="Salir de despensa"
-                aria-label="Salir de despensa"
-                >logout</span
-              >
+            <button type="button" class="corner-btn" :class="pantry.creatorId === deviceId ? 'danger' : 'accent'"
+              @click.stop="onCornerAction(pantry)">
+              <span class="material-icons icons-red" v-if="pantry.creatorId === deviceId" title="Eliminar despensa"
+                aria-label="Eliminar despensa">delete</span>
+              <span class="material-icons icons-red" v-else title="Salir de despensa"
+                aria-label="Salir de despensa">logout</span>
             </button>
             <!-- Botón salir/elimaniar end -->
 
@@ -108,44 +89,28 @@
               </div>
               <div class="footer-row">
                 <!-- Botón copiar código start -->
-                <button
-                  type="button"
-                  class="code-chip copy-btn"
-                  @click.stop="copyPantryCode(pantry.code)"
-                  :aria-label="`Copiar código ${pantry.code}`"
-                  title="Copiar código"
-                >
+                <button type="button" class="code-chip copy-btn" @click.stop="copyPantryCode(pantry.code)"
+                  :aria-label="`Copiar código ${pantry.code}`" title="Copiar código">
                   <span class="chip-text">{{ pantry.code }}</span>
-                  <span class="chip-copy material-icons" aria-hidden="true"
-                    >content_copy</span
-                  >
+                  <span class="chip-copy material-icons" aria-hidden="true">content_copy</span>
                 </button>
                 <!-- Botón copiar código end -->
               </div>
             </div>
             <!-- Info despensa end -->
           </div>
-          <!-- <img src="https://lh3.googleusercontent.com/d/1lnP3os6Rijt8zlK8BlTdlJSqae-y4ZYb" referrerpolicy="no-referrer" alt="Imagen"> -->
         </div>
       </div>
       <!-- Lista de despensas end -->
 
       <!-- Pop up confirmar salir/eliminar despensa START -->
-      <ConfirmPopup
-        v-if="selectedPantry"
-        v-model="showConfirmPantry"
-        :title="selectedPantry.creatorId === deviceId ? 'Eliminar despensa' : 'Salir de la despensa'"
-        :message="
-          selectedPantry.creatorId === deviceId
+      <ConfirmPopup v-if="selectedPantry" v-model="showConfirmPantry"
+        :title="selectedPantry.creatorId === deviceId ? 'Eliminar despensa' : 'Salir de la despensa'" :message="selectedPantry.creatorId === deviceId
             ? `Vas a eliminar definitivamente “${selectedPantry.name}”. Esta acción no se puede deshacer. ¿Quieres eliminarla?`
             : `Vas a salir de “${selectedPantry.name}”. Podrás volver con su código. ¿Quieres salir?`
-        "
-        :confirmLabel="selectedPantry.creatorId === deviceId ? 'Eliminar' : 'Salir'"
-        cancelLabel="Cancelar"
-        @confirm="confirmPantry"
-      />
+          " :confirmLabel="selectedPantry.creatorId === deviceId ? 'Eliminar' : 'Salir'" cancelLabel="Cancelar"
+        @confirm="confirmPantry" />
       <!-- Pop up confirmar salir/eliminar despensa END -->
-
     </ion-content>
 
     <!-- Modal reutilizable en modo CREAR start -->
@@ -156,21 +121,33 @@
     <PantryModal v-model="openJoinModal" mode="join" @confirm="handleJoin" @close="openJoinModal = false" />
     <!-- Modal reutilizable en modo UNIRSE end -->
   </ion-page>
-
 </template>
 
 <script setup lang="ts">
 import PantryHeader from '@/components/ui/PantryHeader.vue'
-import { IonPage, IonHeader, IonContent, IonSpinner } from '@ionic/vue'
+import { IonPage, IonHeader, IonContent, IonSpinner, onIonViewWillEnter } from '@ionic/vue'
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
-import { collection, query, where, getDocs, addDoc, updateDoc, onSnapshot, type Unsubscribe, increment, orderBy, doc, writeBatch } from 'firebase/firestore'
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  updateDoc,
+  onSnapshot,
+  type Unsubscribe,
+  increment,
+  orderBy,
+  doc,
+  writeBatch
+} from 'firebase/firestore'
 import { db } from '@/firebase'
 import { Pantry } from '@/models/pantry'
 import { useRouter } from 'vue-router'
 import { showToast } from '@/composables/showToast'
 import PantryModal from '@/components/ui/PantryModal.vue'
-import ConfirmPopup from '@/components/ui/ConfirmPopup.vue';
-
+import ConfirmPopup from '@/components/ui/ConfirmPopup.vue'
+import { generatePantryCode } from '@/composables/pantryUtils'
 
 // Estado de apertura modal de cada modo
 const openCreateModal = ref(false)
@@ -185,7 +162,9 @@ function blurActiveElement() {
   try {
     const el = document.activeElement as HTMLElement | null
     if (el && typeof el.blur === 'function') el.blur()
-  } catch (e) { console.log('[blurActiveElement] noop catch', e) }
+  } catch (e) {
+    console.log('[blurActiveElement] noop catch', e)
+  }
 }
 
 function openCreate() {
@@ -204,69 +183,136 @@ const loading = ref<boolean>(false)
 
 // Hacemos reactivo el listado de códigos para poder re-suscribir el snapshot cuando cambie
 const codes = ref<string[]>(JSON.parse(localStorage.getItem('myPantries') ?? '[]'))
-const pantryName = ref<string>('');
+const pantryName = ref<string>('')
 let stop: Unsubscribe | null = null
 
-const deviceId = getDeviceId();
+const deviceId = getDeviceId()
 const router = useRouter()
 
-// const keys = Object.keys(productsMap) as Array<keyof typeof productsMap>;
+/**
+ * ✅ NUEVO (IMPORTANTE):
+ * Ionic suele "cachear" las vistas y no se vuelve a ejecutar onMounted al volver atrás.
+ * Además, localStorage NO es reactivo: si se cambia desde otra vista (Ajustes),
+ * Home no se entera a menos que:
+ *  - escuche un evento (myPantriesChanged) y/o
+ *  - se sincronice al entrar de nuevo a la vista.
+ */
+
+// Normaliza y deduplica códigos
+function normalizeCodes(input: any): string[] {
+  const arr = Array.isArray(input) ? input : []
+  const normalized = arr
+    .map((c) => String(c ?? '').trim().toUpperCase())
+    .filter(Boolean)
+  // dedupe manteniendo orden
+  return Array.from(new Set(normalized))
+}
+
+// Lee storage y sincroniza el ref codes (esto dispara el watch y resubscribe)
+function syncCodesFromStorage() {
+  try {
+    const raw = localStorage.getItem('myPantries')
+    const parsed = JSON.parse(raw ?? '[]')
+    const normalized = normalizeCodes(parsed)
+
+    // Solo reasignar si realmente cambia para evitar resuscripciones innecesarias
+    const current = normalizeCodes(codes.value)
+    const sameLength = current.length === normalized.length
+    const sameContent = sameLength && current.every((v, i) => v === normalized[i])
+
+    if (!sameContent) {
+      console.log('[syncCodesFromStorage] codes updated from storage', normalized)
+      codes.value = normalized
+    } else {
+      console.log('[syncCodesFromStorage] codes already in sync', normalized)
+    }
+  } catch (e) {
+    console.log('[syncCodesFromStorage] error parsing myPantries', e)
+  }
+}
+
+// Handler estable para poder hacer removeEventListener
+const onMyPantriesChanged = () => {
+  // Si algún día quisieras usar el detail, lo tienes aquí:
+  // const detail = (ev as CustomEvent)?.detail
+  // console.log('[myPantriesChanged] detail:', detail)
+  syncCodesFromStorage()
+}
 
 // Recuperamos toda la información necesaria
 onMounted(() => {
+  // ✅ NUEVO: escuchar evento global lanzado desde Ajustes (import/export/lo que sea)
+  window.addEventListener('myPantriesChanged', onMyPantriesChanged as any)
+
+  // Carga inicial (sincroniza y suscribe)
+  syncCodesFromStorage()
   getUserPantries()
-  /*
-  addComunItems("Aceite de girasol", "https://res.cloudinary.com/dpqgmi3zs/image/upload/v1762341487/aceite_de_girasol_emqm58.png")
-  */
 })
-/*
-async function addComunItems(name: string, url: string) {
-  await addDoc(collection(db, 'comun_items'), {
-    name: name,
-    imageUrl: url
-  });
-  console.log("Agregamos item: " + name + " con url: " + url)
-}*/
+
+// ✅ NUEVO: al volver a entrar a Home (Ionic cache), sincroniza otra vez
+onIonViewWillEnter(() => {
+  syncCodesFromStorage()
+})
 
 // Al cerrar la ventana dejaremos de escuchar a firestore
 onBeforeUnmount(() => {
-  try { stop?.() } catch (e) { console.log('[onBeforeUnmount] error stopping listener', e) }
+  try {
+    stop?.()
+  } catch (e) {
+    console.log('[onBeforeUnmount] error stopping listener', e)
+  }
+
+  // ✅ NUEVO: quitar listener de evento global
+  try {
+    window.removeEventListener('myPantriesChanged', onMyPantriesChanged as any)
+  } catch (e) {
+    console.log('[onBeforeUnmount] error removing myPantriesChanged listener', e)
+  }
 })
 
 // Re-suscribe si cambian los códigos
-watch(codes, (newCodes) => {
-  console.log('[codes] changed -> resubscribe', newCodes)
-  resubscribe(newCodes)
-}, { deep: true })
+watch(
+  codes,
+  (newCodes) => {
+    console.log('[codes] changed -> resubscribe', newCodes)
+    resubscribe(newCodes)
+  },
+  { deep: true }
+)
 
 // Obtenemos el Identificador de nuestro dispositivo
 function getDeviceId(): string {
-  let id = localStorage.getItem('deviceId');
+  let id = localStorage.getItem('deviceId')
   if (!id) {
-    id = crypto.randomUUID();
-    localStorage.setItem('deviceId', id);
+    id = crypto.randomUUID()
+    localStorage.setItem('deviceId', id)
   }
   console.log('Disposito actual:', id)
-  return id;
+  return id
 }
 
 // Suscripción en tiempo real según códigos
 function resubscribe(codesList: string[]) {
-  try { stop?.() } catch (e) { console.log('[resubscribe] error stopping previous listener', e) }
+  try {
+    stop?.()
+  } catch (e) {
+    console.log('[resubscribe] error stopping previous listener', e)
+  }
 
-  if (!codesList || codesList.length === 0) {
+  const safeCodes = normalizeCodes(codesList)
+
+  if (!safeCodes || safeCodes.length === 0) {
     console.log('[resubscribe] no codes -> clear list')
     pantries.value = []
     loading.value = false
     return
   }
 
-  // Firestore limita "in" a 10 elementos; si superas, podrías trocear aquí (se mantiene la lógica y solo añadimos si fuese necesario)
-  const q = query(collection(db, 'pantries'), where('code', 'in', codesList), orderBy('name', 'asc'))
+  const q = query(collection(db, 'pantries'), where('code', 'in', safeCodes), orderBy('name', 'asc'))
   stop = onSnapshot(
     q,
-    snap => {
-      pantries.value = snap.docs.map(d => {
+    (snap) => {
+      pantries.value = snap.docs.map((d) => {
         const pantryData = d.data() as any
         const pantry = {
           id: String(d.id),
@@ -278,16 +324,18 @@ function resubscribe(codesList: string[]) {
         } as Pantry
         return pantry
       })
+
       // Si alguna despensa ya no existe, la eliminamos del almacenamiento local
-      for (const code of [...codesList]) {
-        if (!pantries.value.some(p => p.code === code)) {
+      for (const code of [...safeCodes]) {
+        if (!pantries.value.some((p) => p.code === code)) {
           deletePantryFromStorage(code)
         }
       }
+
       console.log('Despensas actuales (snapshot):', pantries.value)
       loading.value = false
     },
-    err => {
+    (err) => {
       console.log('[onSnapshot] error', err)
       error.value = err?.message ?? String(err)
       loading.value = false
@@ -330,7 +378,6 @@ async function handleJoin(payload: { name: string } | { code: string }) {
   }
 }
 
-
 // Crearemos una nueva despensa generando un código aleatorio
 async function createPantry() {
   pantryError.value = null
@@ -338,7 +385,6 @@ async function createPantry() {
   let name = pantryName.value?.trim() ?? ''
 
   if (name === '') {
-    //pantryError.value = 'El nombre de la despensa es obligatorio.'
     showToast('El nombre de la despensa es obligatorio.', 'danger')
     return
   }
@@ -347,7 +393,6 @@ async function createPantry() {
     return
   }
 
-  // Primera letra en mayúscula, resto igual
   name = name.charAt(0).toUpperCase() + name.slice(1)
   try {
     const code = await generatePantryCode()
@@ -358,11 +403,10 @@ async function createPantry() {
       memberCount: 1,
       totalItems: 0,
       creatorId: deviceId
-    });
+    })
 
     console.log('Despensa creada en Firestore:', { id: docRef.id, name, code })
 
-    // NO tocamos pantries.value manualmente; el onSnapshot actualizará la UI
     addPantryToStorage(code)
     pantryError.value = null
   } catch (e: any) {
@@ -379,16 +423,16 @@ async function joinPantry(joinCode: string) {
     return
   }
 
-  const q = query(collection(db, 'pantries'), where('code', '==', code));
-  const snap = await getDocs(q);
+  const q = query(collection(db, 'pantries'), where('code', '==', code))
+  const snap = await getDocs(q)
   if (snap.empty) {
     showToast('Despensa no encontrada.', 'danger')
-    return;
+    return
   }
 
-  const pantryRef = snap.docs[0].ref;
+  const pantryRef = snap.docs[0].ref
 
-  if (pantries.value.some(p => p.id === pantryRef.id)) {
+  if (pantries.value.some((p) => p.id === pantryRef.id)) {
     showToast('Ya estás unido a esta despensa.', 'danger')
     return
   }
@@ -397,9 +441,8 @@ async function joinPantry(joinCode: string) {
 
   console.log('Despensa agregada a storage:', { code, pantryId: pantryRef.id })
 
-  // Sumamos 1 al contador de miembros
   try {
-    await updateDoc(pantryRef, { memberCount: increment(1) });
+    await updateDoc(pantryRef, { memberCount: increment(1) })
   } catch (e) {
     console.log('[joinPantry] error actualizando memberCount', e)
   }
@@ -411,83 +454,59 @@ async function deleteOrLeavePantry(joinCode: string) {
   pantryError.value = null
 
   const code = joinCode?.trim().toUpperCase()
-  const q = query(collection(db, 'pantries'), where('code', '==', code));
-  const snap = await getDocs(q);
+  const q = query(collection(db, 'pantries'), where('code', '==', code))
+  const snap = await getDocs(q)
 
   if (snap.empty) {
-    await showToast(`Despensa no encontrada.`, 'danger');
-    return;
+    await showToast(`Despensa no encontrada.`, 'danger')
+    return
   }
-  const pantryRef = snap.docs[0].ref;
-  const pantry = snap.docs[0].data() as any;
+  const pantryRef = snap.docs[0].ref
+  const pantry = snap.docs[0].data() as any
 
   if (pantry.creatorId === deviceId) {
-    // Eliminamos despensa + items asociados
-    await deletePantryAndItems(pantryRef.id, code);
+    await deletePantryAndItems(pantryRef.id, code)
   } else {
-    await updateDoc(pantryRef, { memberCount: increment(-1) });
+    await updateDoc(pantryRef, { memberCount: increment(-1) })
   }
 
-  // No filtramos la lista manualmente; el snapshot actualizará la UI
-  deletePantryFromStorage(code);
+  deletePantryFromStorage(code)
 }
+
 async function deletePantryAndItems(pantryRef: string, pantryCode: string) {
-  const pantryDocRef = doc(db, 'pantries', pantryRef);
+  const pantryDocRef = doc(db, 'pantries', pantryRef)
 
-  // Los items están en la colección raíz 'items' con campo pantryCode
-  const itemsColRef = collection(db, 'items');
-  const itemsQ = query(itemsColRef, where('pantryCode', '==', pantryCode));
-  const itemsSnap = await getDocs(itemsQ);
+  const itemsColRef = collection(db, 'items')
+  const itemsQ = query(itemsColRef, where('pantryCode', '==', pantryCode))
+  const itemsSnap = await getDocs(itemsQ)
 
-  // Borrado en lotes (límite ~500 operaciones por batch)
-  const toDelete = itemsSnap.docs.map(d => d.ref);
-  const chunkSize = 400; // margen de seguridad
+  const toDelete = itemsSnap.docs.map((d) => d.ref)
+  const chunkSize = 400
   for (let i = 0; i < toDelete.length; i += chunkSize) {
-    const batch = writeBatch(db);
-    toDelete.slice(i, i + chunkSize).forEach(ref => batch.delete(ref)); // borra items
+    const batch = writeBatch(db)
+    toDelete.slice(i, i + chunkSize).forEach((ref) => batch.delete(ref))
     if (i + chunkSize >= toDelete.length) {
-      batch.delete(pantryDocRef); // borra la despensa en el último batch
+      batch.delete(pantryDocRef)
     }
-    await batch.commit();
+    await batch.commit()
   }
 
   if (toDelete.length === 0) {
-    // Si no había items, borra solo la despensa
-    const batch = writeBatch(db);
-    batch.delete(pantryDocRef);
-    await batch.commit();
+    const batch = writeBatch(db)
+    batch.delete(pantryDocRef)
+    await batch.commit()
   }
-}
-
-
-// Generar código aleatorio de 6 caracteres comprobando que no exista ya
-async function generatePantryCode(): Promise<string> {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  let code = ''
-  let exists = true
-
-  while (exists) {
-    code = ''
-    for (let i = 0; i < 6; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-
-    const q = query(collection(db, 'pantries'), where('code', '==', code))
-    const snap = await getDocs(q)
-    exists = !snap.empty
-  }
-
-  console.log('[generatePantryCode] generado', code)
-  return code
 }
 
 // Añadir despensa a la lista de despensas del dispositivo
 function addPantryToStorage(code: string) {
-  const existing: string[] = JSON.parse(localStorage.getItem('myPantries') ?? '[]');
+  const existing: string[] = JSON.parse(localStorage.getItem('myPantries') ?? '[]')
   if (!existing.includes(code)) {
-    existing.push(code);
-    localStorage.setItem('myPantries', JSON.stringify(existing));
-    codes.value = existing; // trigger resubscribe
+    existing.push(code)
+    localStorage.setItem('myPantries', JSON.stringify(existing))
+
+    // ✅ Importante: actualizar el ref para que se resuscriba la lista
+    codes.value = normalizeCodes(existing)
   } else {
     console.log('[addPantryToStorage] ya existía', code)
   }
@@ -495,10 +514,13 @@ function addPantryToStorage(code: string) {
 
 // Eliminar despensa de la lista de despensas del dispositivo
 function deletePantryFromStorage(code: string) {
-  const existing: string[] = JSON.parse(localStorage.getItem('myPantries') ?? '[]');
-  const updated = existing.filter(c => c !== code);
-  localStorage.setItem('myPantries', JSON.stringify(updated));
-  codes.value = updated; // trigger resubscribe
+  const existing: string[] = JSON.parse(localStorage.getItem('myPantries') ?? '[]')
+  const updated = existing.filter((c) => String(c ?? '').trim().toUpperCase() !== String(code ?? '').trim().toUpperCase())
+  localStorage.setItem('myPantries', JSON.stringify(updated))
+
+  // ✅ Importante: actualizar el ref para que se resuscriba la lista
+  codes.value = normalizeCodes(updated)
+
   console.log('[deletePantryFromStorage] actualizado storage', updated)
 }
 
@@ -515,21 +537,14 @@ async function confirmPantry() {
 
   try {
     await deleteOrLeavePantry(pantry.code)
-    await showToast(
-      isOwner ? 'Despensa eliminada' : 'Has salido de la despensa',
-      'success'
-    )
+    await showToast(isOwner ? 'Despensa eliminada' : 'Has salido de la despensa', 'success')
   } catch (e: any) {
     console.log('[confirmPantry] error', e)
-    await showToast(
-      isOwner ? 'Error al eliminar despensa.' : 'Error al abandonar despensa.',
-      'danger'
-    )
+    await showToast(isOwner ? 'Error al eliminar despensa.' : 'Error al abandonar despensa.', 'danger')
   } finally {
     selectedPantry.value = null
   }
 }
-
 
 // Navegamos al inventario de nuestra despensa
 function selectPantry(code: string, name: string) {
@@ -538,7 +553,6 @@ function selectPantry(code: string, name: string) {
 
 function onCardClick(e: MouseEvent, pantry: Pantry) {
   const target = e.target as HTMLElement
-  // Si clicas en el botón (o en cualquier hijo del botón), NO navegues
   if (target.closest('.corner-btn')) return
   selectPantry(pantry.code, pantry.name)
 }
@@ -559,7 +573,11 @@ async function copyPantryCode(code: string) {
       document.execCommand('copy')
       document.body.removeChild(ta)
     }
-    try { navigator.vibrate?.(15) } catch (e) { console.log('[copyPantryCode] vibrate noop', e) }
+    try {
+      navigator.vibrate?.(15)
+    } catch (e) {
+      console.log('[copyPantryCode] vibrate noop', e)
+    }
     await showToast(`Código copiado: ${code}`, 'success')
   } catch (e) {
     console.log('[copyPantryCode] error', e)
@@ -568,33 +586,53 @@ async function copyPantryCode(code: string) {
 }
 </script>
 
-
 <style scoped>
-/* Header transparente y sin sombra */
+/* FONDO */
+ion-content.pantry-content {
+  --md-page-bg: var(--ion-background-color, #ffffff);
+
+  --md-card-bg: #ffffff;
+  --md-card-border: var(--md-accent, #2ea15d);
+  --md-card-shadow: 0 2px 0 rgba(var(--md-accent-rgb, 46, 161, 93), 0.12);
+
+  --md-text: #111827;
+  --md-muted: #6b7280;
+
+  --background: var(--md-page-bg);
+
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+body.dark ion-content.pantry-content {
+  --md-card-bg: var(--md-page-bg);
+  --md-card-border: rgba(var(--md-accent-rgb, 46, 161, 93), 0.55);
+  --md-card-shadow: 0 12px 28px rgba(0, 0, 0, 0.45);
+
+  --md-text: rgba(255, 255, 255, 0.92);
+  --md-muted: rgba(229, 231, 235, 0.78);
+}
+
+/* HEADER */
 ion-header.rounded-header {
   --background: transparent;
   --ion-background-color: transparent;
   --box-shadow: none;
-  background: transparent !important;
-  box-shadow: none !important;
+
   border: 0;
   padding: 0;
   overflow: visible;
+
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 ion-header.rounded-header::after {
   display: none;
 }
 
-/* Contenedor general */
-.pantry-content {
-  --background: #fff;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-/* Error */
+/* ERRORES */
 .error-box {
   margin-bottom: 6px;
   text-align: center;
@@ -605,7 +643,7 @@ ion-header.rounded-header::after {
   font-weight: 700;
 }
 
-/* Acciones: lado a lado si caben.Si no, se apilan ocupando todo el ancho */
+/* ACCIONES / BOTONES */
 .actions {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
@@ -613,24 +651,33 @@ ion-header.rounded-header::after {
 }
 
 .btn {
+  width: 100%;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border-radius: 999px;
+
   padding: 10px 14px;
-  font-weight: 700;
+  border-radius: 999px;
+
   font-size: 14px;
-  border: 2px solid #1f9d55;
+  font-weight: 700;
+
+  border: 2px solid var(--md-accent, #2ea15d);
   background: transparent;
-  color: #1f9d55;
+  color: var(--md-accent, #2ea15d);
+
   box-shadow: 0 1px 0 rgba(0, 0, 0, 0.04);
-  width: 100%;
+  transition: transform 120ms ease, box-shadow 120ms ease, background-color 120ms ease;
+}
+
+body.dark .btn {
+  box-shadow: none;
 }
 
 .btn-solid {
-  background: #1f9d55;
-  color: #fff;
+  background: var(--md-accent, #2ea15d);
+  color: #ffffff;
 }
 
 .btn-outline:hover,
@@ -638,39 +685,44 @@ ion-header.rounded-header::after {
   transform: translateY(-1px);
 }
 
+body.dark .btn-outline {
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.08);
+}
+
 .btn-outline:last-child {
   margin-bottom: 5%;
 }
 
-/* Loading */
+/* LOADING */
 .loading-box {
-  display: flex;
-  justify-content: center;
-  align-items: center;
   height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-/* Lista de despensas */
+/* TARJETAS/LISTA DE DESPENSAS */
 .pantry-list {
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
-
-/* Tarjeta de despensa */
 .pantry-card {
   position: relative;
   display: grid;
   grid-template-columns: 56px 1fr;
   gap: 12px;
+
   padding: 12px;
-  border: 2px solid #2ea15d;
-  background: #ffffff;
   border-radius: 14px;
-  box-shadow: 0 2px 0 rgba(31, 157, 85, 0.1);
+
+  background: var(--md-card-bg);
+  border: 2px solid var(--md-card-border);
+  box-shadow: var(--md-card-shadow);
+
   cursor: pointer;
-  transition: transform .12s ease, box-shadow .12s ease;
+  transition: transform 120ms ease, box-shadow 120ms ease;
 }
 
 .pantry-card:hover {
@@ -678,46 +730,48 @@ ion-header.rounded-header::after {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
 }
 
-/* Botón esquina */
-.corner-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  border: 0;
-  background: #fff;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  box-shadow: inset 0 0 0 2px #e8eef2;
-  display: grid;
-  place-items: center;
-  pointer-events: none;
+body.dark .pantry-card {
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.08);
 }
 
-.corner-btn.danger {
-  box-shadow: inset 0 0 0 2px #ffdddd;
-  color: #e53935;
-}
-
-.corner-btn.accent {
-  box-shadow: inset 0 0 0 2px #e5f0ff;
-  color: #1f9d55;
-}
-
-/* Botón de salir/eliminar fijo en esquina de las tarjetas */
-.pantry-card {
-  position: relative;
-}
-
+/* BOTON ELIMINAR/SALIR DESPENSA */
 .corner-btn {
   position: absolute;
   top: 8px;
   right: 8px;
   z-index: 10;
+
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 8px;
+
+  display: grid;
+  place-items: center;
+
+  background: #ffffff;
+  box-shadow: inset 0 0 0 2px #e8eef2;
+
   pointer-events: auto;
 }
 
-/* Icono izquierda */
+body.dark .corner-btn,
+body.dark .corner-btn.accent,
+body.dark .corner-btn.danger {
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.08);
+}
+
+.corner-btn.danger {
+  color: #e53935;
+  box-shadow: inset 0 0 0 2px #e53935;
+}
+
+.corner-btn.accent {
+  color: var(--md-accent, #2ea15d);
+  box-shadow: inset 0 0 0 2px var(--md-accent, #2ea15d);
+}
+
+/* ICONO TARJETA DESPENSA */
 .icon-box {
   display: grid;
   place-items: center;
@@ -727,13 +781,20 @@ ion-header.rounded-header::after {
   width: 44px;
   height: 44px;
   border-radius: 10px;
-  background: #e8fbf2;
-  border: 2px solid #bde8d1;
+
   display: grid;
   place-items: center;
-  font-size: 60px;
+
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.12);
+  border: 2px solid rgba(var(--md-accent-rgb, 46, 161, 93), 0.28);
 }
 
+body.dark .icon-house {
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.16);
+  border-color: rgba(var(--md-accent-rgb, 46, 161, 93), 0.38);
+}
+
+/* CONTENIDO TARJETA DESPENSA */
 .info {
   display: flex;
   flex-direction: column;
@@ -748,17 +809,22 @@ ion-header.rounded-header::after {
 
 .name {
   margin: 0;
-  color: #1f9d55;
   font-size: 18px;
   font-weight: 800;
+  color: var(--md-accent, #2ea15d);
 }
 
 .meta {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #6b7280;
+
   font-size: 13px;
+  color: var(--md-muted);
+}
+
+body.dark .meta {
+  color: var(--md-muted);
 }
 
 .meta-item {
@@ -772,7 +838,7 @@ ion-header.rounded-header::after {
 }
 
 .meta-sep {
-  opacity: .6;
+  opacity: 0.6;
 }
 
 .footer-row {
@@ -781,126 +847,104 @@ ion-header.rounded-header::after {
   margin-top: 2px;
 }
 
-.code-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 6px 10px;
-  border-radius: 10px;
-  background: #f4fbf7;
-  border: 2px solid #e2f5ea;
-  font-weight: 700;
-  color: #1f2937;
-  font-size: 13px;
-}
-
+/* CODIGO DE DESPENSA */
 .copy-btn {
   cursor: pointer;
   border: none;
   background: none;
+  padding: 0;
+}
+
+.code-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 6px 10px;
+  border-radius: 10px;
+
+  font-size: 13px;
+  font-weight: 700;
+
+  color: var(--md-text);
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.1);
+  border: 2px solid rgba(var(--md-accent-rgb, 46, 161, 93), 0.18);
+}
+
+body.dark .code-chip {
+  color: var(--md-text);
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.14);
+  border-color: rgba(var(--md-accent-rgb, 46, 161, 93), 0.32);
 }
 
 .copy-btn:focus-visible {
-  outline: 2px solid #1f9d55;
+  outline: 2px solid var(--md-accent, #2ea15d);
   outline-offset: 2px;
   border-radius: 12px;
 }
 
-
 .chip-text {
-  letter-spacing: .5px;
+  letter-spacing: 0.5px;
 }
 
 .chip-copy {
-  opacity: .8;
+  opacity: 0.8;
 }
 
-
-.items-grid {
-  margin-top: 8px;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 14px;
-}
-
-.item-card {
-  text-align: center;
-  padding: 10px;
-  border-radius: 12px;
-  border: 1px solid #eef2f4;
-  background: #fff;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-}
-
-.item-card img {
-  width: 100%;
-  height: 100px;
-  object-fit: contain;
-  display: block;
-  margin: 0 auto 8px;
-}
-
-.item-name {
-  margin: 0;
-  font-weight: 700;
-  font-size: 14px;
-  color: #111827;
-}
-
-.item-units {
-  margin: 2px 0 0;
-  font-size: 12px;
-  color: #6b7280;
-}
-
-.icons-red {
-  color: #E94031;
-}
-
-.pantry-list {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  flex: 1;
-}
-
+/* SIN RESULTADOS */
 .empty-state {
   flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
+
   padding: 24px 16px;
+  text-align: center;
+
   color: #6b7280;
+}
+
+body.dark .empty-state {
+  color: rgba(229, 231, 235, 0.75);
 }
 
 .empty-icon {
   width: 120px;
   height: 120px;
   border-radius: 999px;
+
   display: grid;
   place-items: center;
+
   margin-bottom: 2px;
 }
 
 .empty-icon .material-icons {
   font-size: 78px;
-  color: #374151;
+  color: var(--ion-text-color3);
 }
 
 .empty-title {
   margin: 0 0 4px;
-  font-weight: 700;
   font-size: 18px;
-  color: #111827;
+  font-weight: 700;
+  color: var(--ion-text-color3);
 }
 
 .empty-subtitle {
   margin: 0;
   font-size: 14px;
-  color: #3f4146;
   font-weight: 500;
+  color: var(--ion-text-color2);
 }
 
+body.dark .empty-subtitle {
+  color: rgba(229, 231, 235, 0.72);
+}
+
+/* ICONOS */
+.icons-red {
+  color: #e94031;
+}
 </style>

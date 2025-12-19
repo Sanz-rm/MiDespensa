@@ -1,4 +1,3 @@
-<!-- PurcharsePage.vue (vista de compra) -->
 <template>
   <ion-page>
     <InventoryAndPurcharseHeader :title="`Compra de ${props.name}`"
@@ -87,7 +86,8 @@
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonContent, IonSpinner, IonButton, IonIcon, IonSearchbar, toastController } from '@ionic/vue'
+import { IonPage, IonContent, IonSpinner, IonButton, IonIcon, IonSearchbar } from '@ionic/vue'
+import { showToast } from '@/composables/showToast'
 import { trashOutline, readerOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
 import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
@@ -176,7 +176,7 @@ async function getPurchaseItems(pantryCode: string) {
     async err => {
       console.error('Error al recuperar los items:', err)
       loading.value = false
-      await showErrorToast('Error al cargar los productos de la compra.')
+      await showToast('Error al cargar los productos de la compra.', 'danger')
     }
   )
 }
@@ -228,7 +228,7 @@ async function saveNote(item: Item) {
   try {
     const text = (noteDraft.value[item.id] || '').trim()
     if (!text) {
-      await showErrorToast('La nota no puede estar vacía.')
+      await showToast('La nota no puede estar vacía.', 'danger')
       return
     }
     const refItem = doc(db, 'items', item.id)
@@ -237,7 +237,7 @@ async function saveNote(item: Item) {
     savedNoteItemId.value = item.id
   } catch (err) {
     console.error('Error al guardar la nota:', err)
-    await showErrorToast('No se pudo guardar la nota.')
+    await showToast('No se pudo guardar la nota.', 'danger')
   }
 }
 
@@ -255,7 +255,7 @@ async function cancelNote(item: Item) {
     noteDraft.value[item.id] = ''
   } catch (err) {
     console.error('Error al borrar la nota:', err)
-    await showErrorToast('No se pudo borrar la nota.')
+    await showToast('No se pudo borrar la nota.', 'danger')
   }
 }
 
@@ -275,7 +275,7 @@ async function deleteItemToPurchase(idItem: string) {
     })
   } catch (err) {
     console.error('Error al quitar de la compra:', err)
-    await showErrorToast('No se pudo quitar el producto de la compra.')
+    await showToast('No se pudo quitar el producto de la compra.', 'danger')
   }
 }
 
@@ -291,139 +291,148 @@ async function clearPurchase() {
     await batch.commit()
   } catch (err) {
     console.error('Error al vaciar la compra:', err)
-    await showErrorToast('No se pudo vaciar la compra.')
+    await showToast('No se pudo vaciar la compra.', 'danger')
   }
-}
-
-
-// Muestra un toast rojo para errores (update o select)
-async function showErrorToast(message: string) {
-  const toast = await toastController.create({
-    message,
-    duration: 2000,
-    color: 'danger',
-    position: 'bottom'
-  })
-  await toast.present()
 }
 </script>
 
 <style scoped>
-/* Acciones */
 .actions {
   display: grid;
   gap: 12px;
   margin-bottom: 8px;
 }
 
-/* Lista estilo cards en fila */
+/* BUSCADOR */
+ion-searchbar {
+  --border-radius: 999px;
+}
+
+body.dark ion-searchbar {
+  --background: #2d2e2e;
+  --placeholder-color: #ffffff;
+  --color: #ffffff;
+  --icon-color: rgba(255, 255, 255, 0.69);
+  --clear-icon-color: #888888;
+  --border-color: #444444;
+  --border-radius: 999px;
+}
+
+/* LISTA DE COMPRA */
 .list-cards {
   display: grid;
   gap: 12px;
 }
 
-/* Fila de item */
 .item-row {
   display: grid;
   grid-template-columns: 40px 1fr auto auto;
   align-items: flex-start;
   gap: 8px 12px;
-  background: #fff;
+
+  padding: 10px 12px;
+
+  background: #ffffff;
   border-radius: 12px;
   border: 1px solid #eef2f4;
   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
-  padding: 10px 12px;
 }
 
-/* SOLO CUANDO LA FOTO VENGA DE GALERIA */
-.item-row .img-galery {
-  width: 80%;
-  object-fit: contain;
-  display: block;
-  margin: 0 8px;
+body.dark .item-row {
+  background: var(--ion-background-color);
+  border-color: #333333;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
 }
 
-.item-row img.img-galery {
-  border-radius: 5%;
-  object-fit: cover;
-}
-
+/* IMAGEN */
 .icon {
   width: 36px;
   height: 36px;
   object-fit: contain;
+  filter: drop-shadow(0 0 6px rgba(202, 202, 202, 0.37));
 }
 
+/* IMAGEN GALERÍA */
+.item-row img.img-galery {
+  width: 80%;
+  margin: 0 8px;
+  display: block;
+
+  border-radius: 5%;
+  object-fit: cover;
+}
+
+/* INFORMACION PRODUCTO COMPRA */
 .info {
   align-self: center;
 }
 
 .info .name {
   margin: 0;
-  font-weight: 700;
   font-size: 14px;
-  color: #111827;
+  font-weight: 700;
+  color: var(--ion-text-color);
 }
 
 .info .units {
   margin: 2px 0 0;
   font-size: 12px;
-  color: #6b7280;
+  color: var(--ion-text-color2);
 }
 
-.note-icon {
-  --padding-start: 6px;
-  --padding-end: 6px;
-  color: #000000;
-}
-
+/* ICONOS DE NOTA Y BORRAR DE COMPRA */
+.note-icon,
 .trash {
   --padding-start: 6px;
   --padding-end: 6px;
 }
 
+.note-icon {
+  color: var(--ion-text-color2);
+}
+
 .note-row {
   grid-column: 1 / -1;
+
   display: flex;
   align-items: center;
   justify-content: space-between;
+
   margin-top: 1%;
-  padding: 0px 8px;
+  padding: 0 8px;
+
   background: #f3f4f6;
-  border-radius: 8px;
-  font-size: 14px;
   border: 1px solid #cacaca;
+  border-radius: 8px;
+
+  font-size: 14px;
 }
 
-.note-text {
-  flex: 1;
-  white-space: pre-wrap;
-  word-break: break-word;
-  max-height: 6em;
-  overflow-y: auto;
+body.dark .note-row {
+  background: #2d2e2e;
+  border-color: rgba(85, 85, 85, 0.8);
 }
 
 .note-textarea {
   flex: 1;
-  border: none;
-  background: transparent;
-  font-size: 14px;
-  outline: none;
   box-sizing: border-box;
 
-  /* textarea sin redimensionar */
+  border: none;
+  outline: none;
+  background: transparent;
+
+  font-size: 14px;
+  line-height: 1.4;
+  white-space: pre-wrap;
+
   min-height: 44px;
   max-height: 80px;
   resize: none;
-  line-height: 1.4;
-  white-space: pre-wrap;
-  align-items: center;
 }
 
 .note-textarea--center {
   padding-top: 4%;
 }
-
 
 .note-actions {
   display: flex;
@@ -431,71 +440,85 @@ async function showErrorToast(message: string) {
   margin-left: 8px;
 }
 
+/* BOTON NOTA */
 .note {
   width: 22px;
   height: 22px;
-  border-radius: 5px;
-  border: none;
+
   display: flex;
   align-items: center;
   justify-content: center;
+
+  border: none;
+  border-radius: 5px;
+
   font-size: 11px;
   cursor: pointer;
 }
 
+/* BORRAR NOTA */
 .note-cancel {
   background: #ef4444;
   color: #ffffff;
 }
 
+/* GUARDAR NOTA */
 .note-ok {
   background: #16a34a;
   color: #ffffff;
 }
 
+/* NOTA GUARDADA */
 .note-ok-saved {
   background: rgba(85, 141, 106, 0.87);
 }
 
+/* SIN RESULTADOS */
 .empty {
   flex: 1;
+
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  text-align: center;
+
   padding: 24px 16px;
+  text-align: center;
+
   color: #6b7280;
 }
 
 .empty-icon {
   width: 120px;
   height: 120px;
-  border-radius: 999px;
+  margin-bottom: 2px;
+
   display: grid;
   place-items: center;
-  margin-bottom: 2px;
+
+  border-radius: 999px;
 }
 
 .empty-icon .material-icons {
   font-size: 78px;
-  color: #374151;
+  color: var(--ion-text-color3);
 }
 
 .empty-title {
   margin: 0 0 4px;
-  font-weight: 700;
   font-size: 18px;
-  color: #111827;
+  font-weight: 700;
+  color: var(--ion-text-color3);
 }
 
 .empty-subtitle {
   margin: 0;
   font-size: 14px;
-  color: #3f4146;
   font-weight: 500;
+  color: var(--ion-text-color2);
 }
 
+/* LOADING */
 .loading-box {
   display: grid;
   place-content: center;

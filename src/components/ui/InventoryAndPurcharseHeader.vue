@@ -1,4 +1,3 @@
-<!-- src/components/InventoryAndPurcharseHeader.vue -->
 <template>
   <ion-header class="rounded-header">
     <ion-toolbar class="back-toolbar">
@@ -34,34 +33,39 @@ const backHref = computed(() => props.backHref ?? '/home')
 </script>
 
 <style scoped>
-ion-header.rounded-header {
-  --background: #2ea15d;
-  --ion-background-color: #2ea15d;
-  --color: #fff;
+/* HEADER */
+.rounded-header {
+  --ion-background-color: var(--md-accent, #2ea15d);
+  --color: #ffffff;
   --box-shadow: none;
-  background: #2ea15d !important;
+
+  background: var(--md-accent, #2ea15d) !important;
   box-shadow: none !important;
+
   border: 0;
   padding: 0;
   overflow: visible;
 }
 
-.back-toolbar {
+/* TOOLBAR */
+.toolbar {
   --background: transparent;
   --border-width: 0;
   padding-inline: 4px;
 }
 
-ion-header.rounded-header ion-buttons ion-button {
-  --color: #fff;
+/* BOTON VOLVER  */
+ion-header.rounded-header ion-buttons ion-button { 
+  --color: #fff; 
 }
 
-ion-header.rounded-header ion-icon {
-  color: #fff;
-}
+ion-header.rounded-header ion-icon { 
+  color: #fff; 
+  font-weight: 900; }
 
-ion-header.rounded-header ion-title {
-  color: #fff;
-  font-weight: 700;
-}
+/* TITULO */
+ion-header.rounded-header ion-title { 
+  color: #fff; 
+  font-weight: 700; 
+  }
 </style>

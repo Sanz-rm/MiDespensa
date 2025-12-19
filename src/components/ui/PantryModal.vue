@@ -200,108 +200,137 @@ async function onConfirm() {
   }
 }
 </script>
-
 <style scoped>
-/* Dar forma al contenedor interno del modal */
+/* CONTENEDOR DEL MODAL */
 :global(.mds-modal::part(content)) {
-  width: 92vw;
-  max-width: 420px;
-  height: 100vw;
+  width: min(420px, 92vw);
+  height: 100vw; 
   max-height: 100vh;
+
   border-radius: 22px;
   overflow: visible;
+
   background: transparent;
 }
 
-/* Oscurecer fondo del modal*/
-:global(.mds-modal::part(backdrop)) {
-  background: rgba(0,0,0,.4);
-  opacity: 1;
-}
-
-/* Force the overlay backdrop to cover the entire viewport (defensive) */
+/* BACKDROP */
 :global(.mds-modal::part(backdrop)) {
   position: fixed;
   inset: 0;
+
+  background: rgba(0, 0, 0, 0.4);
+  opacity: 1;
 }
 
-/* Dejar el content transparente (el “card” pone el blanco) */
 :global(.mds-modal ion-content) {
   --background: transparent;
 }
 
-
-/* arjeta por dentro */
+/* CONTENIDO DE LA TARJETA */
 .modal-card {
-  background: #ffffff;
+  background: var(--ion-background-color2);
   border-radius: 22px;
   overflow: hidden;
-  box-shadow: var(--box-shadow);
+
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.16);
 }
 
-/* Cabecera verde */
+/* HEADER */
 .modal-head {
   position: relative;
-  background: #2e9b52;
-  color: #fff;
+
   padding: 28px 20px 22px;
+
+  background: var(--md-accent, #2ea15d);
+  color: #fff;
+
   border-bottom-left-radius: 22px;
   border-bottom-right-radius: 22px;
 }
 
+/* BOTON CERRAR */
 .close-btn {
   position: absolute;
   top: 12px;
   right: 12px;
-  background: transparent;
-  border: 0;
-  color: #fff;
+
   padding: 6px;
+  border: 0;
   border-radius: 999px;
+
+  background: transparent;
+  color: #fff;
+
   line-height: 0;
+  cursor: pointer;
 }
 
+.close-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.close-btn:focus-visible {
+  outline: 2px solid rgba(255, 255, 255, 0.75);
+  outline-offset: 2px;
+}
+
+/* ICONO */
 .head-icon {
   width: 44px;
   height: 44px;
-  border-radius: 999px;
-  background: rgba(255,255,255,.2);
+  margin: 0 auto 10px;
+
   display: grid;
   place-items: center;
-  margin: 0 auto 10px;
+
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.2);
 }
 
-.head-icon .material-icons { font-size: 24px; color: #fff; }
+.head-icon .material-icons {
+  font-size: 24px;
+  color: #fff;
+}
 
+/* TITULO */
 .head-title {
+  margin: 0;
   text-align: center;
+
   font-size: 20px;
   font-weight: 800;
-  letter-spacing: .2px;
-  margin: 0;
+  letter-spacing: 0.2px;
 }
 
-/* Cuerpo del modal */
+/* FORMULARIO */
 .modal-body {
   padding: 16px 18px 18px;
 }
 
 .field-label {
   display: block;
-  font-weight: 700;
-  color: #222;
   margin: 8px 2px 8px;
+
+  font-weight: 700;
+  color: var(--ion-text-color);
 }
 
 .field-item {
-  --background: #fff;
-  --inner-padding-end: 0;
+  margin-bottom: 14px;
+
+  border-radius: 12px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08);
+
+  --background: #f7f9fa;
   --inner-padding-start: 0;
+  --inner-padding-end: 0;
   --padding-start: 10px;
   --padding-end: 0;
-  border-radius: 12px;
-  box-shadow: 0 4px 14px rgba(0,0,0,.08);
-  margin-bottom: 14px;
+}
+
+body.dark .field-item {
+  --background: #3a3838;
 }
 
 .field-item ion-input::part(native) {
@@ -309,47 +338,63 @@ async function onConfirm() {
   font-size: 16px;
 }
 
-/* Botones */
+/* BOTONES */
 .modal-actions {
+  margin-top: 6%;
+
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  margin-top: 6px;
 }
 
 .btn {
+  width: 100%;
+  padding: 12px 14px;
+
   display: inline-flex;
   align-items: center;
   justify-content: center;
   column-gap: 8px;
-  width: 100%;
-  padding: 12px 14px;
+
   border-radius: 12px;
-  font-weight: 700;
-  font-size: 15px;
   border: 2px solid transparent;
-  transition: transform .04s ease;
+
+  font-size: 15px;
+  font-weight: 700;
+
+  transition: transform 80ms ease, filter 120ms ease;
+  cursor: pointer;
 }
 
-.btn:active { transform: translateY(1px); }
+.btn:active {
+  transform: translateY(1px);
+}
 
+.btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+/* BOTON CANCELAR */
 .btn-outline {
-  background: #fff;
-  color: #2e9b52;
-  border-color: #2e9b52;
+  background: var(--ion-background-color);
+  color: var(--md-accent, #2ea15d);
+  border-color: var(--md-accent, #2ea15d);
 }
 
+body.dark .btn-outline {
+  background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.08);
+}
+
+/* BOTON ACEPTAR */
 .btn-solid {
-  background: #2e9b52;
+  background: var(--md-accent, #2ea15d);
   color: #fff;
 }
 
+/* SPINNER */
 .spinner {
   margin-right: 6px;
   --color: #fff;
-}
-
-.inner-scroll scroll-y{
-  padding: 0px;
 }
 </style>

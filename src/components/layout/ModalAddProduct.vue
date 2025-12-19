@@ -1,4 +1,3 @@
-<!-- components/layout/ModalAddProduct.vue -->
 <template>
     <!-- Botón flotante START -->
     <ion-fab slot="fixed" vertical="bottom" horizontal="end">
@@ -150,36 +149,11 @@
 </template>
 
 <script setup lang="ts">
-import {
-    IonFab,
-    IonFabButton,
-    IonModal,
-    IonHeader,
-    IonToolbar,
-    IonTitle,
-    IonButtons,
-    IonButton,
-    IonContent,
-    IonList,
-    IonItem,
-    IonInput,
-    IonLabel,
-    IonIcon
+import { IonFab, IonFabButton, IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonList, IonItem, IonInput, IonLabel, IonIcon
 } from '@ionic/vue'
 import { addOutline } from 'ionicons/icons'
 import { ref, computed, watch } from 'vue'
-import {
-    collection,
-    query,
-    where,
-    getDocs,
-    writeBatch,
-    doc,
-    increment,
-    orderBy,
-    limit,
-    updateDoc,
-} from 'firebase/firestore'
+import { collection, query, where, getDocs, writeBatch, doc, increment, orderBy, limit, updateDoc,} from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showToast } from '@/composables/showToast'
 import { getImageFirstLetter, getOptimizedUrl, isImageGalery } from '@/composables/itemUtils'
@@ -434,269 +408,274 @@ watch(
 </script>
 
 <style scoped>
+/* BOTON FLOTANTE AÑADIR */
 .add-button {
-    --background: #2ea15d;
+  --background: var(--md-accent, #2ea15d);
+  --color: #ffffff;
 }
 
-/* MODAL CREAR O AÑADIR PRODUCTO START */
+/* HEADER MODAL */
 .create-modal-toolbar {
-    --background: #2ea15d;
-    --border-width: 0;
+  --background: var(--md-accent, #2ea15d);
+  --border-width: 0;
 }
 
 .create-modal-title {
-    --color: #ffffff;
-    font-weight: 700;
-    font-size: 18px;
+  --color: #ffffff;
+  font-size: 18px;
+  font-weight: 700;
 }
 
 .create-modal-close-btn {
-    --color: #ffffff;
-    font-weight: 600;
-    font-size: 14px;
-    text-transform: uppercase;
+  --color: #ffffff;
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
+/* CONTENIDO MODAL + FORMULARIO */
 .create-modal-content {
-    --background: #f5faf7;
+  --background: var(--ion-background-color);
 }
 
 .create-modal-item {
-    margin-top: 12px;
-    padding-inline: 5px;
+  margin-top: 12px;
+  padding-inline: 5px;
 }
 
 .create-modal-label {
-    font-weight: 700;
-    font-size: 19px;
-    color: #111827;
-    margin-left: 2%;
+  margin-left: 2%;
+  color: var(--ion-text-color);
+  font-size: 19px;
+  font-weight: 700;
 }
 
 .create-modal-input {
-    margin-top: 4%;
-    border-radius: 5%;
-    --background: #ffffff;
-    --padding-start: 12px;
-    --padding-end: 12px;
-    --padding-top: 10px;
-    --padding-bottom: 10px;
-    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
-    border: 1px solid #d1d5db36;
+  margin-top: 4%;
+  border-radius: 10px;
+
+  --background: var(--ion-background-color2);
+  --padding-start: 12px;
+  --padding-end: 12px;
+  --padding-top: 10px;
+  --padding-bottom: 10px;
+
+  border: 1px solid var(--ion-border-color);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
 .create-modal-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 16px;
-    margin-left: 16px;
-    margin-right: 16px;
+  display: flex;
+  gap: 10px;
+  margin: 16px 16px 0;
 }
 
+/* BOTONES CANCELAR Y CREAR PRODUCTO */
 .btn-cancel-outline {
-    flex: 1;
-    --background: transparent;
-    --box-shadow: none;
-    --color: #2ea15d;
-    font-weight: 600;
-    text-transform: uppercase;
+  flex: 1;
+  --background: transparent;
+  --box-shadow: none;
+  --color: var(--md-accent, #2ea15d);
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
 .btn-create-solid {
-    flex: 1;
-    --background: #2ea15d;
-    --background-hover: #27663f;
-    --background-activated: #228447;
-    --color: #ffffff;
-    font-weight: 600;
-    text-transform: uppercase;
-    border-radius: 8px;
+  flex: 1;
+  --background: var(--md-accent, #2ea15d);
+  --color: #ffffff;
+
+  border-radius: 8px;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
-/* Estilos del listado informativo en el modal */
+/* PRODUCTOS SUGERIDOS */
 .suggested-wrapper {
-    margin-top: 24px;
+  margin-top: 24px;
 }
 
 .suggested-title {
-    margin: 0 0 10px 0;
-    font-size: 16px;
-    font-weight: 700;
+  margin: 0 0 10px;
+  font-size: 16px;
+  font-weight: 700;
 }
 
 .suggested-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-    gap: 12px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 12px;
 }
 
 .suggested-card {
-    display: flex;
-    flex-direction: column;
-    justify-content: flex-start;
-    justify-items: center;
-    text-align: center;
-    padding: 8px;
-    border: 1px solid #eef2f4;
-    border-radius: 12px;
-    background: #fff;
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  padding: 8px;
+
+  border-radius: 12px;
+  border: 1px solid var(--ion-border-color);
+  background: var(--ion-background-color);
 }
 
-/* SOLO CUANDO LA FOTO VENGA DE GALERIA */
-.suggested-card .img-galery {
-    width: 70%;
-    object-fit: contain;
-    display: block;
-    margin: 0 auto 8px;
-}
-
-.suggested-card img.img-galery {
-    border-radius: 5%;
-    object-fit: cover;
-}
-
+/* IMAGEN PRODUCTO */
 .suggested-img {
-    width: 60px;
-    height: 60px;
-    object-fit: contain;
-    display: block;
-    margin: 0 auto 8px;
-    align-self: center;
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 8px;
+  display: block;
+  align-self: center;
+  object-fit: contain;
+}
+
+/* IMAGEN GALERÍA */
+.suggested-card img.img-galery {
+  width: 70%;
+  margin: 0 auto 8px;
+  display: block;
+
+  border-radius: 5%;
+  object-fit: cover;
 }
 
 .suggested-name {
-    font-weight: 600;
-    font-size: 15px;
-    line-height: 1.2;
-    min-height: calc(2 * 1.2em);
-    margin: 0 0 8px 0;
-    --line-clamp: 2;
-    -webkit-box-orient: vertical;
-    overflow: hidden;
+  margin: 0 0 8px;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.2;
+
+  min-height: calc(2 * 1.2em);
+  overflow: hidden;
 }
 
-/* El botón baja al fondo de la tarjeta */
 .suggested-card .btn-add {
-    margin-top: auto;
-    align-self: stretch;
+  margin-top: auto;
+  align-self: stretch;
 }
 
-.empty {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    text-align: center;
-    padding: 24px 16px;
-    color: #6b7280;
-}
-
-.empty-icon {
-    width: 120px;
-    height: 120px;
-    border-radius: 999px;
-    display: grid;
-    place-items: center;
-    margin-bottom: 2px;
-}
-
-.empty-icon .material-icons {
-    font-size: 78px;
-    color: #374151;
-}
-
-.empty-title {
-    margin: 0 0 4px;
-    font-weight: 700;
-    font-size: 18px;
-    color: #111827;
-}
-
-.empty-subtitle {
-    margin: 0;
-    font-size: 14px;
-    color: #3f4146;
-    font-weight: 500;
-}
-
-.loading-box {
-    display: grid;
-    place-content: center;
-    min-height: 40vh;
-}
-
-/* Color personalizado para el botón de añadir a compra/inventario */
 .btn-add {
-    --background: #2ea15d;
-    --background-hover: #279150;
-    --background-activated: #228447;
-    --color: #fff;
-    border-radius: 8px;
-    font-weight: 600;
-    text-transform: none;
-    height: 33px;
+  --background: var(--md-accent, #2ea15d);
+  --color: #ffffff;
+
+  height: 33px;
+  border-radius: 8px;
+  font-weight: 600;
+  text-transform: none;
 }
 
-/* FILTRO RADIO BUTTONS START */
-/* Contenedor del bloque de filtros */
+/* FILTO DE PRODUCTOS (RADIOBUTTONS) */
 .filter-radios {
-    margin: 16px 4px 22px;
+  margin: 16px 4px 22px;
 }
 
-/* Layout del grupo de radios */
-.filter-radios.mydict>div {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
+.filter-radios.mydict > div {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
-.filter-radios.mydict input[type="radio"] {
-    clip: rect(0 0 0 0);
-    clip-path: inset(100%);
-    height: 1px;
-    overflow: hidden;
-    position: absolute;
-    white-space: nowrap;
-    width: 1px;
+.filter-radios.mydict input[type='radio'] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  white-space: nowrap;
+  clip: rect(0 0 0 0);
+  clip-path: inset(100%);
 }
 
-.filter-radios.mydict input[type="radio"]:focus+span {
-    outline: 0;
-    border-color: #2ea15d;
-    box-shadow: 0 0 0 4px #bcdbc9;
-}
-
-.filter-radios.mydict input[type="radio"]:checked+span {
-    box-shadow: 0 0 0 0.0625em #2ea15d;
-    background-color: #cefde2af;
-    z-index: 1;
-    color: #2ea15d;
+.filter-radios.mydict input[type='radio']:focus + span {
+  outline: 0;
+  border-color: var(--md-accent, #2ea15d);
+  box-shadow: 0 0 0 4px color-mix(in srgb, #ffffff 80%, var(--md-accent, #2ea15d) 20%);
 }
 
 .filter-radios.mydict label span {
-    display: block;
-    cursor: pointer;
-    background-color: #fff;
-    padding: 0.3em 0.8em;
-    position: relative;
-    margin-left: 0.0625em;
-    box-shadow: 0 0 0 0.0625em #b5c9af;
-    letter-spacing: 0.05em;
-    color: #7caa8f;
-    text-align: center;
-    font-size: 17px;
-    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
+  display: block;
+  cursor: pointer;
+  padding: 0.3em 0.8em;
+
+  background-color: var(--ion-background-color);
+  box-shadow: 0 0 0 0.0625em color-mix(in srgb, #ffffff 35%, var(--md-accent, #2ea15d) 25%);
+
+  font-size: 17px;
+  letter-spacing: 0.05em;
+  text-align: center;
+
+  color: color-mix(in srgb, #ffffff 55%, var(--md-accent, #2ea15d) 45%);
+  transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
 }
 
 .filter-radios.mydict label:first-child span {
-    border-radius: 0.375em 0 0 0.375em;
+  border-radius: 0.375em 0 0 0.375em;
 }
 
 .filter-radios.mydict label:last-child span {
-    border-radius: 0 0.375em 0.375em 0;
+  border-radius: 0 0.375em 0.375em 0;
 }
-/* FILTRO RADIO BUTTONS END */
 
-/* MODAL CREAR O AÑADIR PRODUCTO END */
+.filter-radios.mydict input[type='radio']:checked + span {
+  z-index: 1;
+  color: var(--md-accent, #2ea15d);
+  box-shadow: 0 0 0 0.0625em var(--md-accent, #2ea15d);
+  background-color: color-mix(in srgb, #ffffff 80%, var(--md-accent, #2ea15d) 20%);
+}
+
+body.dark .filter-radios.mydict input[type='radio']:checked + span {
+  background-color: rgba(46, 161, 94, 0.1);
+  color: color-mix(in srgb, #ffffff 92%, var(--md-accent, #2ea15d) 8%);
+  box-shadow: 0 0 0 0.0625em var(--md-accent, #2ea15d);
+}
+
+/* SIN RESULTADOS */
+.empty {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+
+  padding: 24px 16px;
+  text-align: center;
+
+  color: #6b7280;
+}
+
+.empty-icon {
+  width: 120px;
+  height: 120px;
+  margin-bottom: 2px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 999px;
+}
+
+.empty-icon .material-icons {
+  font-size: 78px;
+  color: var(--ion-text-color3);
+}
+
+.empty-title {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ion-text-color3);
+}
+
+.empty-subtitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ion-text-color2);
+}
+
+/* Loading */
+.loading-box {
+  display: grid;
+  place-content: center;
+  min-height: 40vh;
+}
 </style>
