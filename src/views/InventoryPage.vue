@@ -400,7 +400,7 @@ function isExpiringSoon(item: Item): boolean {
   const exp = (item as any).expirationDate as string | null | undefined
   if (!exp) return false
   const d = daysUntilExpiration(exp)
-  return d >= 0 && d < 3
+  return d <= 3
 }
 
 // CARGA DE DESPENSAS POR CÓDIGOS EN LOCALSTORAGE 
@@ -1073,6 +1073,11 @@ body.dark .item-card {
 
 /* CADUCIDAD PROXIMA */
 .item-card-expiring {
+  border: 2px solid #ef4444;
+  box-shadow: 0 2px 12px rgba(239, 68, 68, 0.18);
+}
+
+body.dark .item-card-expiring {
   border: 2px solid #ef4444;
   box-shadow: 0 2px 12px rgba(239, 68, 68, 0.18);
 }
