@@ -31,8 +31,13 @@
             <ion-icon :icon="trashOutline" />
           </ion-button>
 
-          <img :src="getOptimizedUrl(item.imageUrl)" :alt="item.name"
+          <img v-if="item.imageUrl" :src="getOptimizedUrl(item.imageUrl)" :alt="item.name"
             :class="{ 'img-galery': isImageGalery(item.imageUrl) }" />
+
+          <div v-else class="item-letter" aria-hidden="true">
+            {{ getInitial(item.name) }}
+          </div>
+
           <p class="item-name">{{ item.name }}</p>
 
           <!-- Controles cantidad en card -->
@@ -267,7 +272,7 @@ import { onMounted, onBeforeUnmount, ref, computed, inject, watch, type Ref } fr
 import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe, orderBy } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showToast } from '@/composables/showToast'
-import { getMeasurementUnit, getOptimizedUrl, isImageGalery } from '@/composables/itemUtils'
+import { getMeasurementUnit, getOptimizedUrl, isImageGalery, getInitial } from '@/composables/itemUtils'
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
 import ModalAddProduct from '@/components/layout/ModalAddProduct.vue'
 import InventoryAndPurcharseHeader from '@/components/ui/InventoryAndPurcharseHeader.vue'
@@ -400,7 +405,7 @@ function isExpiringSoon(item: Item): boolean {
   const exp = (item as any).expirationDate as string | null | undefined
   if (!exp) return false
   const d = daysUntilExpiration(exp)
-  return d >= 0 && d < 3
+  return d <= 3
 }
 
 // CARGA DE DESPENSAS POR CÓDIGOS EN LOCALSTORAGE 
@@ -638,7 +643,7 @@ async function saveItemInfo() {
       expirationDate: expirationToSave
     })
 
-    ;(selectedItem.value as any).expirationDate = expirationToSave
+      ; (selectedItem.value as any).expirationDate = expirationToSave
 
     // limpiamos el estado de preview (ya es imagen real)
     clearPrevImageIfNeeded(selectedItem.value)
@@ -701,10 +706,10 @@ async function pickImage(item: Item) {
       ...(isWeb
         ? {}
         : {
-            promptLabelHeader: 'Seleccionar imagen',
-            promptLabelPhoto: 'Galería',
-            promptLabelPicture: 'Cámara'
-          })
+          promptLabelHeader: 'Seleccionar imagen',
+          promptLabelPhoto: 'Galería',
+          promptLabelPicture: 'Cámara'
+        })
     })
 
     if (!photo.dataUrl) return
@@ -939,7 +944,7 @@ async function confirmMove() {
         notePurchase: (moveItem.value as any).notePurchase ?? '',
         expirationDate: (moveItem.value as any).expirationDate ?? null
       })
-      
+
       // Nuevo producto en esa despensa: aumentar totalItems en despensa destino
       const destPantryRef = await getPantryRefByCodeGeneric(destCode)
       batch.update(destPantryRef, { totalItems: increment(1) })
@@ -1073,6 +1078,11 @@ body.dark .item-card {
 
 /* CADUCIDAD PROXIMA */
 .item-card-expiring {
+  border: 2px solid #ef4444;
+  box-shadow: 0 2px 12px rgba(239, 68, 68, 0.18);
+}
+
+body.dark .item-card-expiring {
   border: 2px solid #ef4444;
   box-shadow: 0 2px 12px rgba(239, 68, 68, 0.18);
 }
@@ -1260,6 +1270,34 @@ body.dark .qty-btn-card {
   --ionicon-stroke-width: 35px;
 }
 
+/* LETRA (cuando no hay imagen) */
+.item-letter {
+  width: 60%;
+  height: 80px;
+  margin: 0 auto 8px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 10px;
+  border: 1px solid var(--ion-border-color);
+
+  font-family: "Risque", serif;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
+  font-size: 62px;
+
+
+  color: var(--md-accent, #2ea15d);
+  background: color-mix(in srgb, var(--ion-background-color) 88%, var(--md-accent, #2ea15d) 12%);
+}
+
+
+body.dark .item-letter {
+  border-color: #333333;
+  background: color-mix(in srgb, var(--ion-background-color) 85%, var(--md-accent, #2ea15d) 15%);
+}
 
 /* MODAL INFO PRODUCTO + MODAL MOVER PRODUCTO: */
 
