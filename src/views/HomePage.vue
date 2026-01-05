@@ -47,7 +47,7 @@
         <!-- Lista de tarjetas start-->
         <div v-else class="pantry-list">
           <div v-for="(pantry, i) in pantries" :key="i" class="pantry-card" @click="onCardClick($event, pantry)">
-            <!-- Botón salir/elimaniar start -->
+            <!-- Botón salir/eliminar start -->
             <button type="button" class="corner-btn" :class="pantry.creatorId === deviceId ? 'danger' : 'accent'"
               @click.stop="onCornerAction(pantry)">
               <span class="material-icons icons-red" v-if="pantry.creatorId === deviceId" title="Eliminar despensa"
@@ -55,7 +55,7 @@
               <span class="material-icons icons-red" v-else title="Salir de despensa"
                 aria-label="Salir de despensa">logout</span>
             </button>
-            <!-- Botón salir/elimaniar end -->
+            <!-- Botón salir/eliminar end -->
 
             <!-- Icono despensa start -->
             <div class="icon-box">
@@ -768,7 +768,7 @@ body.dark .corner-btn.danger {
 
 .corner-btn.accent {
   color: var(--md-accent, #2ea15d);
-  box-shadow: inset 0 0 0 2px var(--md-accent, #2ea15d);
+  box-shadow: inset 0 0 0 2px #e53935;
 }
 
 /* ICONO TARJETA DESPENSA */
