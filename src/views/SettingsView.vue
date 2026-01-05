@@ -63,13 +63,8 @@
               </ion-button>
 
               <label class="color-chip" :title="accentColor">
-                <input
-                  class="color-input"
-                  type="color"
-                  v-model="accentColor"
-                  @input="onAccentColorInput"
-                  aria-label="Seleccionar color principal"
-                />
+                <input class="color-input" type="color" v-model="accentColor" @input="onAccentColorInput"
+                  aria-label="Seleccionar color principal" />
               </label>
             </div>
           </ion-item>
@@ -130,13 +125,8 @@
         <!-- Seccion App end -->
 
         <!-- NUEVO: input oculto para seleccionar archivo de importación START -->
-        <input
-          ref="importFileInput"
-          type="file"
-          accept="application/json,.json"
-          class="hidden-file-input"
-          @change="onImportFileSelected"
-        />
+        <input ref="importFileInput" type="file" accept="application/json,.json" class="hidden-file-input"
+          @change="onImportFileSelected" />
         <!-- NUEVO: input oculto para seleccionar archivo de importación END -->
 
         <!-- NUEVO: Modal selección despensas a exportar START -->
@@ -161,19 +151,10 @@
             </div>
 
             <ion-list v-else inset class="export-list">
-              <ion-item
-                v-for="p in exportPantries"
-                :key="p.id"
-                lines="none"
-                class="export-item"
-                :class="{ 'export-item--selected': selectedExportCodes.has(p.code) }"
-              >
-                <ion-checkbox
-                  slot="start"
-                  class="accent-checkbox"
-                  :checked="selectedExportCodes.has(p.code)"
-                  @ionChange="toggleExportPantry(p.code, $event)"
-                />
+              <ion-item v-for="p in exportPantries" :key="p.id" lines="none" class="export-item"
+                :class="{ 'export-item--selected': selectedExportCodes.has(p.code) }">
+                <ion-checkbox slot="start" class="accent-checkbox" :checked="selectedExportCodes.has(p.code)"
+                  @ionChange="toggleExportPantry(p.code, $event)" />
                 <ion-label>
                   <h2 class="export-name">{{ p.name }}</h2>
                   <p class="export-code">{{ p.code }}</p>
@@ -186,12 +167,8 @@
             </ion-list>
 
             <div class="export-actions">
-              <ion-button
-                expand="block"
-                class="export-btn"
-                :disabled="selectedExportCodes.size === 0 || exportingBackup"
-                @click="onConfirmExportSelection"
-              >
+              <ion-button expand="block" class="export-btn"
+                :disabled="selectedExportCodes.size === 0 || exportingBackup" @click="onConfirmExportSelection">
                 {{ exportingBackup ? 'Generando...' : 'Continuar' }}
               </ion-button>
               <ion-note class="export-note" v-if="selectedExportCodes.size === 0">
@@ -226,19 +203,10 @@
             </div>
 
             <ion-list v-else inset class="export-list">
-              <ion-item
-                v-for="b in importBundles"
-                :key="getImportKey(b)"
-                lines="none"
-                class="export-item"
-                :class="{ 'export-item--selected': selectedImportKeys.has(getImportKey(b)) }"
-              >
-                <ion-checkbox
-                  slot="start"
-                  class="accent-checkbox"
-                  :checked="selectedImportKeys.has(getImportKey(b))"
-                  @ionChange="toggleImportBundle(getImportKey(b), $event)"
-                />
+              <ion-item v-for="b in importBundles" :key="getImportKey(b)" lines="none" class="export-item"
+                :class="{ 'export-item--selected': selectedImportKeys.has(getImportKey(b)) }">
+                <ion-checkbox slot="start" class="accent-checkbox" :checked="selectedImportKeys.has(getImportKey(b))"
+                  @ionChange="toggleImportBundle(getImportKey(b), $event)" />
                 <ion-label>
                   <h2 class="export-name">{{ b.pantry?.name }}</h2>
                   <p class="export-code">{{ b.pantry?.code }}</p>
@@ -251,12 +219,8 @@
             </ion-list>
 
             <div class="export-actions">
-              <ion-button
-                expand="block"
-                class="export-btn"
-                :disabled="selectedImportKeys.size === 0 || importingBackup"
-                @click="onConfirmImportSelection"
-              >
+              <ion-button expand="block" class="export-btn" :disabled="selectedImportKeys.size === 0 || importingBackup"
+                @click="onConfirmImportSelection">
                 {{ importingBackup ? 'Importando...' : 'Importar' }}
               </ion-button>
               <ion-note class="export-note" v-if="selectedImportKeys.size === 0">
@@ -289,14 +253,9 @@
         <!-- NUEVO: Alert para decidir qué hacer si la despensa existe END -->
 
         <!-- Pop up confirmar limpiar caché START -->
-        <ConfirmPopup
-          v-model="showConfirmDeleteData"
-          title="Borrar datos"
+        <ConfirmPopup v-model="showConfirmDeleteData" title="Borrar datos"
           message="Vas a borrar TODOS los datos locales de MiDespensa en este dispositivo (ajustes, caché y almacenamiento interno). Esta acción no se puede deshacer. Si quieres conservar tus datos, haz una copia con “Exportar” antes de continuar. ¿Quieres borrar los datos?"
-          confirmLabel="Borrar"
-          cancelLabel="Cancelar"
-          @confirm="confirmDeleteData"
-        />
+          confirmLabel="Borrar" cancelLabel="Cancelar" @confirm="confirmDeleteData" />
 
         <!-- Pop up confirmar limpiar caché END -->
 
@@ -768,7 +727,19 @@ const onConfirmImportSelection = async () => {
         const liveCode = String(data?.code ?? pantryCode).trim().toUpperCase()
         const liveName = String(data?.name ?? pantryName).trim()
 
-        // ✅ NUEVO: si ya la tienes en storage, NO preguntes nada y sáltala
+        // ✅ NUEVO: si el backup dice que ERAS creador, actualiza creatorId SIEMPRE (100%) al nuevo deviceId
+        // (independientemente de si la despensa ya está en tu storage o de la decisión del popup)
+        try {
+          const wasCreator = !!(b as any)?.wasCreator
+          if (wasCreator) {
+            await updateDoc(refPantry, { creatorId: deviceId })
+            console.log('[import] creatorId reasignado (wasCreator=true)', { liveCode, deviceId })
+          }
+        } catch (e) {
+          console.log('[import] error reasignando creatorId (wasCreator=true)', e)
+        }
+
+        // ✅ si ya la tienes en storage, NO preguntes nada y sáltala (pero creatorId ya quedó actualizado si tocaba)
         const alreadyInStorage = getStoredPantryCodes().includes(liveCode)
         if (alreadyInStorage) {
           console.log('[import] ya tienes esta despensa en el dispositivo, se omite', liveCode)
@@ -784,21 +755,6 @@ const onConfirmImportSelection = async () => {
 
         if (decision === 'existing') {
           addPantryToStorage(liveCode)
-
-          // Si en el backup ESTE dispositivo era el creador, reasignamos el creatorId al nuevo deviceId
-          try {
-            const wasCreator = !!(b as any)?.wasCreator
-            const backupCreatorId = String((pantry as any)?.creatorId ?? '').trim()
-            const currentCreatorId = String((data as any)?.creatorId ?? '').trim()
-
-            // Seguridad: solo reasigna si el creatorId actual coincide con el del backup
-            if (wasCreator && backupCreatorId && currentCreatorId === backupCreatorId) {
-              await updateDoc(refPantry, { creatorId: deviceId })
-              console.log('[import] creatorId reasignado al nuevo deviceId', { liveCode, deviceId })
-            }
-          } catch (e) {
-            console.log('[import] error reasignando creatorId', e)
-          }
 
           try {
             await updateDoc(refPantry, { memberCount: increment(1) })
@@ -1112,7 +1068,7 @@ async function getItemsForPantry(pantryCode: string): Promise<ExportItem[]> {
   }
 }
 
-// NUEVO: al confirmar selección -> recuperar items y generar backup
+// Al confirmar selección -> recuperar items y generar backup
 const onConfirmExportSelection = async () => {
   if (selectedExportCodes.value.size === 0) {
     await showToast('Selecciona al menos una despensa', 'danger')
