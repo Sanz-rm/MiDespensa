@@ -1,8 +1,8 @@
-// Obtiene la imagen por la primera letra del nombre
-export function getImageFirstLetter(name: string): string {
-  const firstLetter = name.charAt(0).toLowerCase()
-  const imageUrl = `img/letters/letra_${firstLetter}.png`
-  return imageUrl
+// Obtiene la letra inicial (en texto) del nombre
+export function getInitial(name: string): string {
+  const n = (name ?? '').trim()
+  if (!n) return '?'
+  return n.charAt(0).toUpperCase()
 }
 
 // Obtener la unidad de medida en singular o plural según la cantidad

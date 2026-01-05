@@ -139,7 +139,7 @@ import { ref, computed, watch } from 'vue'
 import { collection, query, where, getDocs, writeBatch, doc, increment, orderBy, limit, updateDoc, } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showToast } from '@/composables/showToast'
-import { getImageFirstLetter, getOptimizedUrl, isImageGalery } from '@/composables/itemUtils'
+import { getOptimizedUrl, isImageGalery } from '@/composables/itemUtils'
 import type { Item } from '@/models/item'
 import type { ComunItem } from '@/models/comunItem'
 
@@ -234,7 +234,7 @@ function closeCreateModal() {
 
 // Confirmamos creación desde el modal
 async function confirmCreate() {
-  await addItemFromPantry(newProductName.value, getImageFirstLetter(newProductName.value))
+  await addItemFromPantry(newProductName.value, '')
   if (newProductName.value.trim()) {
     newProductName.value = ''
   }
@@ -445,8 +445,8 @@ watch(
   border: 1px solid var(--ion-border-color);
   border-radius: 10px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-  
-  overflow: hidden; 
+
+  overflow: hidden;
 }
 
 .create-modal-actions {

@@ -1,13 +1,20 @@
 <template>
   <ion-page>
-    <InventoryAndPurcharseHeader :title="`Compra de ${props.name}`"
-      :backHref="`/tabs/${props.code}/${props.name}/inventory`" />
+    <InventoryAndPurcharseHeader
+      :title="`Compra de ${props.name}`"
+      :backHref="`/tabs/${props.code}/${props.name}/inventory`"
+    />
+
     <ion-content class="ion-padding pantry-content">
       <!-- Acciones START-->
       <div class="actions">
         <ion-searchbar v-model="search" placeholder="Buscar producto…" :debounce="150" show-clear-button="focus" />
-        <ion-button color="danger" expand="block" :disabled="loading || !hasItemsInPurchase"
-          @click="showConfirmClear = true">
+        <ion-button
+          color="danger"
+          expand="block"
+          :disabled="loading || !hasItemsInPurchase"
+          @click="showConfirmClear = true"
+        >
           <ion-icon :icon="trashOutline" slot="start" />
           Vaciar compra
         </ion-button>
@@ -23,44 +30,77 @@
       <!-- Productos de la despensa seleccionada (en compra) -->
       <div v-if="!loading && itemsFiltered.length" class="list-cards">
         <div v-for="item in itemsFiltered" :key="item.id" class="item-row">
-          <img class="icon" :src="getOptimizedUrl(item.imageUrl)" :alt="item.name" :class="{ 'img-galery': isImageGalery(item.imageUrl) }"/>
+          <!-- IMG si hay imagen, LETRA si no hay -->
+          <img
+            v-if="item.imageUrl"
+            class="icon"
+            :src="getOptimizedUrl(item.imageUrl)"
+            :alt="item.name"
+            :class="{ 'img-galery': isImageGalery(item.imageUrl) }"
+          />
+          <div v-else class="icon-letter" aria-hidden="true">
+            {{ getInitial(item.name) }}
+          </div>
+
           <div class="info">
             <p class="name">{{ item.name }}</p>
-            <p class="units">Stock: {{ item.quantity }} {{ getMeasurementUnit(item.unit, item.quantity) }}</p>
+            <p class="units">
+              Stock: {{ item.quantity }} {{ getMeasurementUnit(item.unit, item.quantity) }}
+            </p>
           </div>
 
           <!-- Icono para añadir nota cuando no hay nota -->
-          <ion-button v-if="!item.notePurchase && editingNoteItemId !== item.id" class="note-icon" fill="clear"
-            size="small" aria-label="Añadir nota" @click="openNoteInput(item)">
+          <ion-button
+            v-if="!item.notePurchase && editingNoteItemId !== item.id"
+            class="note-icon"
+            fill="clear"
+            size="small"
+            aria-label="Añadir nota"
+            @click="openNoteInput(item)"
+          >
             <ion-icon :icon="readerOutline" />
           </ion-button>
 
-          <ion-button class="trash" color="danger" fill="clear" size="small" aria-label="Quitar de la compra"
-            @click="deleteItemToPurchase(item.id)">
+          <ion-button
+            class="trash"
+            color="danger"
+            fill="clear"
+            size="small"
+            aria-label="Quitar de la compra"
+            @click="deleteItemToPurchase(item.id)"
+          >
             <ion-icon :icon="trashOutline" />
           </ion-button>
 
           <!-- Barra de nota -->
           <div v-if="item.notePurchase || editingNoteItemId === item.id" class="note-row">
-            <textarea v-model="noteDraft[item.id]"
+            <textarea
+              v-model="noteDraft[item.id]"
               :class="['note-textarea', { 'note-textarea--center': isSingleLineNote(item) }]"
-              placeholder="Escribe una nota..." rows="1" :readonly="editingNoteItemId !== item.id"
-              @click="editingNoteItemId !== item.id && enableNoteEdit(item)" @blur="handleBlurNote(item)"></textarea>
-
+              placeholder="Escribe una nota..."
+              rows="1"
+              :readonly="editingNoteItemId !== item.id"
+              @click="editingNoteItemId !== item.id && enableNoteEdit(item)"
+              @blur="handleBlurNote(item)"
+            ></textarea>
 
             <div class="note-actions">
               <button type="button" class="note note-cancel" @click="cancelNote(item)">
                 <span class="material-icons">close</span>
               </button>
-              <button v-if="hasNoteChanged(item)" type="button"
+              <button
+                v-if="hasNoteChanged(item)"
+                type="button"
                 :class="['note', 'note-ok', savedNoteItemId === item.id ? 'note-ok-saved' : '']"
-                @click="saveNote(item)">
+                @click="saveNote(item)"
+              >
                 <span class="material-icons">check</span>
               </button>
             </div>
           </div>
         </div>
       </div>
+
       <div v-else-if="!loading" class="empty">
         <!-- Sin despensas Start -->
         <div class="empty-icon">
@@ -72,15 +112,19 @@
       </div>
 
       <!-- Botón flotante START -->
-      <ModalAddProduct :pantry-code="props.code" :items="items" view="purcharse" @willOpen="search = ''"/>
+      <ModalAddProduct :pantry-code="props.code" :items="items" view="purcharse" @willOpen="search = ''" />
       <!-- Botón flotante END -->
 
       <!-- Pop up confirmar salir/eliminar despensa START -->
-      <ConfirmPopup v-model="showConfirmClear" title="Vaciar compra"
+      <ConfirmPopup
+        v-model="showConfirmClear"
+        title="Vaciar compra"
         message="Se eliminarán todos los productos de la lista de compra. Esta acción no se puede deshacer. ¿Quieres continuar?"
-        confirmLabel="Sí, vaciar" cancelLabel="Cancelar" @confirm="clearPurchase" />
+        confirmLabel="Sí, vaciar"
+        cancelLabel="Cancelar"
+        @confirm="clearPurchase"
+      />
       <!-- Pop up confirmar salir/eliminar despensa END -->
-
     </ion-content>
   </ion-page>
 </template>
@@ -91,12 +135,23 @@ import { showToast } from '@/composables/showToast'
 import { trashOutline, readerOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
 import { onMounted, onBeforeUnmount, ref, computed } from 'vue'
-import { collection, query, where, updateDoc, doc, getDoc, onSnapshot, type Unsubscribe, writeBatch, orderBy } from 'firebase/firestore'
-import { getImageFirstLetter, getMeasurementUnit, getOptimizedUrl, isImageGalery } from '@/composables/itemUtils'
+import {
+  collection,
+  query,
+  where,
+  updateDoc,
+  doc,
+  getDoc,
+  onSnapshot,
+  type Unsubscribe,
+  writeBatch,
+  orderBy
+} from 'firebase/firestore'
+import { getInitial, getMeasurementUnit, getOptimizedUrl, isImageGalery } from '@/composables/itemUtils'
 import { db } from '@/firebase'
-import ConfirmPopup from '@/components/ui/ConfirmPopup.vue';
+import ConfirmPopup from '@/components/ui/ConfirmPopup.vue'
 import ModalAddProduct from '@/components/layout/ModalAddProduct.vue'
-import InventoryAndPurcharseHeader from '@/components/ui/InventoryAndPurcharseHeader.vue';
+import InventoryAndPurcharseHeader from '@/components/ui/InventoryAndPurcharseHeader.vue'
 
 const props = defineProps<{ code: string; name: string }>()
 console.log('Codigo y nombre de la despensa:', props.code, props.name)
@@ -108,15 +163,14 @@ const search = ref<string>('')
 const showConfirmClear = ref(false)
 
 let stop: Unsubscribe | null = null
+
 // Normaliza: quita acentos y pasa a minúsculas
 const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim()
 
 const items = ref<Item[]>([])
 const itemsFiltered = computed(() => {
   const q = norm(search.value)
-  return items.value.filter(it =>
-    it.inPurchase && (!q || norm(it.name).includes(q))
-  )
+  return items.value.filter(it => it.inPurchase && (!q || norm(it.name).includes(q)))
 })
 
 const hasItemsInPurchase = computed(() => items.value.some(it => it.inPurchase))
@@ -137,11 +191,7 @@ onBeforeUnmount(() => stop?.())
 // Recuperamos los items de la despensa seleccionada (todos los items)
 async function getPurchaseItems(pantryCode: string) {
   loading.value = true
-  const q = query(
-    collection(db, 'items'),
-    where('pantryCode', '==', pantryCode),
-    orderBy('name', 'asc')
-  )
+  const q = query(collection(db, 'items'), where('pantryCode', '==', pantryCode), orderBy('name', 'asc'))
   stop = onSnapshot(
     q,
     snap => {
@@ -155,7 +205,7 @@ async function getPurchaseItems(pantryCode: string) {
           pantryCode: String(item.pantryCode ?? pantryCode),
           locationId: String(item.locationId ?? null),
           inPurchase: Boolean(item.inPurchase ?? false),
-          imageUrl: String(item.imageUrl ?? getImageFirstLetter(String(item.name ?? ''))),
+          imageUrl: String(item.imageUrl ?? ''), // <- ya NO metemos imagen por letra
           notePurchase: String(item.notePurchase ?? '')
         } as Item
       })
@@ -169,7 +219,7 @@ async function getPurchaseItems(pantryCode: string) {
       }
       noteDraft.value = drafts
 
-      console.log("items obtenidos: ", items.value)
+      console.log('items obtenidos: ', items.value)
       loading.value = false
     },
     // Si falla suscripción/lectura
@@ -194,7 +244,6 @@ function isSingleLineNote(item: Item): boolean {
   // umbral aproximado para una línea en móvil
   return text.length <= 35
 }
-
 
 // habilitar edición al pulsar sobre el textarea con nota ya guardada
 function enableNoteEdit(item: Item) {
@@ -240,7 +289,6 @@ async function saveNote(item: Item) {
     await showToast('No se pudo guardar la nota.', 'danger')
   }
 }
-
 
 // cancelar / borrar nota
 async function cancelNote(item: Item) {
@@ -360,6 +408,27 @@ body.dark .item-row {
 
   border-radius: 5%;
   object-fit: cover;
+}
+
+/* LETRA (cuando no hay imagen) */
+.icon-letter {
+  width: 36px;
+  height: 36px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, #ffffff 65%, var(--md-accent, #2ea15d) 35%);
+  background: color-mix(in srgb, #ffffff 88%, var(--md-accent, #2ea15d) 12%);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+
+  color: var(--md-accent, #2ea15d);
+
+  font-family: "Risque", serif;
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1;
 }
 
 /* INFORMACION PRODUCTO COMPRA */
