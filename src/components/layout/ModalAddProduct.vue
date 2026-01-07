@@ -30,7 +30,7 @@
             Nombre del producto
           </ion-label>
           <ion-input v-model="newProductName" class="create-modal-input" placeholder="Ej. Leche, Huevos, Arroz"
-            @keyup.enter="confirmCreate" autofocus />
+            @keyup.enter="confirmCreate"/>
         </ion-item>
         <div class="create-modal-actions">
           <ion-button expand="block" fill="clear" class="btn-cancel-outline" @click="clearInput">
@@ -135,8 +135,21 @@ import {
   IonFab, IonFabButton, IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonList, IonItem, IonInput, IonLabel, IonIcon
 } from '@ionic/vue'
 import { addOutline } from 'ionicons/icons'
-import { ref, computed, watch } from 'vue'
-import { collection, query, where, getDocs, writeBatch, doc, increment, orderBy, limit, updateDoc, } from 'firebase/firestore'
+import { ref, computed, watch, onBeforeUnmount } from 'vue'
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  writeBatch,
+  doc,
+  increment,
+  orderBy,
+  limit,
+  updateDoc,
+  onSnapshot,
+  type Unsubscribe,
+} from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showToast } from '@/composables/showToast'
 import { getOptimizedUrl, isImageGalery } from '@/composables/itemUtils'
@@ -161,6 +174,9 @@ const pantryDocId = ref<string | null>(null)
 
 const filterMode = ref<'all' | 'inventory'>('all')
 
+const comunUnsub = ref<Unsubscribe | null>(null)
+const localExcludedKeys = ref<string[]>([])
+
 const norm = (s: string) =>
   s
     .normalize('NFD')
@@ -168,10 +184,34 @@ const norm = (s: string) =>
     .toLowerCase()
     .trim()
 
+const keyFor = (name: string, imageUrl: string) => `${norm(name)}__${String(imageUrl ?? '')}`
+
+const excludedKeysSet = computed(() => {
+  const set = new Set<string>()
+
+  for (const i of (props.items ?? [])) {
+    const n = String(i?.name ?? '')
+    const img = String(i?.imageUrl ?? '')
+    set.add(keyFor(n, img))
+  }
+
+  for (const k of (localExcludedKeys.value ?? [])) {
+    set.add(k)
+  }
+
+  return set
+})
+
+const comunItemsAvailable = computed(() => {
+  const excluded = excludedKeysSet.value
+  return (comunItems.value ?? []).filter(ci => !excluded.has(keyFor(ci.name, ci.imageUrl)))
+})
+
 const comunItemsFiltered = computed(() => {
   const q = norm(newProductName.value)
-  if (!q) return comunItems.value
-  return comunItems.value.filter(it => norm(it.name).includes(q))
+  const base = comunItemsAvailable.value
+  if (!q) return base
+  return base.filter(it => norm(it.name).includes(q))
 })
 
 // items del inventario que NO están en compra
@@ -220,16 +260,53 @@ const fabAriaLabel = computed(() =>
 
 const defaultInPurchase = computed<boolean>(() => props.view === 'purcharse')
 
+function stopComunItemsListener() {
+  if (comunUnsub.value) {
+    comunUnsub.value()
+    comunUnsub.value = null
+  }
+}
+
+function startComunItemsListener() {
+  stopComunItemsListener()
+  loading.value = true
+
+  const q = query(collection(db, 'comun_items'), orderBy('name', 'asc'))
+
+  comunUnsub.value = onSnapshot(
+    q,
+    snap => {
+      comunItems.value = snap.docs.map(d => {
+        const data = d.data() as any
+        return {
+          id: String(d.id),
+          name: String(data?.name ?? ''),
+          imageUrl: String(data?.imageUrl ?? ''),
+        } as ComunItem
+      })
+      loading.value = false
+    },
+    async err => {
+      console.error('Error al escuchar productos comunes:', err)
+      loading.value = false
+      await showToast('Error al cargar los productos sugeridos.', 'danger')
+    }
+  )
+}
+
 // Modal crear producto
 function openCreateModal() {
   filterMode.value = 'all'
-  getComunItems()
+  localExcludedKeys.value = []
   isCreateOpen.value = true
+  startComunItemsListener()
 }
 
 function closeCreateModal() {
   isCreateOpen.value = false
   newProductName.value = ''
+  localExcludedKeys.value = []
+  stopComunItemsListener()
 }
 
 // Confirmamos creación desde el modal
@@ -242,44 +319,6 @@ async function confirmCreate() {
 
 function clearInput() {
   newProductName.value = ''
-}
-
-// Obtenemos todas los items comunes que aun no tenemos
-async function getComunItems() {
-  try {
-    loading.value = true
-    const q = query(collection(db, 'comun_items'), orderBy('name', 'asc'))
-    const snap = await getDocs(q)
-
-    const existing = new Set(
-      (props.items ?? []).map((i: Item) => {
-        const n = String(i?.name ?? '').trim().toLowerCase()
-        const img = String(i?.imageUrl ?? '')
-        return `${n}__${img}`
-      })
-    )
-
-    comunItems.value = snap.docs
-      .map(d => {
-        const data = d.data() as any
-        return {
-          id: String(d.id),
-          name: String(data?.name ?? ''),
-          imageUrl: String(data?.imageUrl ?? ''),
-        } as ComunItem
-      })
-      .filter(ci => {
-        const n = ci.name.trim().toLowerCase()
-        const img = String(ci.imageUrl ?? '')
-        const key = `${n}__${img}`
-        return !existing.has(key)
-      })
-  } catch (err) {
-    console.error('Error al obtener productos comunes:', err)
-    await showToast('Error al cargar los productos sugeridos.', 'danger')
-  } finally {
-    loading.value = false
-  }
 }
 
 // Añade un nuevo item a la despensa (crea documento nuevo)
@@ -333,6 +372,14 @@ async function addItemFromPantry(nameItem: string, imageUrl: string) {
 
     await batch.commit()
 
+    // Ocultar al instante el común añadido (sin depender de que el padre refresque)
+    if (imageUrl !== undefined) {
+      const k = keyFor(name, String(imageUrl ?? ''))
+      if (!localExcludedKeys.value.includes(k)) {
+        localExcludedKeys.value = [...localExcludedKeys.value, k]
+      }
+    }
+
     await showToast(`Producto ${name} añadido.`, 'success')
   } catch (err) {
     console.error('Error al añadir producto:', err)
@@ -371,24 +418,20 @@ async function getPantryRefByCode() {
   return snap.docs[0].ref
 }
 
-// Al abrir/cerrar el modal, refrescamos sugerencias
+// Si se abre/cierra por otras vías, arrancamos/pararmos listener
 watch(isCreateOpen, open => {
   if (open) {
-    getComunItems()
+    startComunItemsListener()
+  } else {
+    stopComunItemsListener()
   }
 })
 
-// Cada vez que cambien los items del padre, si el modal está abierto refrescamos sugerencias
-watch(
-  () => props.items,
-  () => {
-    if (isCreateOpen.value) {
-      getComunItems()
-    }
-  },
-  { deep: true }
-)
+onBeforeUnmount(() => {
+  stopComunItemsListener()
+})
 </script>
+
 
 <style scoped>
 /* BOTON FLOTANTE AÑADIR */
