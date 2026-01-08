@@ -29,9 +29,14 @@
           <ion-label position="stacked" class="create-modal-label">
             Nombre del producto
           </ion-label>
-          <ion-input v-model="newProductName" class="create-modal-input" placeholder="Ej. Leche, Huevos, Arroz"
-            @keyup.enter="confirmCreate"/>
+          <ion-input
+            v-model="newProductName"
+            class="create-modal-input"
+            placeholder="Ej. Leche, Huevos, Arroz"
+            @keyup.enter="confirmCreate"
+          />
         </ion-item>
+
         <div class="create-modal-actions">
           <ion-button expand="block" fill="clear" class="btn-cancel-outline" @click="clearInput">
             CANCELAR
@@ -52,7 +57,18 @@
           <div v-if="comunItemsFiltered && comunItemsFiltered.length">
             <div class="suggested-grid">
               <div v-for="item in comunItemsFiltered" :key="item.id" class="suggested-card">
-                <img :src="getOptimizedUrl(item.imageUrl)" :alt="item.name" class="suggested-img" />
+                <img
+                  v-if="item.imageUrl"
+                  :src="getOptimizedUrl(item.imageUrl)"
+                  :alt="item.name"
+                  class="suggested-img"
+                  :class="{ 'img-galery': isImageGalery(item.imageUrl) }"
+                />
+
+                <div v-else class="suggested-letter" aria-hidden="true">
+                  {{ getInitial(item.name) }}
+                </div>
+
                 <p class="suggested-name">{{ item.name }}</p>
 
                 <!-- Botón para añadir al inventario -->
@@ -96,16 +112,30 @@
           <!-- Lista combinada START-->
           <div v-if="combinedItems && combinedItems.length" class="suggested-grid">
             <div v-for="item in combinedItems" :key="item.kind + '-' + item.id" class="suggested-card">
-              <img :src="getOptimizedUrl(item.imageUrl)" :alt="item.name" class="suggested-img"
-                :class="{ 'img-galery': isImageGalery(item.imageUrl) }" />
+              <img
+                v-if="item.imageUrl"
+                :src="getOptimizedUrl(item.imageUrl)"
+                :alt="item.name"
+                class="suggested-img"
+                :class="{ 'img-galery': isImageGalery(item.imageUrl) }"
+              />
+
+              <div v-else class="suggested-letter" aria-hidden="true">
+                {{ getInitial(item.name) }}
+              </div>
+
               <p class="suggested-name">{{ item.name }}</p>
 
               <!-- Botón según tipo -->
-              <ion-button size="small" class="btn-add" @click="
-                item.kind === 'common'
-                  ? addItemFromPantry(item.name, item.imageUrl)
-                  : addExistingToPurchase(item.id)
-                ">
+              <ion-button
+                size="small"
+                class="btn-add"
+                @click="
+                  item.kind === 'common'
+                    ? addItemFromPantry(item.name, item.imageUrl)
+                    : addExistingToPurchase(item.id)
+                "
+              >
                 <ion-icon :icon="addOutline" slot="start" />Añadir
               </ion-button>
             </div>
@@ -132,7 +162,20 @@
 
 <script setup lang="ts">
 import {
-  IonFab, IonFabButton, IonModal, IonHeader, IonToolbar, IonTitle, IonButtons, IonButton, IonContent, IonList, IonItem, IonInput, IonLabel, IonIcon
+  IonFab,
+  IonFabButton,
+  IonModal,
+  IonHeader,
+  IonToolbar,
+  IonTitle,
+  IonButtons,
+  IonButton,
+  IonContent,
+  IonList,
+  IonItem,
+  IonInput,
+  IonLabel,
+  IonIcon
 } from '@ionic/vue'
 import { addOutline } from 'ionicons/icons'
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
@@ -148,11 +191,11 @@ import {
   limit,
   updateDoc,
   onSnapshot,
-  type Unsubscribe,
+  type Unsubscribe
 } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showToast } from '@/composables/showToast'
-import { getOptimizedUrl, isImageGalery } from '@/composables/itemUtils'
+import { getOptimizedUrl, isImageGalery, getInitial } from '@/composables/itemUtils'
 import type { Item } from '@/models/item'
 import type { ComunItem } from '@/models/comunItem'
 
@@ -189,13 +232,13 @@ const keyFor = (name: string, imageUrl: string) => `${norm(name)}__${String(imag
 const excludedKeysSet = computed(() => {
   const set = new Set<string>()
 
-  for (const i of (props.items ?? [])) {
+  for (const i of props.items ?? []) {
     const n = String(i?.name ?? '')
     const img = String(i?.imageUrl ?? '')
     set.add(keyFor(n, img))
   }
 
-  for (const k of (localExcludedKeys.value ?? [])) {
+  for (const k of localExcludedKeys.value ?? []) {
     set.add(k)
   }
 
@@ -228,13 +271,13 @@ const combinedItems = computed(() => {
     kind: 'common' as const,
     id: c.id,
     name: c.name,
-    imageUrl: c.imageUrl,
+    imageUrl: c.imageUrl
   }))
   const inv = inventoryNotInPurchaseFiltered.value.map(i => ({
     kind: 'inventory' as const,
     id: i.id,
     name: i.name,
-    imageUrl: i.imageUrl,
+    imageUrl: i.imageUrl
   }))
 
   let merged = [...commons, ...inv]
@@ -243,9 +286,7 @@ const combinedItems = computed(() => {
     merged = merged.filter(i => i.kind === 'inventory')
   }
 
-  merged.sort((a, b) =>
-    a.name.localeCompare(b.name, 'es', { sensitivity: 'base' })
-  )
+  merged.sort((a, b) => a.name.localeCompare(b.name, 'es', { sensitivity: 'base' }))
 
   return merged
 })
@@ -281,7 +322,7 @@ function startComunItemsListener() {
         return {
           id: String(d.id),
           name: String(data?.name ?? ''),
-          imageUrl: String(data?.imageUrl ?? ''),
+          imageUrl: String(data?.imageUrl ?? '')
         } as ComunItem
       })
       loading.value = false
@@ -313,7 +354,7 @@ function closeCreateModal() {
 async function confirmCreate() {
   await addItemFromPantry(newProductName.value, '')
   if (newProductName.value.trim()) {
-    newProductName.value = ''
+    clearInput()
   }
 }
 
@@ -361,10 +402,10 @@ async function addItemFromPantry(nameItem: string, imageUrl: string) {
     batch.set(newItemRef, {
       name: itemName,
       pantryCode: props.pantryCode,
-      quantity: 1,
+      quantity: 0,
       unit: 'Unidad',
       inPurchase: defaultInPurchase.value,
-      imageUrl: imageUrl,
+      imageUrl: imageUrl
     })
 
     const pantryRef = await getPantryRefByCode()
@@ -386,6 +427,7 @@ async function addItemFromPantry(nameItem: string, imageUrl: string) {
     await showToast(`No se pudo añadir el producto ${name}.`, 'danger')
   } finally {
     loading.value = false
+    clearInput()
   }
 }
 
@@ -399,6 +441,9 @@ async function addExistingToPurchase(itemId: string) {
   } catch (err) {
     console.error('Error al añadir producto existente a la compra:', err)
     await showToast('No se pudo añadir el producto a la compra.', 'danger')
+  } finally {
+    loading.value = false
+    clearInput()
   }
 }
 
@@ -406,11 +451,7 @@ async function addExistingToPurchase(itemId: string) {
 async function getPantryRefByCode() {
   if (pantryDocId.value) return doc(db, 'pantries', pantryDocId.value)
 
-  const q = query(
-    collection(db, 'pantries'),
-    where('code', '==', props.pantryCode),
-    limit(1)
-  )
+  const q = query(collection(db, 'pantries'), where('code', '==', props.pantryCode), limit(1))
   const snap = await getDocs(q)
   if (snap.empty) throw new Error(`No existe la despensa con code ${props.pantryCode}`)
 
@@ -431,7 +472,6 @@ onBeforeUnmount(() => {
   stopComunItemsListener()
 })
 </script>
-
 
 <style scoped>
 /* BOTON FLOTANTE AÑADIR */
@@ -566,6 +606,33 @@ onBeforeUnmount(() => {
   object-fit: cover;
 }
 
+/* LETRA (cuando no hay imagen) */
+.suggested-letter {
+  width: 60px;
+  height: 60px;
+  margin: 0 auto 8px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 12px;
+  border: 1px solid var(--ion-border-color);
+
+  font-family: "Risque", serif;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
+  font-size: 44px;
+
+  color: var(--md-accent, #2ea15d);
+  background: color-mix(in srgb, var(--ion-background-color) 88%, var(--md-accent, #2ea15d) 12%);
+}
+
+body.dark .suggested-letter {
+  border-color: #333333;
+  background: color-mix(in srgb, var(--ion-background-color) 85%, var(--md-accent, #2ea15d) 15%);
+}
+
 .suggested-name {
   margin: 0 0 8px;
   font-size: 15px;
@@ -596,7 +663,7 @@ onBeforeUnmount(() => {
   margin: 16px 4px 22px;
 }
 
-.filter-radios.mydict>div {
+.filter-radios.mydict > div {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -612,7 +679,7 @@ onBeforeUnmount(() => {
   clip-path: inset(100%);
 }
 
-.filter-radios.mydict input[type='radio']:focus+span {
+.filter-radios.mydict input[type='radio']:focus + span {
   outline: 0;
   border-color: var(--md-accent, #2ea15d);
   box-shadow: 0 0 0 4px color-mix(in srgb, #ffffff 80%, var(--md-accent, #2ea15d) 20%);
@@ -642,14 +709,14 @@ onBeforeUnmount(() => {
   border-radius: 0 0.375em 0.375em 0;
 }
 
-.filter-radios.mydict input[type='radio']:checked+span {
+.filter-radios.mydict input[type='radio']:checked + span {
   z-index: 1;
   color: var(--md-accent, #2ea15d);
   box-shadow: 0 0 0 0.0625em var(--md-accent, #2ea15d);
   background-color: color-mix(in srgb, #ffffff 80%, var(--md-accent, #2ea15d) 20%);
 }
 
-body.dark .filter-radios.mydict input[type='radio']:checked+span {
+body.dark .filter-radios.mydict input[type='radio']:checked + span {
   background-color: rgba(46, 161, 94, 0.1);
   color: color-mix(in srgb, #ffffff 92%, var(--md-accent, #2ea15d) 8%);
   box-shadow: 0 0 0 0.0625em var(--md-accent, #2ea15d);
