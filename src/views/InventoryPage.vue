@@ -2,7 +2,7 @@
   <ion-page>
     <InventoryAndPurcharseHeader :title="`Inventario de ${props.name}`" backRouteName="home" />
 
-    <ion-content class="ion-padding pantry-content">
+    <ion-content ref="contentRef" class="ion-padding pantry-content" :scroll-events="true" @ionScroll="onContentScroll">
       <!-- Buscador START -->
       <div class="actions">
         <ion-searchbar v-model="search" placeholder="Buscar producto…" :debounce="150" show-clear-button="focus" />
@@ -17,7 +17,7 @@
 
       <!-- Productos de la despensa seleccionada START -->
       <div v-if="!loading && itemsFiltered.length" class="items-grid">
-        <div v-for="item in itemsFiltered" :key="item.id" class="item-card"
+        <div v-for="item in itemsFiltered" :key="item.id" :ref="(el) => setItemCardRef(item.id, el)" class="item-card"
           :class="{ 'item-card-expiring': isExpiringSoon(item) }" @click="openInfoModal(item)">
           <!-- Botón mover -->
           <ion-button class="move-btn" fill="clear" size="small" aria-label="Mover producto"
@@ -88,12 +88,24 @@
       </div>
       <!-- Sin productos de la despensa seleccionada END -->
 
+      <!-- Barra alfabética (scroll rápido) START -->
+      <div class="alpha-bar" :class="{ 'alpha-bar--visible': showAlphaBar }" @pointerdown.prevent="onAlphaPointerDown"
+        @pointermove.prevent="onAlphaPointerMove" @pointerup="onAlphaPointerUp" @pointercancel="onAlphaPointerUp">
+
+        <div v-for="l in alphabet" :key="l" class="alpha-letter" :class="{ 'alpha-letter--active': activeLetter === l }"
+          :data-letter="l">
+          {{ l }}
+        </div>
+
+      </div>
+      <!-- Barra alfabética END -->
+
       <!-- Botón flotante START -->
       <ModalAddProduct :pantry-code="props.code" :items="items" view="inventory" @willOpen="search = ''" />
       <!-- Botón flotante END -->
 
       <!-- Modal info producto START -->
-      <ion-modal :is-open="isInfoOpen" css-class="product-info-modal" @didDismiss="closeInfoModal"
+      <ion-modal :is-open="isInfoOpen" css-class="product-info-modal" @didDismiss="onInfoDidDismiss"
         :backdropDismiss="!savingItem" :canDismiss="!savingItem">
         <ion-content class="product-info-content" v-if="selectedItem">
           <div class="product-info-wrapper">
@@ -158,7 +170,7 @@
               </div>
 
               <div class="info-actions">
-                <ion-button expand="block" fill="outline" class="btn-info-cancel" @click="closeInfoModal"
+                <ion-button expand="block" fill="outline" class="btn-info-cancel" @click="requestCloseInfoModal"
                   :disabled="savingItem">
                   <span class="material-icons">close</span> Cancelar
                 </ion-button>
@@ -180,7 +192,7 @@
       <!-- Modal info producto END -->
 
       <!-- Modal mover producto START -->
-      <ion-modal :is-open="isMoveOpen" css-class="move-product-modal" @didDismiss="closeMoveModal"
+      <ion-modal :is-open="isMoveOpen" css-class="move-product-modal" @didDismiss="onMoveDidDismiss"
         :backdropDismiss="!movingItem" :canDismiss="!movingItem">
         <ion-content class="product-info-content" v-if="moveItem">
           <div class="product-info-wrapper">
@@ -225,9 +237,7 @@
                     </ion-button>
                   </div>
 
-                  <small class="info-helper">
-                    Mínimo 1, máximo {{ moveMaxQuantity }}
-                  </small>
+                  <small class="info-helper"> Mínimo 1, máximo {{ moveMaxQuantity }} </small>
                 </div>
 
                 <div class="info-field">
@@ -237,7 +247,7 @@
               </div>
 
               <div class="info-actions">
-                <ion-button expand="block" fill="outline" class="btn-info-cancel" @click="closeMoveModal"
+                <ion-button expand="block" fill="outline" class="btn-info-cancel" @click="requestCloseMoveModal"
                   :disabled="movingItem">
                   <span class="material-icons">close</span> Cancelar
                 </ion-button>
@@ -257,19 +267,42 @@
         </ion-content>
       </ion-modal>
       <!-- Modal mover producto END -->
-
     </ion-content>
   </ion-page>
 </template>
 
 <script setup lang="ts">
-import { IonPage, IonContent, IonSpinner, IonButton, IonIcon, IonSearchbar, IonModal, IonInput, IonSelect, IonSelectOption } from '@ionic/vue'
+import {
+  IonPage,
+  IonContent,
+  IonSpinner,
+  IonButton,
+  IonIcon,
+  IonSearchbar,
+  IonModal,
+  IonInput,
+  IonSelect,
+  IonSelectOption
+} from '@ionic/vue'
 import { cartOutline, trashOutline, swapHorizontalOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
 import type { Location } from '@/models/location'
 import type { Pantry } from '@/models/pantry'
-import { onMounted, onBeforeUnmount, ref, computed, inject, watch, type Ref } from 'vue'
-import { collection, query, where, updateDoc, doc, getDocs, writeBatch, increment, onSnapshot, limit, type Unsubscribe, orderBy } from 'firebase/firestore'
+import { onMounted, onBeforeUnmount, ref, computed, inject, watch, type Ref, nextTick } from 'vue'
+import {
+  collection,
+  query,
+  where,
+  updateDoc,
+  doc,
+  getDocs,
+  writeBatch,
+  increment,
+  onSnapshot,
+  limit,
+  type Unsubscribe,
+  orderBy
+} from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showToast } from '@/composables/showToast'
 import { getMeasurementUnit, getOptimizedUrl, isImageGalery, getInitial } from '@/composables/itemUtils'
@@ -287,21 +320,223 @@ const search = ref<string>('')
 const savingItem = ref<boolean>(false)
 const movingItem = ref<boolean>(false)
 
-let stop: Unsubscribe | null = null
-const items = ref<Item[]>([])
+// -----------------------------
+// 1) Mantener scroll al cerrar modales (editar / mover)
+// -----------------------------
+type IonContentEl = HTMLElement & {
+  getScrollElement: () => Promise<HTMLElement>
+  scrollToPoint: (x: number, y: number, duration: number) => Promise<void>
+}
 
+const contentRef = ref<any>(null)
+
+const showAlphaBar = ref(false)
+let alphaHideTimer: ReturnType<typeof setTimeout> | null = null
+
+function scheduleHideAlphaBar() {
+  if (alphaHideTimer) clearTimeout(alphaHideTimer)
+  alphaHideTimer = setTimeout(() => {
+    // Si el usuario está arrastrando la barra, no la escondas aún
+    if (!alphaDragging.value) showAlphaBar.value = false
+  }, 1000)
+}
+
+function onContentScroll() {
+  // Al hacer scroll, la mostramos y reprogramamos el hide
+  showAlphaBar.value = true
+  scheduleHideAlphaBar()
+}
+
+
+function getIonContentEl(): IonContentEl | null {
+  const r = contentRef.value
+  // En Ionic Vue el ref suele ser un proxy -> el webcomponent real está en $el
+  return ((r?.$el ?? r) as IonContentEl) ?? null
+}
+
+async function getScrollEl(): Promise<HTMLElement | null> {
+  try {
+    const el = getIonContentEl()
+    if (!el?.getScrollElement) return null
+    return await el.getScrollElement()
+  } catch {
+    return null
+  }
+}
+
+const itemCardEls = ref<Record<string, HTMLElement>>({})
+const savedScrollTop = ref<number>(0)
+const savedItemId = ref<string | null>(null)
+const savedItemOffset = ref<number>(0)
+
+function setItemCardRef(id: string, el: any) {
+  if (!id) return
+  const node = (el?.$el ?? el) as HTMLElement | null
+
+  if (node) {
+    itemCardEls.value[id] = node
+  } else {
+    const copy = { ...itemCardEls.value }
+    delete copy[id]
+    itemCardEls.value = copy
+  }
+}
+
+function calcOffsetTopWithinScroll(target: HTMLElement, scrollEl: HTMLElement): number {
+  let y = 0
+  let el: HTMLElement | null = target
+  while (el && el !== scrollEl) {
+    y += el.offsetTop || 0
+    el = el.offsetParent as HTMLElement | null
+  }
+  return y
+}
+
+// Guardamos scroll justo al abrir un modal desde un item
+async function saveScrollSnapshot(itemId: string) {
+  const scrollEl = await getScrollEl()
+  if (!scrollEl) return
+
+  savedScrollTop.value = scrollEl.scrollTop
+  savedItemId.value = itemId
+
+  const el = itemCardEls.value[itemId]
+  if (el) {
+    const elTop = calcOffsetTopWithinScroll(el, scrollEl)
+    // Offset del item respecto al viewport del scroll (para que al volver quede en el mismo sitio)
+    savedItemOffset.value = elTop - scrollEl.scrollTop
+  } else {
+    savedItemOffset.value = 0
+  }
+}
+
+// Restauramos scroll al cerrar el modal (guardar o cancelar)
+async function restoreScrollSnapshot() {
+  const c = getIonContentEl()
+  const scrollEl = await getScrollEl()
+  if (!c || !scrollEl) return
+
+  await nextTick()
+
+  const id = savedItemId.value
+  const el = id ? itemCardEls.value[id] : null
+
+  let targetY = savedScrollTop.value
+
+  if (el && id) {
+    const elTop = calcOffsetTopWithinScroll(el, scrollEl)
+    targetY = Math.max(0, elTop - savedItemOffset.value)
+  }
+
+  try {
+    await c.scrollToPoint(0, targetY, 0)
+  } catch {
+    // fallback (por si scrollToPoint falla por alguna razón)
+    scrollEl.scrollTop = targetY
+  }
+}
+
+// -----------------------------
+// 2) Barra alfabética (scroll rápido)
+// -----------------------------
+const alphabet = [
+  'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'Ñ', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'
+]
+const activeLetter = ref<string | null>(null)
+const alphaDragging = ref(false)
+
+const letterToItemId = computed<Record<string, string>>(() => {
+  const map: Record<string, string> = {}
+  for (const it of itemsFiltered.value) {
+    const first = getLetterKey(it.name)
+    if (first && !map[first]) map[first] = it.id
+  }
+  return map
+})
+
+function getLetterKey(name: string): string {
+  const raw = String(name ?? '').trim()
+  if (!raw) return ''
+  // Normalizamos acentos para agrupar (Á -> A)
+  const n = raw.normalize('NFD').replace(/\p{Diacritic}/gu, '').toUpperCase()
+  const c = n.charAt(0)
+  // Si el nombre empieza por Ñ “real”, lo detectamos antes de normalizar (si quieres)
+  if (raw.trim().toUpperCase().startsWith('Ñ')) return 'Ñ'
+  // Si no es letra, devolvemos '#'(pero aquí no la usamos)
+  if (!/[A-Z]/.test(c)) return ''
+  return c
+}
+
+async function scrollToItemId(itemId: string) {
+  const c = getIonContentEl()
+  const scrollEl = await getScrollEl()
+  if (!c || !scrollEl) return
+
+  const el = itemCardEls.value[itemId]
+  if (!el) return
+
+  const y = calcOffsetTopWithinScroll(el, scrollEl)
+  await c.scrollToPoint(0, Math.max(0, y - 8), 120)
+}
+
+async function scrollToLetter(letter: string) {
+  const id = letterToItemId.value[letter]
+  if (!id) return
+  activeLetter.value = letter
+  await scrollToItemId(id)
+}
+
+function letterFromPointerEvent(ev: PointerEvent): string | null {
+  const target = ev.currentTarget as HTMLElement | null
+  if (!target) return null
+
+  const rect = target.getBoundingClientRect()
+  const y = Math.min(Math.max(ev.clientY - rect.top, 0), rect.height)
+
+  const itemH = rect.height / alphabet.length
+  const idx = Math.min(alphabet.length - 1, Math.max(0, Math.floor(y / itemH)))
+
+  return alphabet[idx] ?? null
+}
+
+function onAlphaPointerDown(ev: PointerEvent) {
+  alphaDragging.value = true
+  showAlphaBar.value = true
+  if (alphaHideTimer) clearTimeout(alphaHideTimer)
+
+  const l = letterFromPointerEvent(ev)
+  if (l) scrollToLetter(l)
+}
+
+function onAlphaPointerMove(ev: PointerEvent) {
+  if (!alphaDragging.value) return
+  const l = letterFromPointerEvent(ev)
+  if (l && l !== activeLetter.value) scrollToLetter(l)
+}
+
+function onAlphaPointerUp() {
+  alphaDragging.value = false
+  scheduleHideAlphaBar()
+
+  setTimeout(() => (activeLetter.value = null), 250)
+}
+
+
+// -----------------------------
+// Datos / listeners
+// -----------------------------
+let stopItems: Unsubscribe | null = null
+let stopLocations: Unsubscribe | null = null
+const items = ref<Item[]>([])
 const locations = ref<Location[]>([])
 
 // Despensas reales obtenidas por códigos guardados en localStorage
 const pantries = ref<Pantry[]>([])
 
-const destinationPantries = computed(() =>
-  pantries.value.filter(p => p.code !== props.code)
-)
+const destinationPantries = computed(() => pantries.value.filter(p => p.code !== props.code))
 
 // Normaliza: quita acentos y pasa a minúsculas
-const norm = (s: string) =>
-  s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim()
+const norm = (s: string) => s.normalize('NFD').replace(/\p{Diacritic}/gu, '').toLowerCase().trim()
 
 // Lista filtrada según el texto del searchbar
 const itemsFiltered = computed(() => {
@@ -330,7 +565,12 @@ onMounted(() => {
 })
 
 // Al cerrar la ventana dejaremos de escuchar a firestore
-onBeforeUnmount(() => stop?.())
+onBeforeUnmount(() => {
+  if (alphaHideTimer) clearTimeout(alphaHideTimer)
+  stopItems?.()
+  stopLocations?.()
+})
+
 
 // Estado del modal de información
 const isInfoOpen = ref(false)
@@ -389,7 +629,7 @@ function clearPrevImageIfNeeded(item: Item) {
   prevImageItemId.value = null
 }
 
-// CADUCIDAD / ALERTA EN CARD 
+// CADUCIDAD / ALERTA EN CARD
 function daysUntilExpiration(expiration: string): number {
   const today = new Date()
   today.setHours(0, 0, 0, 0)
@@ -408,7 +648,7 @@ function isExpiringSoon(item: Item): boolean {
   return d <= 3
 }
 
-// CARGA DE DESPENSAS POR CÓDIGOS EN LOCALSTORAGE 
+// CARGA DE DESPENSAS POR CÓDIGOS EN LOCALSTORAGE
 async function loadPantries() {
   try {
     const raw = localStorage.getItem('myPantries')
@@ -430,11 +670,7 @@ async function loadPantries() {
       return
     }
 
-    const qPantries = query(
-      collection(db, 'pantries'),
-      where('code', 'in', codesList),
-      orderBy('name', 'asc')
-    )
+    const qPantries = query(collection(db, 'pantries'), where('code', 'in', codesList), orderBy('name', 'asc'))
 
     const snap = await getDocs(qPantries)
     pantries.value = snap.docs.map(d => {
@@ -455,7 +691,7 @@ async function loadPantries() {
   }
 }
 
-//  HELPERS DE CANTIDAD 
+// HELPERS DE CANTIDAD
 function getStepForUnit(unitRaw: string | undefined | null): number {
   const u = (unitRaw || '').toLowerCase()
 
@@ -554,8 +790,11 @@ function changeMoveQuantity(deltaSign: 1 | -1) {
   moveQuantity.value = newQty
 }
 
-// MODAL INFO PRODUCTO 
+// MODAL INFO PRODUCTO
 async function openInfoModal(item: Item) {
+  // Guardamos scroll antes de abrir
+  await saveScrollSnapshot(item.id)
+
   selectedItem.value = item
   editQuantity.value = item.quantity
   editUnit.value = item.unit || 'Unidad'
@@ -564,27 +803,36 @@ async function openInfoModal(item: Item) {
   isInfoOpen.value = true
 }
 
-// Cierra el modal de información y resetea los campos
-function closeInfoModal() {
+// Cerrar modal (por botón) -> solo baja el boolean, el reset real se hace en didDismiss
+function requestCloseInfoModal() {
+  isInfoOpen.value = false
+}
+
+// didDismiss del modal info: reset + restaurar scroll
+async function onInfoDidDismiss() {
   // Si tenía una imagen en preview sin guardar, la restauramos al cerrar
   if (selectedItem.value) {
     restorePrevImageIfNeeded(selectedItem.value)
   }
 
-  isInfoOpen.value = false
   selectedItem.value = null
   editQuantity.value = null
   editUnit.value = 'Unidad'
   editLocation.value = null
   editExpirationDate.value = null
   savingItem.value = false
+
+  // Restaurar scroll donde estaba
+  await restoreScrollSnapshot()
 }
 
 async function getLocations(locationId: string | null) {
   loading.value = true
   const q = query(collection(db, 'locations'), orderBy('name', 'asc'))
 
-  stop = onSnapshot(
+  // Cortamos el listener anterior de locations (si existía)
+  stopLocations?.()
+  stopLocations = onSnapshot(
     q,
     snap => {
       locations.value = snap.docs.map(d => {
@@ -619,10 +867,7 @@ async function saveItemInfo() {
 
   try {
     if (pendingImageFile.value && pendingImagePublicId.value) {
-      const url = await uploadToCloudinary(
-        pendingImageFile.value,
-        pendingImagePublicId.value
-      )
+      const url = await uploadToCloudinary(pendingImageFile.value, pendingImagePublicId.value)
       if (!url) {
         await showToast('Error al subir la imagen a la nube.', 'danger')
         // Restaurar si falla la subida
@@ -634,6 +879,7 @@ async function saveItemInfo() {
 
     const expirationToSave = editExpirationDate.value ? editExpirationDate.value.trim() : null
     console.log('selectedItem.value.imageUrl', selectedItem.value.imageUrl)
+
     const refItem = doc(db, 'items', selectedItem.value.id)
     await updateDoc(refItem, {
       quantity: editQuantity.value,
@@ -649,7 +895,8 @@ async function saveItemInfo() {
     clearPrevImageIfNeeded(selectedItem.value)
 
     await showToast('Producto actualizado.', 'success')
-    closeInfoModal()
+    // Cerrar modal (reset lo hace didDismiss)
+    requestCloseInfoModal()
   } catch (err) {
     console.error('Error al actualizar producto:', err)
     // si falla el update, restaurar imagen anterior
@@ -689,7 +936,6 @@ async function pickWebSource(): Promise<CameraSource | null> {
   const { data } = await sheet.onDidDismiss<CameraSource | null>()
   return (data ?? null)
 }
-
 
 // Obtiene una imagen de la cámara/galería y la deja solo en memoria como preview hasta que el usuario pulse Guardar
 async function pickImage(item: Item) {
@@ -747,13 +993,10 @@ async function uploadToCloudinary(file: File, publicId: string): Promise<string>
   formData.append('public_id', publicId)
   formData.append('api_key', '962198993815698')
 
-  const res = await fetch(
-    'https://api.cloudinary.com/v1_1/dpgqmi3zs/image/upload',
-    {
-      method: 'POST',
-      body: formData
-    }
-  )
+  const res = await fetch('https://api.cloudinary.com/v1_1/dpgqmi3zs/image/upload', {
+    method: 'POST',
+    body: formData
+  })
 
   const data = await res.json()
   return data.secure_url
@@ -762,12 +1005,10 @@ async function uploadToCloudinary(file: File, publicId: string): Promise<string>
 // Recuperamos los items de la despensa seleccionada
 async function getPantryItems(pantryCode: string) {
   loading.value = true
-  const q = query(
-    collection(db, 'items'),
-    where('pantryCode', '==', pantryCode),
-    orderBy('name', 'asc')
-  )
-  stop = onSnapshot(
+  const q = query(collection(db, 'items'), where('pantryCode', '==', pantryCode), orderBy('name', 'asc'))
+
+  stopItems?.()
+  stopItems = onSnapshot(
     q,
     snap => {
       items.value = snap.docs.map(d => {
@@ -830,11 +1071,7 @@ async function deleteItemFromPantry(item: Item) {
 async function getPantryRefByCode() {
   if (pantryDocId.value) return doc(db, 'pantries', pantryDocId.value)
 
-  const q = query(
-    collection(db, 'pantries'),
-    where('code', '==', props.code),
-    limit(1)
-  )
+  const q = query(collection(db, 'pantries'), where('code', '==', props.code), limit(1))
   const snap = await getDocs(q)
   if (snap.empty) throw new Error(`No existe la despensa con code ${props.code}`)
 
@@ -844,18 +1081,17 @@ async function getPantryRefByCode() {
 
 // Obtener ref de una despensa por código genérico (para despensa destino)
 async function getPantryRefByCodeGeneric(code: string) {
-  const q = query(
-    collection(db, 'pantries'),
-    where('code', '==', code),
-    limit(1)
-  )
+  const q = query(collection(db, 'pantries'), where('code', '==', code), limit(1))
   const snap = await getDocs(q)
   if (snap.empty) throw new Error(`No existe la despensa con code ${code}`)
   return snap.docs[0].ref
 }
 
-// MODAL MOVER PRODUCTO 
-function openMoveModal(item: Item) {
+// MODAL MOVER PRODUCTO
+async function openMoveModal(item: Item) {
+  // Guardamos scroll antes de abrir
+  await saveScrollSnapshot(item.id)
+
   moveItem.value = item
   moveMaxQuantity.value = item.quantity
   moveQuantity.value = item.quantity > 0 ? 1 : 0
@@ -863,14 +1099,21 @@ function openMoveModal(item: Item) {
   isMoveOpen.value = true
 }
 
-// Cierra el modal de información y resetea los campos
-function closeMoveModal() {
+// Cerrar modal (por botón) -> solo baja el boolean, el reset real se hace en didDismiss
+function requestCloseMoveModal() {
   isMoveOpen.value = false
+}
+
+// didDismiss del modal mover: reset + restaurar scroll
+async function onMoveDidDismiss() {
   moveItem.value = null
   selectedPantryCode.value = ''
   moveQuantity.value = null
   moveMaxQuantity.value = 0
   movingItem.value = false
+
+  // Restaurar scroll donde estaba
+  await restoreScrollSnapshot()
 }
 
 async function confirmMove() {
@@ -963,7 +1206,8 @@ async function confirmMove() {
     moveItem.value.quantity = newOriginQty
 
     await showToast('Producto movido correctamente.', 'success')
-    closeMoveModal()
+    // Cerrar modal (reset lo hace didDismiss)
+    requestCloseMoveModal()
   } catch (err) {
     console.error('Error al mover producto:', err)
     await showToast('No se pudo mover el producto.', 'danger')
@@ -972,6 +1216,7 @@ async function confirmMove() {
   }
 }
 </script>
+
 
 <style scoped>
 /* BUSCADOR */
@@ -1288,15 +1533,63 @@ body.dark .qty-btn-card {
   letter-spacing: 0;
   font-size: 62px;
 
-
   color: var(--md-accent, #2ea15d);
   background: color-mix(in srgb, var(--ion-background-color) 88%, var(--md-accent, #2ea15d) 12%);
 }
 
-
 body.dark .item-letter {
   border-color: #333333;
   background: color-mix(in srgb, var(--ion-background-color) 85%, var(--md-accent, #2ea15d) 15%);
+}
+
+/* ÍNDICE ALFABÉTICO (barra derecha) */
+.alpha-index {
+  position: fixed;
+  right: 6px;
+  top: 52%;
+  transform: translateY(-50%);
+  z-index: 50;
+
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  padding: 8px 6px;
+  border-radius: 999px;
+
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(229, 231, 235, 0.9);
+  backdrop-filter: blur(6px);
+
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+body.dark .alpha-index {
+  background: rgba(30, 30, 30, 0.7);
+  border-color: rgba(60, 60, 60, 0.9);
+}
+
+.alpha-letter {
+  width: 18px;
+  height: 16px;
+
+  display: grid;
+  place-items: center;
+
+  font-size: 11px;
+  font-weight: 700;
+
+  color: color-mix(in srgb, #ffffff 55%, var(--md-accent, #2ea15d) 45%);
+}
+
+body.dark .alpha-letter {
+  color: color-mix(in srgb, #ffffff 88%, var(--md-accent, #2ea15d) 12%);
+}
+
+.alpha-letter.disabled {
+  opacity: 0.22;
 }
 
 /* MODAL INFO PRODUCTO + MODAL MOVER PRODUCTO: */
@@ -1595,4 +1888,80 @@ body.dark .btn-info-cancel {
   font-weight: 700;
   color: #111827;
 }
+
+/* ====== BARRA ALFABÉTICA (aparece/desaparece con transición) ====== */
+.alpha-bar {
+  position: fixed;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%) translateX(10px);
+  z-index: 20;
+
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 4px;
+  border-radius: 12px;
+
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+
+  opacity: 0;
+  pointer-events: none;
+
+  transition: opacity 180ms ease, transform 180ms ease;
+
+  /* claro */
+  background: rgba(255, 255, 255, 0.78);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+}
+
+.alpha-bar--visible {
+  opacity: 1;
+  transform: translateY(-50%) translateX(0);
+  pointer-events: auto;
+}
+
+/* oscuro */
+body.dark .alpha-bar {
+  background: rgba(20, 20, 20, 0.68);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+/* ====== LETRAS ====== */
+.alpha-letter {
+  font-size: 12px;
+  line-height: 12px;
+  padding: 2px 4px;
+  border-radius: 6px;
+  text-align: center;
+  min-width: 18px;
+
+  font-weight: 600;
+
+  /* SIEMPRE color principal */
+  color: var(--md-accent, #2ea15d);
+}
+
+/* IMPORTANTE: fuerza también en oscuro (te estaba pisando otra regla) */
+body.dark .alpha-letter {
+  color: var(--md-accent, #2ea15d);
+}
+
+/* Activa (la que estás tocando) */
+.alpha-letter--active {
+  font-weight: 700;
+
+  /* claro */
+  background: rgba(0, 0, 0, 0.12);
+}
+
+body.dark .alpha-letter--active {
+  background: rgba(255, 255, 255, 0.14);
+}
+
+
 </style>
