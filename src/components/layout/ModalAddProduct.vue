@@ -49,7 +49,7 @@
 
       <!-- PRODUCTOS CREADOS PARA AÑADIR AL INVENTARIO START -->
       <div class="suggested-wrapper">
-        <h3 class="suggested-title">Añade productos a tu despensa</h3>
+        <h3 class="suggested-title">{{ modalSubtitle }}</h3>
 
         <!-- INVENTARIO: solo comunes que no tenemos (se mantiene igual) -->
         <template v-if="view === 'inventory'">
@@ -297,6 +297,9 @@ const modalTitle = computed(() =>
 
 const fabAriaLabel = computed(() =>
   props.view === 'purcharse' ? 'Crear producto en compra' : 'Crear producto'
+)
+const modalSubtitle = computed(() =>
+  props.view === 'purcharse' ? 'Añade productos a tu compra' : 'Añade productos a tu despensa'
 )
 
 const defaultInPurchase = computed<boolean>(() => props.view === 'purcharse')
