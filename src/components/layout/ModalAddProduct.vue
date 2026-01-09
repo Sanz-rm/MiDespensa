@@ -402,7 +402,7 @@ async function addItemFromPantry(nameItem: string, imageUrl: string) {
     batch.set(newItemRef, {
       name: itemName,
       pantryCode: props.pantryCode,
-      quantity: 0,
+      quantity: (defaultInPurchase?.value === true) ? 0 : 1,
       unit: 'Unidad',
       inPurchase: defaultInPurchase.value,
       imageUrl: imageUrl
