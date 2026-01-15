@@ -113,7 +113,13 @@
 
             <div class="info-product-block">
               <div class="info-product-image-wrapper" @click="!savingItem && pickImage(selectedItem)">
-                <img :src="selectedItem.imageUrl" :alt="selectedItem.name" />
+                <img v-if="selectedItem.imageUrl" :src="getOptimizedUrl(selectedItem.imageUrl)" :alt="selectedItem.name"
+                  :class="{ 'info-img-galery': isImageGalery(selectedItem.imageUrl) }" />
+
+                <div v-else class="modal-item-letter" aria-hidden="true">
+                  {{ getInitial(selectedItem.name) }}
+                </div>
+
                 <span class="material-icons info-product-icon">add_photo_alternate</span>
               </div>
               <span class="info-product-name">{{ selectedItem.name }}</span>
@@ -200,7 +206,12 @@
 
             <div class="info-product-block">
               <div class="info-product-image-wrapper">
-                <img :src="moveItem.imageUrl" :alt="moveItem.name" />
+                <img v-if="moveItem.imageUrl" :src="getOptimizedUrl(moveItem.imageUrl)" :alt="moveItem.name"
+                  :class="{ 'info-img-galery': isImageGalery(moveItem.imageUrl) }" />
+
+                <div v-else class="modal-item-letter" aria-hidden="true">
+                  {{ getInitial(moveItem.name) }}
+                </div>
               </div>
               <span class="info-product-name">{{ moveItem.name }}</span>
             </div>
@@ -346,7 +357,6 @@ function onContentScroll() {
   showAlphaBar.value = true
   scheduleHideAlphaBar()
 }
-
 
 function getIonContentEl(): IonContentEl | null {
   const r = contentRef.value
@@ -521,7 +531,6 @@ function onAlphaPointerUp() {
   setTimeout(() => (activeLetter.value = null), 250)
 }
 
-
 // -----------------------------
 // Datos / listeners
 // -----------------------------
@@ -570,7 +579,6 @@ onBeforeUnmount(() => {
   stopItems?.()
   stopLocations?.()
 })
-
 
 // Estado del modal de información
 const isInfoOpen = ref(false)
@@ -1217,7 +1225,6 @@ async function confirmMove() {
 }
 </script>
 
-
 <style scoped>
 /* BUSCADOR */
 .actions {
@@ -1542,6 +1549,34 @@ body.dark .item-letter {
   background: color-mix(in srgb, var(--ion-background-color) 85%, var(--md-accent, #2ea15d) 15%);
 }
 
+/* LETRA EN MODALES (cuando no hay imagen) */
+.modal-item-letter {
+  width: 100%;
+  height: 100%;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 14px;
+  border: 1px solid var(--ion-border-color);
+
+  font-family: "Risque", serif;
+  font-weight: 400;
+  line-height: 1;
+  letter-spacing: 0;
+
+  /* Ajustada a 108x108 */
+  font-size: 74px;
+
+  color: var(--md-accent, #2ea15d);
+  background: color-mix(in srgb, var(--ion-background-color) 88%, var(--md-accent, #2ea15d) 12%);
+}
+
+body.dark .modal-item-letter {
+  border-color: #333333;
+  background: color-mix(in srgb, var(--ion-background-color) 85%, var(--md-accent, #2ea15d) 15%);
+}
+
 /* ÍNDICE ALFABÉTICO (barra derecha) */
 .alpha-index {
   position: fixed;
@@ -1652,6 +1687,12 @@ body.dark .move-product-modal::part(content) {
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+
+/* IMAGEN DE GALERÍA EN MODAL */
+.info-product-image-wrapper img.info-img-galery {
+  object-fit: cover;
+  border-radius: 14px;
 }
 
 /* ICONO CAMBIAR FOTO */
@@ -1962,6 +2003,4 @@ body.dark .alpha-letter {
 body.dark .alpha-letter--active {
   background: rgba(255, 255, 255, 0.14);
 }
-
-
 </style>
