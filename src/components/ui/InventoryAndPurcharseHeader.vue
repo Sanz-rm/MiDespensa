@@ -6,7 +6,7 @@
           <ion-icon :icon="arrowBackOutline" style="font-size:28px;" />
         </ion-button>
       </ion-buttons>
-      <ion-title>{{ props.title }}</ion-title>
+      <ion-title class="title">{{ props.title }}</ion-title>
     </ion-toolbar>
   </ion-header>
 </template>
@@ -64,8 +64,39 @@ ion-header.rounded-header ion-icon {
   font-weight: 900; }
 
 /* TITULO */
-ion-header.rounded-header ion-title { 
+.title { 
   color: #fff; 
-  font-weight: 700; 
+  letter-spacing: 0.4px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+
+@media (min-width: 820px) {
+  ion-toolbar.back-toolbar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
+
+  ion-toolbar.back-toolbar ion-buttons[slot="start"] {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+  }
+
+  ion-toolbar.back-toolbar ion-title.title {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    width: auto;
+    margin: 0;
+    padding: 0;
+  }
+}
+
 </style>
