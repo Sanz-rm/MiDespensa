@@ -1,6 +1,6 @@
 <div align="center">
 
-# <img src="assets/icon.png" alt="Logo Mi Despensa" width="140" /> Mi Despensa
+# <img src="assets/icon.png" alt="Logo Mi Despensa" width="40" /> Mi Despensa
 
 **Proyecto de portafolio** realizado por **Manuel Sanz Romero** y **Silvia Aparicio Martín**  
 Organiza tu despensa, ahorra tiempo y evita desperdicio.
