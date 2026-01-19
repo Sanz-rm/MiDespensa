@@ -28,7 +28,7 @@
 
       <!-- Loading start -->
       <div v-if="loading" class="loading-box">
-        <ion-spinner name="crescent" style="transform:scale(2);"></ion-spinner>
+        <ion-spinner name="crescent" style="transform: scale(2)"></ion-spinner>
       </div>
       <!-- Loading end -->
 
@@ -46,16 +46,47 @@
 
         <!-- Lista de tarjetas start-->
         <div v-else class="pantry-list">
-          <div v-for="(pantry, i) in pantries" :key="i" class="pantry-card" @click="onCardClick($event, pantry)">
-            <!-- Botón salir/elimaniar start -->
-            <button type="button" class="corner-btn" :class="pantry.creatorId === deviceId ? 'danger' : 'accent'"
-              @click.stop="onCornerAction(pantry)">
-              <span class="material-icons icons-red" v-if="pantry.creatorId === deviceId" title="Eliminar despensa"
-                aria-label="Eliminar despensa">delete</span>
-              <span class="material-icons icons-red" v-else title="Salir de despensa"
-                aria-label="Salir de despensa">logout</span>
+          <div
+            v-for="(pantry, i) in pantries"
+            :key="i"
+            class="pantry-card"
+            @click="onCardClick($event, pantry)"
+          >
+            <!-- Botón salir/eliminar start -->
+            <button
+              type="button"
+              class="corner-btn"
+              :class="pantry.creatorId === deviceId ? 'danger' : 'accent'"
+              @click.stop="onCornerAction(pantry)"
+            >
+              <span
+                class="material-icons icons-red"
+                v-if="pantry.creatorId === deviceId"
+                title="Eliminar despensa"
+                aria-label="Eliminar despensa"
+                >delete</span
+              >
+              <span
+                class="material-icons icons-red"
+                v-else
+                title="Salir de despensa"
+                aria-label="Salir de despensa"
+                >logout</span
+              >
             </button>
-            <!-- Botón salir/elimaniar end -->
+            <!-- Botón salir/eliminar end -->
+
+            <!-- ✅ NUEVO: botón renombrar (solo creador) -->
+            <button
+              type="button"
+              class="corner-btn rename"
+              @click.stop="openRename(pantry)"
+              title="Cambiar nombre"
+              aria-label="Cambiar nombre"
+            >
+              <span class="material-icons">edit</span>
+            </button>
+            <!-- ✅ NUEVO: botón renombrar end -->
 
             <!-- Icono despensa start -->
             <div class="icon-box">
@@ -89,8 +120,13 @@
               </div>
               <div class="footer-row">
                 <!-- Botón copiar código start -->
-                <button type="button" class="code-chip copy-btn" @click.stop="copyPantryCode(pantry.code)"
-                  :aria-label="`Copiar código ${pantry.code}`" title="Copiar código">
+                <button
+                  type="button"
+                  class="code-chip copy-btn"
+                  @click.stop="copyPantryCode(pantry.code)"
+                  :aria-label="`Copiar código ${pantry.code}`"
+                  title="Copiar código"
+                >
                   <span class="chip-text">{{ pantry.code }}</span>
                   <span class="chip-copy material-icons" aria-hidden="true">content_copy</span>
                 </button>
@@ -103,38 +139,93 @@
       </div>
       <!-- Lista de despensas end -->
 
+      <!-- ✅ Popup renombrar (mismo diseño ConfirmPopup) START -->
+      <div v-if="showRenamePopup" class="confirm-overlay" @click.self="closeRename">
+        <div class="confirm-dialog">
+          <h2>Renombrar despensa</h2>
+
+          <p class="confirm-message">Cambia el nombre de “{{ renamePantry?.name }}”</p>
+
+          <input
+            v-model="renameValue"
+            class="confirm-input"
+            type="text"
+            maxlength="25"
+            placeholder="Nuevo nombre"
+            aria-label="Nuevo nombre"
+            @keydown.enter.prevent="confirmRename"
+          />
+
+          <div class="confirm-actions">
+            <button type="button" class="btn-secondary" @click="closeRename">Cancelar</button>
+            <button type="button" class="btn-primary" @click="confirmRename">Guardar</button>
+          </div>
+        </div>
+      </div>
+      <!-- ✅ Popup renombrar END -->
+
       <!-- Pop up confirmar salir/eliminar despensa START -->
-      <ConfirmPopup v-if="selectedPantry" v-model="showConfirmPantry"
-        :title="selectedPantry.creatorId === deviceId ? 'Eliminar despensa' : 'Salir de la despensa'" :message="selectedPantry.creatorId === deviceId
+      <ConfirmPopup
+        v-if="selectedPantry"
+        v-model="showConfirmPantry"
+        :title="selectedPantry.creatorId === deviceId ? 'Eliminar despensa' : 'Salir de la despensa'"
+        :message="
+          selectedPantry.creatorId === deviceId
             ? `Vas a eliminar definitivamente “${selectedPantry.name}”. Esta acción no se puede deshacer. ¿Quieres eliminarla?`
             : `Vas a salir de “${selectedPantry.name}”. Podrás volver con su código. ¿Quieres salir?`
-          " :confirmLabel="selectedPantry.creatorId === deviceId ? 'Eliminar' : 'Salir'" cancelLabel="Cancelar"
-        @confirm="confirmPantry" />
+        "
+        :confirmLabel="selectedPantry.creatorId === deviceId ? 'Eliminar' : 'Salir'"
+        cancelLabel="Cancelar"
+        @confirm="confirmPantry"
+      />
       <!-- Pop up confirmar salir/eliminar despensa END -->
     </ion-content>
 
     <!-- Modal reutilizable en modo CREAR start -->
-    <PantryModal v-model="openCreateModal" mode="create" @confirm="handleCreate" @close="openCreateModal = false" />
+    <PantryModal
+      v-model="openCreateModal"
+      mode="create"
+      @confirm="handleCreate"
+      @close="openCreateModal = false"
+    />
     <!-- Modal reutilizable en modo CREAR end -->
 
     <!-- Modal reutilizable en modo UNIRSE start -->
-    <PantryModal v-model="openJoinModal" mode="join" @confirm="handleJoin" @close="openJoinModal = false" />
+    <PantryModal
+      v-model="openJoinModal"
+      mode="join"
+      @confirm="handleJoin"
+      @close="openJoinModal = false"
+    />
     <!-- Modal reutilizable en modo UNIRSE end -->
   </ion-page>
 </template>
 
 <script setup lang="ts">
 import PantryHeader from '@/components/ui/PantryHeader.vue'
-import { IonPage, IonHeader, IonContent, IonSpinner } from '@ionic/vue'
+import { IonPage, IonHeader, IonContent, IonSpinner, onIonViewWillEnter } from '@ionic/vue'
 import { onMounted, onBeforeUnmount, ref, watch } from 'vue'
-import { collection, query, where, getDocs, addDoc, updateDoc, onSnapshot,
- type Unsubscribe, increment, orderBy, doc, writeBatch } from 'firebase/firestore'
+import {
+  collection,
+  query,
+  where,
+  getDocs,
+  addDoc,
+  updateDoc,
+  onSnapshot,
+  type Unsubscribe,
+  increment,
+  orderBy,
+  doc,
+  writeBatch
+} from 'firebase/firestore'
 import { db } from '@/firebase'
 import { Pantry } from '@/models/pantry'
 import { useRouter } from 'vue-router'
 import { showToast } from '@/composables/showToast'
 import PantryModal from '@/components/ui/PantryModal.vue'
 import ConfirmPopup from '@/components/ui/ConfirmPopup.vue'
+import { generatePantryCode } from '@/composables/pantryUtils'
 
 // Estado de apertura modal de cada modo
 const openCreateModal = ref(false)
@@ -143,6 +234,11 @@ const openJoinModal = ref(false)
 // Estados popup confirmación eliminar/salir despensa
 const showConfirmPantry = ref<boolean>(false)
 const selectedPantry = ref<Pantry | null>(null)
+
+// ✅ NUEVO: estados popup renombrar
+const showRenamePopup = ref(false)
+const renamePantry = ref<Pantry | null>(null)
+const renameValue = ref('')
 
 // Utility: blur focused element (avoid aria-hidden / autofocus conflicts when opening modals)
 function blurActiveElement() {
@@ -176,21 +272,63 @@ let stop: Unsubscribe | null = null
 const deviceId = getDeviceId()
 const router = useRouter()
 
-// Recuperamos toda la información necesaria
+// Normaliza y deduplica códigos
+function normalizeCodes(input: any): string[] {
+  const arr = Array.isArray(input) ? input : []
+  const normalized = arr.map((c) => String(c ?? '').trim().toUpperCase()).filter(Boolean)
+  return Array.from(new Set(normalized))
+}
+
+// Lee storage y sincroniza el ref codes (esto dispara el watch y resubscribe)
+function syncCodesFromStorage() {
+  try {
+    const raw = localStorage.getItem('myPantries')
+    const parsed = JSON.parse(raw ?? '[]')
+    const normalized = normalizeCodes(parsed)
+
+    const current = normalizeCodes(codes.value)
+    const sameLength = current.length === normalized.length
+    const sameContent = sameLength && current.every((v, i) => v === normalized[i])
+
+    if (!sameContent) {
+      console.log('[syncCodesFromStorage] codes updated from storage', normalized)
+      codes.value = normalized
+    } else {
+      console.log('[syncCodesFromStorage] codes already in sync', normalized)
+    }
+  } catch (e) {
+    console.log('[syncCodesFromStorage] error parsing myPantries', e)
+  }
+}
+
+const onMyPantriesChanged = () => {
+  syncCodesFromStorage()
+}
+
 onMounted(() => {
+  window.addEventListener('myPantriesChanged', onMyPantriesChanged as any)
+  syncCodesFromStorage()
   getUserPantries()
 })
 
-// Al cerrar la ventana dejaremos de escuchar a firestore
+onIonViewWillEnter(() => {
+  syncCodesFromStorage()
+})
+
 onBeforeUnmount(() => {
   try {
     stop?.()
   } catch (e) {
     console.log('[onBeforeUnmount] error stopping listener', e)
   }
+
+  try {
+    window.removeEventListener('myPantriesChanged', onMyPantriesChanged as any)
+  } catch (e) {
+    console.log('[onBeforeUnmount] error removing myPantriesChanged listener', e)
+  }
 })
 
-// Re-suscribe si cambian los códigos
 watch(
   codes,
   (newCodes) => {
@@ -211,7 +349,6 @@ function getDeviceId(): string {
   return id
 }
 
-// Suscripción en tiempo real según códigos
 function resubscribe(codesList: string[]) {
   try {
     stop?.()
@@ -219,32 +356,32 @@ function resubscribe(codesList: string[]) {
     console.log('[resubscribe] error stopping previous listener', e)
   }
 
-  if (!codesList || codesList.length === 0) {
+  const safeCodes = normalizeCodes(codesList)
+
+  if (!safeCodes || safeCodes.length === 0) {
     console.log('[resubscribe] no codes -> clear list')
     pantries.value = []
     loading.value = false
     return
   }
 
-  const q = query(collection(db, 'pantries'), where('code', 'in', codesList), orderBy('name', 'asc'))
+  const q = query(collection(db, 'pantries'), where('code', 'in', safeCodes), orderBy('name', 'asc'))
   stop = onSnapshot(
     q,
     (snap) => {
       pantries.value = snap.docs.map((d) => {
         const pantryData = d.data() as any
-        const pantry = {
+        return {
           id: String(d.id),
           code: String(pantryData.code ?? ''),
           name: String(pantryData.name ?? ''),
           memberCount: Number(pantryData.memberCount ?? 1),
           totalItems: Number(pantryData.totalItems ?? 0),
-          creatorId: String(pantryData.creatorId ?? '0000'),
+          creatorId: String(pantryData.creatorId ?? '0000')
         } as Pantry
-        return pantry
       })
 
-      // Si alguna despensa ya no existe, la eliminamos del almacenamiento local
-      for (const code of [...codesList]) {
+      for (const code of [...safeCodes]) {
         if (!pantries.value.some((p) => p.code === code)) {
           deletePantryFromStorage(code)
         }
@@ -261,17 +398,12 @@ function resubscribe(codesList: string[]) {
   )
 }
 
-// Obtenemos todas las despensas que tenga guardadas nuestro
 async function getUserPantries() {
   console.log('Mis despensas (storage):', codes.value)
   loading.value = true
   resubscribe(codes.value)
 }
 
-/* MODAL ADAPTADO
-    El modal nos pasa:  1.handleCreate({ name })  2.handleJoin({ code })
-    Llamamos las funciones correspondientes y cerramos el modal.
-*/
 async function handleCreate(payload: { name: string } | { code: string }) {
   try {
     if ('name' in payload) {
@@ -296,12 +428,10 @@ async function handleJoin(payload: { name: string } | { code: string }) {
   }
 }
 
-// Crearemos una nueva despensa generando un código aleatorio
 async function createPantry() {
   pantryError.value = null
 
   let name = pantryName.value?.trim() ?? ''
-
   if (name === '') {
     showToast('El nombre de la despensa es obligatorio.', 'danger')
     return
@@ -312,6 +442,7 @@ async function createPantry() {
   }
 
   name = name.charAt(0).toUpperCase() + name.slice(1)
+
   try {
     const code = await generatePantryCode()
 
@@ -320,7 +451,7 @@ async function createPantry() {
       code,
       memberCount: 1,
       totalItems: 0,
-      creatorId: deviceId,
+      creatorId: deviceId
     })
 
     console.log('Despensa creada en Firestore:', { id: docRef.id, name, code })
@@ -333,7 +464,6 @@ async function createPantry() {
   }
 }
 
-// Unirse a despensa por codigo
 async function joinPantry(joinCode: string) {
   const code = joinCode?.trim().toUpperCase()
   if (!code) {
@@ -366,8 +496,6 @@ async function joinPantry(joinCode: string) {
   }
 }
 
-// Si somos creadores, eliminaremos la despensa
-// Si somos miembros, abandonaremos la despensa
 async function deleteOrLeavePantry(joinCode: string) {
   pantryError.value = null
 
@@ -416,49 +544,27 @@ async function deletePantryAndItems(pantryRef: string, pantryCode: string) {
   }
 }
 
-// Generar código aleatorio de 6 caracteres comprobando que no exista ya
-async function generatePantryCode(): Promise<string> {
-  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'
-  let code = ''
-  let exists = true
-
-  while (exists) {
-    code = ''
-    for (let i = 0; i < 6; i++) {
-      code += chars.charAt(Math.floor(Math.random() * chars.length))
-    }
-
-    const q = query(collection(db, 'pantries'), where('code', '==', code))
-    const snap = await getDocs(q)
-    exists = !snap.empty
-  }
-
-  console.log('[generatePantryCode] generado', code)
-  return code
-}
-
-// Añadir despensa a la lista de despensas del dispositivo
 function addPantryToStorage(code: string) {
   const existing: string[] = JSON.parse(localStorage.getItem('myPantries') ?? '[]')
   if (!existing.includes(code)) {
     existing.push(code)
     localStorage.setItem('myPantries', JSON.stringify(existing))
-    codes.value = existing
+    codes.value = normalizeCodes(existing)
   } else {
     console.log('[addPantryToStorage] ya existía', code)
   }
 }
 
-// Eliminar despensa de la lista de despensas del dispositivo
 function deletePantryFromStorage(code: string) {
   const existing: string[] = JSON.parse(localStorage.getItem('myPantries') ?? '[]')
-  const updated = existing.filter((c) => c !== code)
+  const updated = existing.filter(
+    (c) => String(c ?? '').trim().toUpperCase() !== String(code ?? '').trim().toUpperCase()
+  )
   localStorage.setItem('myPantries', JSON.stringify(updated))
-  codes.value = updated
+  codes.value = normalizeCodes(updated)
   console.log('[deletePantryFromStorage] actualizado storage', updated)
 }
 
-// Confirmar eliminar
 function onCornerAction(pantry: Pantry) {
   selectedPantry.value = pantry
   showConfirmPantry.value = true
@@ -474,16 +580,12 @@ async function confirmPantry() {
     await showToast(isOwner ? 'Despensa eliminada' : 'Has salido de la despensa', 'success')
   } catch (e: any) {
     console.log('[confirmPantry] error', e)
-    await showToast(
-      isOwner ? 'Error al eliminar despensa.' : 'Error al abandonar despensa.',
-      'danger'
-    )
+    await showToast(isOwner ? 'Error al eliminar despensa.' : 'Error al abandonar despensa.', 'danger')
   } finally {
     selectedPantry.value = null
   }
 }
 
-// Navegamos al inventario de nuestra despensa
 function selectPantry(code: string, name: string) {
   router.push(`/tabs/${code}/${name}/inventory`)
 }
@@ -494,7 +596,55 @@ function onCardClick(e: MouseEvent, pantry: Pantry) {
   selectPantry(pantry.code, pantry.name)
 }
 
-// NUEVO: copiar el código de la despensa al portapapeles (con fallback y toast)
+// ✅ NUEVO: renombrar
+function normalizePantryName(name: string) {
+  let n = String(name ?? '').trim().replace(/\s+/g, ' ')
+  if (!n) return ''
+  n = n.charAt(0).toUpperCase() + n.slice(1)
+  return n
+}
+
+function openRename(p: Pantry) {
+  blurActiveElement()
+  renamePantry.value = p
+  renameValue.value = String(p.name ?? '').trim()
+  showRenamePopup.value = true
+}
+
+function closeRename() {
+  showRenamePopup.value = false
+  renamePantry.value = null
+  renameValue.value = ''
+}
+
+async function confirmRename() {
+  try {
+    const p = renamePantry.value
+    if (!p) return
+
+    const newName = normalizePantryName(renameValue.value)
+    if (!newName) {
+      await showToast('El nombre es obligatorio', 'danger')
+      return
+    }
+    if (newName.length > 25) {
+      await showToast('El nombre de la despensa es muy largo', 'danger')
+      return
+    }
+    if (newName === String(p.name ?? '').trim()) {
+      closeRename()
+      return
+    }
+
+    await updateDoc(doc(db, 'pantries', p.id), { name: newName })
+    await showToast('Nombre actualizado', 'success')
+    closeRename()
+  } catch (e) {
+    console.log('[confirmRename] error', e)
+    await showToast('No se pudo cambiar el nombre', 'danger')
+  }
+}
+
 async function copyPantryCode(code: string) {
   try {
     if (navigator?.clipboard?.writeText) {
@@ -627,7 +777,7 @@ body.dark .btn-outline {
 }
 
 .btn-outline:last-child {
-  margin-bottom: 5%; 
+  margin-bottom: 5%;
 }
 
 /* LOADING */
@@ -705,7 +855,14 @@ body.dark .corner-btn.danger {
 
 .corner-btn.accent {
   color: var(--md-accent, #2ea15d);
-  box-shadow: inset 0 0 0 2px var(--md-accent, #2ea15d);
+  box-shadow: inset 0 0 0 2px #e53935;
+}
+
+/* ✅ NUEVO: botón renombrar */
+.corner-btn.rename {
+  right: 48px;
+  color: var(--md-accent, #2ea15d);
+  box-shadow: inset 0 0 0 2px rgba(var(--md-accent-rgb, 46, 161, 93), 0.45);
 }
 
 /* ICONO TARJETA DESPENSA */
@@ -883,5 +1040,110 @@ body.dark .empty-subtitle {
 /* ICONOS */
 .icons-red {
   color: #e94031;
+}
+
+/* ====== POPUP (mismo estilo app) ====== */
+.confirm-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.confirm-dialog {
+  width: min(360px, 90%);
+  padding: 18px 20px 16px;
+
+  background: var(--ion-background-color2);
+  border-radius: 18px;
+
+  box-shadow: 0 15px 40px rgba(15, 23, 42, 0.25);
+  animation: popup-in 180ms ease-out;
+
+  border: 1px solid rgba(var(--md-accent-rgb, 46, 161, 93), 0.18);
+}
+
+.confirm-dialog h2 {
+  margin: 0 0 6px;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--ion-text-color);
+}
+
+.confirm-message {
+  margin: 0 0 10px;
+  font-size: 14px;
+  color: var(--ion-text-color2);
+  white-space: pre-line;
+}
+
+.confirm-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.confirm-actions button {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 14px;
+
+  font-size: 14px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: transform 120ms ease, filter 120ms ease;
+}
+
+.confirm-actions button:active {
+  transform: scale(0.98);
+}
+
+.confirm-actions button:focus-visible {
+  outline: 2px solid rgba(var(--md-accent-rgb, 46, 161, 93), 0.7);
+  outline-offset: 2px;
+}
+
+.btn-secondary {
+  background: #ef4444;
+  color: #ffffff;
+}
+
+.btn-primary {
+  background: var(--md-accent, #2ea15d);
+  color: #ffffff;
+}
+
+.confirm-input {
+  width: 100%;
+  margin: 10px 0 16px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  background: transparent;
+  color: var(--ion-text-color);
+  outline: none;
+}
+
+body.dark .confirm-input {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+@keyframes popup-in {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
 }
 </style>
