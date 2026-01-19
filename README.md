@@ -11,7 +11,7 @@ Organiza tu despensa, ahorra tiempo y evita desperdicio.
 
 ## ✨ Qué es
 
-**Mi Despensa** es una demo de portafolio para gestionar productos, caducidades y organización de la despensa con una interfaz clara y agradable.
+**Mi Despensa** es una aplicación móvil para gestionar tu despensa. En la que podrás administrar tu productos y sus caducidades, mediante una organización de la despensa con una interfaz clara y agradable.
 
 ---
 
@@ -24,7 +24,7 @@ Organiza tu despensa, ahorra tiempo y evita desperdicio.
 
 ## 👥 Autores
 
-- **Silvia Aparicio Martín** — Diseño UI/UX · Frontend · Desarrollo de interfaz  
+- **Silvia Aparicio Martín** — Diseño UI/UX · Frontend · Desarrollo de interfaz   
 - **Manuel Sanz Romero** — Lógica · Infraestructura · Frontend  
 
 ---
