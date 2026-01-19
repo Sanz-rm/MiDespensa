@@ -33,11 +33,11 @@ Organiza tu despensa, ahorra tiempo y evita desperdicio.
 
 Este proyecto está licenciado bajo **Creative Commons Atribución–NoComercial 4.0 Internacional (CC BY-NC 4.0)**.
 
-• Puedes:
+► Puedes:
 - **Compartir** (copiar y redistribuir) el material en cualquier medio o formato.
 - **Adaptar** (remezclar, transformar y crear a partir del material).
 
-• Condiciones:
+► Condiciones:
 - **Atribución (BY):** debes dar crédito adecuado, enlazar la licencia e indicar si realizaste cambios.
 - **NoComercial (NC):** **no** puedes usar el material con fines comerciales.
 
