@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="assets/icon.png" alt="Logo Mi Despensa" width="40" height="40" style="display:block;" />
+  <img src="assets/icon.png" alt="Logo Mi Despensa" width="40" height="100" style="display:block;" />
 
 <h1 style="margin: 0; padding: 0; display: inline-flex; align-items: center; justify-content: center; gap: 10px;">
   <span>Mi Despensa</span>
