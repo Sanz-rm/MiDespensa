@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <!-- Cabecera start -->
+    <!-- Cabecera START -->
     <ion-header translucent>
       <ion-toolbar class="top-toolbar">
         <ion-buttons slot="start">
@@ -9,7 +9,7 @@
         <ion-title>Ajustes</ion-title>
       </ion-toolbar>
     </ion-header>
-    <!-- Cabecera end -->
+    <!-- Cabecera END -->
 
     <ion-content fullscreen class="options-content">
       <ion-header collapse="condense">
@@ -19,7 +19,7 @@
       </ion-header>
 
       <div class="container">
-        <!-- Tarjeta cabecera start -->
+        <!-- Tarjeta cabecera START -->
         <ion-card class="hero-card">
           <ion-card-content class="hero-content">
             <div class="hero-left">
@@ -35,9 +35,9 @@
             <ion-note class="hero-version">v{{ appVersion }}</ion-note>
           </ion-card-content>
         </ion-card>
-        <!-- Tarjeta cabecera end -->
+        <!-- Tarjeta cabecera END -->
 
-        <!-- Seccion Apariencia start -->
+        <!-- Seccion Apariencia START -->
         <ion-list class="list-card">
           <ion-item-divider class="section-divider">Apariencia</ion-item-divider>
 
@@ -69,9 +69,9 @@
             </div>
           </ion-item>
         </ion-list>
-        <!-- Seccion Apariencia end -->
+        <!-- Seccion Apariencia END -->
 
-        <!-- Seccion Datos start -->
+        <!-- Seccion Datos START -->
         <ion-list inset class="list-card">
           <ion-item-divider class="section-divider">Datos</ion-item-divider>
 
@@ -83,7 +83,6 @@
             </ion-label>
           </ion-item>
 
-          <!-- NUEVO: Importar debajo de exportar -->
           <ion-item lines="full" class="setting-item" button @click="onImportData">
             <ion-icon slot="start" :icon="cloudUploadOutline" class="item-icon accent" />
             <ion-label>
@@ -100,9 +99,9 @@
             </ion-label>
           </ion-item>
         </ion-list>
-        <!-- Seccion Datos end -->
+        <!-- Seccion Datos END -->
 
-        <!-- Seccion App start -->
+        <!-- Seccion App START -->
         <ion-list inset class="list-card">
           <ion-item-divider class="section-divider">App</ion-item-divider>
 
@@ -114,6 +113,14 @@
             </ion-label>
           </ion-item>
 
+          <ion-item lines="full" class="setting-item" button @click="openWeb">
+            <ion-icon slot="start" :icon="globeOutline" class="item-icon accent" />
+            <ion-label>
+              <h2>Web</h2>
+              <p>Aprende a usar Mi Despensa</p>
+            </ion-label>
+          </ion-item>
+
           <ion-item lines="none" class="setting-item" button @click="onExitApp">
             <ion-icon slot="start" :icon="logOutOutline" class="item-icon accent" />
             <ion-label>
@@ -122,14 +129,12 @@
             </ion-label>
           </ion-item>
         </ion-list>
-        <!-- Seccion App end -->
+        <!-- Seccion App END -->
 
-        <!-- NUEVO: input oculto para seleccionar archivo de importación START -->
         <input ref="importFileInput" type="file" accept="application/json,.json" class="hidden-file-input"
           @change="onImportFileSelected" />
-        <!-- NUEVO: input oculto para seleccionar archivo de importación END -->
 
-        <!-- NUEVO: Modal selección despensas a exportar START -->
+        <!-- Modal selección despensas a exportar START -->
         <ion-modal :is-open="showExportModal" @didDismiss="closeExportModal">
           <ion-header translucent>
             <ion-toolbar class="modal-toolbar">
@@ -177,9 +182,9 @@
             </div>
           </ion-content>
         </ion-modal>
-        <!-- NUEVO: Modal selección despensas a exportar END -->
+        <!-- Modal selección despensas a exportar END -->
 
-        <!-- NUEVO: Modal selección despensas a importar START -->
+        <!--  Modal selección despensas a importar START -->
         <ion-modal :is-open="showImportModal" @didDismiss="closeImportModal">
           <ion-header translucent>
             <ion-toolbar class="modal-toolbar">
@@ -229,9 +234,9 @@
             </div>
           </ion-content>
         </ion-modal>
-        <!-- NUEVO: Modal selección despensas a importar END -->
+        <!--  Modal selección despensas a importar END -->
 
-        <!-- NUEVO: Alert para decidir qué hacer si la despensa existe START -->
+        <!-- Alert para decidir qué hacer si la despensa existe START -->
         <div v-if="showImportDecisionPopup" class="confirm-overlay" @click.self="onImportDecisionCancel">
           <div class="confirm-dialog">
             <h2>Despensa encontrada</h2>
@@ -250,17 +255,15 @@
             </div>
           </div>
         </div>
-        <!-- NUEVO: Alert para decidir qué hacer si la despensa existe END -->
+        <!-- Alert para decidir qué hacer si la despensa existe END -->
 
         <!-- Pop up confirmar limpiar caché START -->
         <ConfirmPopup v-model="showConfirmDeleteData" title="Borrar datos"
           message="Vas a borrar TODOS los datos locales de MiDespensa en este dispositivo (ajustes, caché y almacenamiento interno). Esta acción no se puede deshacer. Si quieres conservar tus datos, haz una copia con “Exportar” antes de continuar. ¿Quieres borrar los datos?"
           confirmLabel="Borrar" cancelLabel="Cancelar" @confirm="confirmDeleteData" />
-
         <!-- Pop up confirmar limpiar caché END -->
 
-        <!-- Espacio footer start -->
-        <!-- Popup "Acerca de" (estilo app) -->
+        <!-- Pop up de información sobre Acerca de START -->
         <div v-if="showAboutPopup" class="confirm-overlay" @click.self="closeAboutPopup">
           <div class="confirm-dialog">
             <h2>Acerca de MiDespensa v{{ appVersion }}</h2>
@@ -277,9 +280,10 @@
             </div>
           </div>
         </div>
+        <!-- Pop up de información sobre Acerca de  START -->
 
         <div class="footer-space" />
-        <!-- Espacio footer end -->
+
       </div>
     </ion-content>
   </ion-page>
@@ -338,7 +342,8 @@ import {
   cloudUploadOutline,
   logOutOutline,
   sparklesOutline,
-  moonOutline
+  moonOutline,
+  globeOutline
 } from 'ionicons/icons'
 import { initTheme, toggleTheme, accentColor, setAccentColor, resetAccentColor } from '@/theme/theme'
 import ConfirmPopup from '@/components/ui/ConfirmPopup.vue'
@@ -372,28 +377,32 @@ const showAboutPopup = ref(false)
 const onAbout = () => (showAboutPopup.value = true)
 const closeAboutPopup = () => (showAboutPopup.value = false)
 
+const openWeb = () => {
+  window.open('https://midespensaweb.netlify.app/', '_blank')
+}
+
 /* ===========================
    EXPORTAR / IMPORTAR (UI)
    =========================== */
 
-// NUEVO: estados modal export
+// Estados modal export
 const showExportModal = ref(false)
 const exportLoading = ref(false)
 const exportingBackup = ref(false)
 const exportPantries = ref<Pantry[]>([])
 const selectedExportCodes = ref<Set<string>>(new Set())
 
-// NUEVO: input file import
+// Input file import
 const importFileInput = ref<HTMLInputElement | null>(null)
 const importingBackup = ref(false)
 
-// NUEVO: Modal import selección
+// Modal import selección
 const showImportModal = ref(false)
 const importModalLoading = ref(false)
 const importBundles = ref<ExportPantryBundle[]>([])
 const selectedImportKeys = ref<Set<string>>(new Set())
 
-// NUEVO: Pop up decisión import si existe (estilo app)
+// Pop up decisión import si existe (estilo app)
 const showImportDecisionPopup = ref(false)
 const importDecisionMessage = ref('')
 let importDecisionResolver: ((v: 'existing' | 'new' | 'cancel') => void) | null = null
@@ -435,7 +444,7 @@ type ExportBackup = {
   pantries: ExportPantryBundle[]
 }
 
-// NUEVO: helper para recuperar los códigos del storage (mis despensas)
+// Helper para recuperar los códigos del storage (mis despensas)
 function getStoredPantryCodes(): string[] {
   try {
     const raw = localStorage.getItem('myPantries')
@@ -450,7 +459,7 @@ function getStoredPantryCodes(): string[] {
   }
 }
 
-// NUEVO: notificar cambios para refrescar Home (sin F5)
+// Notificar cambios para refrescar Home (sin F5)
 function notifyPantriesChanged() {
   try {
     const codes = getStoredPantryCodes()
@@ -478,21 +487,21 @@ function addPantryToStorage(code: string) {
       console.log('[addPantryToStorage] ya existía', normalized)
     }
 
-    // NUEVO: para que se refresque Home sin recargar
+    // Para que se refresque Home sin recargar
     notifyPantriesChanged()
   } catch (e) {
     console.log('[addPantryToStorage] error', e)
   }
 }
 
-// NUEVO: helper para trocear (Firestore "in" admite máximo 10)
+// Helper para trocear (Firestore "in" admite máximo 10)
 function chunkArray<T>(arr: T[], size: number): T[][] {
   const out: T[][] = []
   for (let i = 0; i < arr.length; i += size) out.push(arr.slice(i, i + size))
   return out
 }
 
-// ✅ NUEVO: al borrar datos, abandonar todas las despensas del dispositivo (memberCount -1)
+// Al borrar datos, abandonar todas las despensas del dispositivo (memberCount -1)
 async function leaveAllPantriesBeforeWipe() {
   try {
     const codes = getStoredPantryCodes()
@@ -569,7 +578,7 @@ const onExportData = async () => {
       String(a.name ?? '').localeCompare(String(b.name ?? ''), 'es', { sensitivity: 'base' })
     )
 
-    // ✅ NUEVO: por defecto todos los checkboxes marcados
+    // NUEVO: por defecto todos los checkboxes marcados
     selectedExportCodes.value = new Set(
       exportPantries.value.map((p) => String(p.code ?? '').trim().toUpperCase())
     )
@@ -583,7 +592,7 @@ const onExportData = async () => {
   }
 }
 
-// NUEVO: Importar -> pedir seleccionar fichero
+// Importar -> pedir seleccionar fichero
 const onImportData = async () => {
   try {
     if (importingBackup.value) {
@@ -605,7 +614,7 @@ const onImportData = async () => {
   }
 }
 
-// NUEVO: key estable para cada bundle del fichero
+// Key estable para cada bundle del fichero
 function getImportKey(b: ExportPantryBundle) {
   const id = String((b as any)?.pantry?.id ?? '').trim()
   const code = String((b as any)?.pantry?.code ?? '').trim().toUpperCase()
@@ -613,7 +622,7 @@ function getImportKey(b: ExportPantryBundle) {
   return id || code || `${name}-${Math.random().toString(16).slice(2)}`
 }
 
-// NUEVO: toggle selección import
+// Toggle selección import
 function toggleImportBundle(key: string, ev: CustomEvent) {
   const checked = !!(ev as any)?.detail?.checked
   const set = new Set(selectedImportKeys.value)
@@ -622,12 +631,12 @@ function toggleImportBundle(key: string, ev: CustomEvent) {
   selectedImportKeys.value = set
 }
 
-// NUEVO: cerrar modal import
+// Cerrar modal import
 function closeImportModal() {
   showImportModal.value = false
 }
 
-// NUEVO: leer fichero seleccionado y abrir modal de selección (por defecto todo seleccionado)
+// Leer fichero seleccionado y abrir modal de selección (por defecto todo seleccionado)
 const onImportFileSelected = async (ev: Event) => {
   try {
     const input = ev.target as HTMLInputElement | null
@@ -676,7 +685,7 @@ const onImportFileSelected = async (ev: Event) => {
       return
     }
 
-    // NUEVO: abrir modal con todas seleccionadas
+    // Abrir modal con todas seleccionadas
     importBundles.value = bundles
     selectedImportKeys.value = new Set(bundles.map((b) => getImportKey(b)))
     showImportModal.value = true
@@ -688,7 +697,7 @@ const onImportFileSelected = async (ev: Event) => {
   }
 }
 
-// NUEVO: confirmar selección import y ejecutar import real
+// Confirmar selección import y ejecutar import real
 const onConfirmImportSelection = async () => {
   try {
     if (selectedImportKeys.value.size === 0) {
@@ -700,7 +709,7 @@ const onConfirmImportSelection = async () => {
 
     const selected = importBundles.value.filter((b) => selectedImportKeys.value.has(getImportKey(b)))
 
-    // Proceso: por cada despensa del backup -> si existe por id, preguntar; si no, crear nueva
+    // Por cada despensa del backup -> si existe por id, preguntar; si no, crear nueva
     let joinedCount = 0
     let createdCount = 0
 
@@ -727,7 +736,7 @@ const onConfirmImportSelection = async () => {
         const liveCode = String(data?.code ?? pantryCode).trim().toUpperCase()
         const liveName = String(data?.name ?? pantryName).trim()
 
-        // ✅ NUEVO: si el backup dice que ERAS creador, actualiza creatorId SIEMPRE (100%) al nuevo deviceId
+        // Si el backup dice que ERAS creador, actualiza creatorId SIEMPRE (100%) al nuevo deviceId
         // (independientemente de si la despensa ya está en tu storage o de la decisión del popup)
         try {
           const wasCreator = !!(b as any)?.wasCreator
@@ -739,7 +748,7 @@ const onConfirmImportSelection = async () => {
           console.log('[import] error reasignando creatorId (wasCreator=true)', e)
         }
 
-        // ✅ si ya la tienes en storage, NO preguntes nada y sáltala (pero creatorId ya quedó actualizado si tocaba)
+        // Si ya la tienes en storage, NO preguntes nada y sáltala (pero creatorId ya quedó actualizado si tocaba)
         const alreadyInStorage = getStoredPantryCodes().includes(liveCode)
         if (alreadyInStorage) {
           console.log('[import] ya tienes esta despensa en el dispositivo, se omite', liveCode)
@@ -797,7 +806,7 @@ const onConfirmImportSelection = async () => {
   }
 }
 
-// NUEVO: pedir decisión al usuario cuando la despensa del backup sigue existiendo
+// Pedir decisión al usuario cuando la despensa del backup sigue existiendo
 function askImportDecision(name: string, code: string): Promise<'existing' | 'new' | 'cancel'> {
   return new Promise((resolve) => {
     try {
@@ -809,7 +818,7 @@ function askImportDecision(name: string, code: string): Promise<'existing' | 'ne
         `Si te unes a la existente, es posible que NO coincida con tu copia de seguridad (puede haber cambios o faltar productos).\n\n` +
         `¿Qué quieres hacer?`
 
-      // ✅ cerrar modal selección para que el popup no quede por debajo
+      // Cerrar modal selección para que el popup no quede por debajo
       showImportModal.value = false
       showImportDecisionPopup.value = true
     } catch (e) {
@@ -846,7 +855,7 @@ function onImportDecisionNew() {
   showImportDecisionPopup.value = false
 }
 
-// NUEVO: normalizar expirationDate desde JSON a Timestamp (si venía como {seconds,nanoseconds})
+// Normalizar expirationDate desde JSON a Timestamp (si venía como {seconds,nanoseconds})
 function normalizeExpirationDate(val: any) {
   try {
     if (!val) return null
@@ -864,7 +873,7 @@ function normalizeExpirationDate(val: any) {
   }
 }
 
-// NUEVO: crear despensa nueva + items nuevos con pantryCode nuevo
+// Crear despensa nueva + items nuevos con pantryCode nuevo
 async function createNewPantryFromBackup(nameFromBackup: string, itemsFromBackup: ExportItem[]) {
   try {
     let name = String(nameFromBackup ?? '').trim()
@@ -902,7 +911,7 @@ async function createNewPantryFromBackup(nameFromBackup: string, itemsFromBackup
   }
 }
 
-// NUEVO: crear items en batches (por límite de writeBatch)
+// Crear items en batches (por límite de writeBatch)
 async function createItemsForNewPantry(newPantryCode: string, items: ExportItem[]) {
   try {
     const safeItems = Array.isArray(items) ? items : []
@@ -939,12 +948,12 @@ async function createItemsForNewPantry(newPantryCode: string, items: ExportItem[
   }
 }
 
-// NUEVO: cerrar modal
+// Cerrar modal
 function closeExportModal() {
   showExportModal.value = false
 }
 
-// NUEVO: toggle checkbox
+// Toggle checkbox
 function toggleExportPantry(code: string, ev: CustomEvent) {
   const checked = !!(ev as any)?.detail?.checked
   const set = new Set(selectedExportCodes.value)
@@ -955,7 +964,7 @@ function toggleExportPantry(code: string, ev: CustomEvent) {
   selectedExportCodes.value = set
 }
 
-// NUEVO: descarga backup en web / escribe archivo en móvil si existe plugin
+// Descarga backup en web / escribe archivo en móvil si existe plugin
 async function saveBackupToFile(backup: ExportBackup) {
   const fileName = `midespensa_backup_${new Date().toISOString().replace(/[:.]/g, '-')}.json`
   const content = JSON.stringify(backup, null, 2)
@@ -994,7 +1003,7 @@ async function saveBackupToFile(backup: ExportBackup) {
     })
     console.log('[saveBackupToFile] backup guardado en Documents', fileName)
 
-    // NUEVO: abrir "Compartir" para que puedas guardarlo en Descargas/Drive/Archivos
+    // abrir "Compartir" para que puedas guardarlo en Descargas/Drive/Archivos
     // y normalmente te aparece más fácil en "Recientes" del gestor.
     try {
       const shareMod = await import('@capacitor/share')
@@ -1039,7 +1048,7 @@ async function saveBackupToFile(backup: ExportBackup) {
   }
 }
 
-// NUEVO: recuperar items por pantryCode (getDocs, no snapshot)
+// Recuperar items por pantryCode (getDocs, no snapshot)
 async function getItemsForPantry(pantryCode: string): Promise<ExportItem[]> {
   try {
     const q = query(collection(db, 'items'), where('pantryCode', '==', pantryCode), orderBy('name', 'asc'))
@@ -1114,7 +1123,6 @@ const onDeleteData = async () => {
 
 async function confirmDeleteData() {
   try {
-    // ✅ NUEVO: Antes de borrar todo, abandonar todas las despensas del dispositivo (memberCount -1)
     await leaveAllPantriesBeforeWipe()
 
     // 1) Limpieza común (web + móvil): Preferences (Capacitor)
@@ -1497,12 +1505,10 @@ body.dark .color-chip {
   height: 18px;
 }
 
-/* NUEVO: input file oculto */
 .hidden-file-input {
   display: none;
 }
 
-/* NUEVO: estilos modal export */
 .modal-toolbar {
   --background: var(--md-accent, #2ea15d);
   --color: #ffffff;
@@ -1545,7 +1551,6 @@ body.dark .color-chip {
 .export-btn {
   --border-radius: 14px;
 
-  /* ✅ usar color principal en vez de azul */
   --background: var(--md-accent, #2ea15d);
   --color: #ffffff;
 
@@ -1553,7 +1558,6 @@ body.dark .color-chip {
   --background-focused: rgba(var(--md-accent-rgb, 46, 161, 93), 0.92);
 }
 
-/* ✅ NUEVO: filas (export/import) con borde y “card” + resalte */
 :deep(ion-list.export-list) {
   --background: transparent;
 }
