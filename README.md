@@ -1,11 +1,17 @@
 <div align="center">
 
-# <img src="assets/icon.png" alt="Logo Mi Despensa" width="40" /> Mi Despensa
+<h1 style="margin: 0; padding: 0; display: inline-flex; align-items: center; justify-content: center; gap: 10px;">
+  <img src="assets/icon.png" alt="Logo Mi Despensa" width="40" height="40" style="display:block;" />
+  <span>Mi Despensa</span>
+</h1>
 
-**Proyecto de portafolio** realizado por **Manuel Sanz Romero** y **Silvia Aparicio Martín**  
-Organiza tu despensa, ahorra tiempo y evita desperdicio.
+<p>
+  <b>Proyecto de portafolio</b> realizado por <b>Manuel Sanz Romero</b> y <b>Silvia Aparicio Martín</b><br/>
+  Organiza tu despensa, ahorra tiempo y evita desperdicio.
+</p>
 
 </div>
+
 
 ---
 
