@@ -33,9 +33,7 @@
 - <a href="https://www.linkedin.com/in/silvia-aparicio-mart%C3%ADn-bb465b333" target="_blank" rel="noopener noreferrer"> **Silvia Aparicio Martín** </a> — Diseño UI/UX · Frontend · Desarrollo de interfaz  
 
 
-- **Manuel Sanz Romero** — Lógica · Infraestructura · Frontend  
-  <a href="linkedin.com/in/manuel-sanz-romero-6a8797320" target="_blank" rel="noopener noreferrer">
- 
+- <a href="https://www.linkedin.com/in/manuel-sanz-romero-6a8797320" target="_blank" rel="noopener noreferrer"> **Manuel Sanz Romero** </a> — Lógica · Infraestructura · Frontend   
 
 ---
 
