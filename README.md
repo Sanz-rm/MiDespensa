@@ -5,13 +5,12 @@ Proyecto de portafolio realizado por **Silvia Aparicio** y **Manuel Sanz**.
 Organiza tu despensa, ahorra tiempo y evita desperdicio.
 
 ## Enlaces
-- Video (YouTube): https://youtu.be/Sbc_rqb0tAI
-- Prototipo (Visme): https://my.visme.co/view/q69oq019-prototipo-mi-despensa#s1
-- Repositorio: https://github.com/Sanz-rm/MiDespensa
+- Video (YouTube): 
+- Prototipo (Visme): https://my.visme.co/view/q69oq019-prototipo-mi-despensa#s1)
 
 ## Autores
-- Silvia Aparicio
-- Manuel Sanz
+- Silvia Aparicio Martín (Diseño UI/UX · Frontend · Desarrollo de interfaz)
+- Manuel Sanz Romero (Lógica · Infraestructura · Frontend)
 
 ## Licencia
 
@@ -29,7 +28,6 @@ Texto completo de la licencia: https://creativecommons.org/licenses/by-nc/4.0/
 
 Si reutilizas este proyecto (de forma no comercial), utiliza una atribución como:
 
-> “Mi Despensa” por Silvia Aparicio y Manuel Sanz, licenciado bajo CC BY-NC 4.0.  
+> “Mi Despensa” por Silvia Aparicio Martín y Manuel Sanz Romero, licenciado bajo CC BY-NC 4.0.  
 > Cambios: *(indica si hiciste cambios)*  
 > Repositorio: https://github.com/Sanz-rm/MiDespensa
-```
