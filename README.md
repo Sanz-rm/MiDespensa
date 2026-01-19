@@ -2,7 +2,7 @@
 
 # 🍃 Mi Despensa
 
-**Proyecto de portafolio** realizado por **Manuel Sanz Romero** y **Silvia Aparicio Martín**
+**Proyecto de portafolio** realizado por **Manuel Sanz Romero** y **Silvia Aparicio Martín**  
 Organiza tu despensa, ahorra tiempo y evita desperdicio.
 
 </div>
