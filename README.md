@@ -30,13 +30,8 @@
 
 ## 👥 Autores
 
-- **Silvia Aparicio Martín** — Diseño UI/UX · Frontend · Desarrollo de interfaz  
-<a style="display:inline-block; padding:10px 14px; border-radius:10px; background-color:#2F9145; color:#FFFFFF; text-decoration:none; font-weight:700;"
-   href="https://www.linkedin.com/in/silvia-aparicio-mart%C3%ADn-bb465b333"
-   target="_blank"
-   rel="noopener noreferrer">
-  LinkedIn
-</a>
+- <a href="https://www.linkedin.com/in/silvia-aparicio-mart%C3%ADn-bb465b333" target="_blank" rel="noopener noreferrer"> **Silvia Aparicio Martín** </a> — Diseño UI/UX · Frontend · Desarrollo de interfaz  
+
 
 - **Manuel Sanz Romero** — Lógica · Infraestructura · Frontend  
   <a href="linkedin.com/in/manuel-sanz-romero-6a8797320" target="_blank" rel="noopener noreferrer">
