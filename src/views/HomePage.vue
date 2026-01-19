@@ -858,7 +858,6 @@ body.dark .corner-btn.danger {
   box-shadow: inset 0 0 0 2px #e53935;
 }
 
-/* ✅ NUEVO: botón renombrar */
 .corner-btn.rename {
   right: 48px;
   color: var(--md-accent, #2ea15d);
@@ -1042,7 +1041,7 @@ body.dark .empty-subtitle {
   color: #e94031;
 }
 
-/* ====== POPUP (mismo estilo app) ====== */
+/* POPUP */
 .confirm-overlay {
   position: fixed;
   inset: 0;
@@ -1156,12 +1155,12 @@ body.dark .confirm-input {
     flex-wrap: nowrap;
     max-width: none;
     margin: 0 auto;
-    width: fit-content; /* el ancho será el de los 2 botones + gap */
+    width: fit-content;
   }
 
   .actions .btn {
     width: clamp(360px, 46vw, 560px);
-    flex: 0 0 auto; /* evita que se estiren/encojan distinto */
+    flex: 0 0 auto;
     margin: 0;
   }
 
@@ -1169,14 +1168,14 @@ body.dark .confirm-input {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 24px;
-    width: fit-content; /* mismo concepto */
+    width: fit-content;
     max-width: none;
     margin: 0 auto;
     margin-top: clamp(20px, 3vh, 40px);
   }
 
   .pantry-list {
-    grid-template-columns: repeat(2, clamp(360px, 46vw, 560px)); /* mismo ancho que .btn */
+    grid-template-columns: repeat(2, clamp(360px, 46vw, 560px));
   }
 }
 
