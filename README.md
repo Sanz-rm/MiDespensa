@@ -5,16 +5,6 @@
 **Proyecto de portafolio** realizado por **Silvia Aparicio Martín** y **Manuel Sanz Romero**  
 Organiza tu despensa, ahorra tiempo y evita desperdicio.
 
-<br/>
-
-<!-- Badges -->
-<a href="https://creativecommons.org/licenses/by-nc/4.0/" target="_blank">
-  <img alt="Licencia CC BY-NC 4.0" src="https://img.shields.io/badge/Licencia-CC%20BY--NC%204.0-1F6F34?style=for-the-badge&labelColor=F0F2F8&color=1F6F34">
-</a>
-<img alt="Proyecto de portafolio" src="https://img.shields.io/badge/Estado-Portfolio-2F9145?style=for-the-badge&labelColor=F0F2F8&color=2F9145">
-
-<br/><br/>
-
 </div>
 
 ---
