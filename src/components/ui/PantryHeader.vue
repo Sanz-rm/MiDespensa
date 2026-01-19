@@ -318,19 +318,25 @@ body.dark .menu button[role='menuitem']:hover {
   border: 0;
 }
 
-/* RESPONSIVE (Ajustes para pantallas un poco más grandes) */
-@media (min-width: 420px) {
+
+@media (min-width: 477px) {
   .banner {
-    padding: 16px 22px;
+    justify-content: center;
+    padding-top: 16px;
   }
 
-  .logo {
-    width: 38px;
-    height: 38px;
+  .left {
+    position: static;
+    transform: none;
+    margin: 0 auto;
+    justify-content: center;
   }
 
-  .title {
-    font-size: 22px;
+  .right {
+    position: absolute;
+    right: 18px;
+    top: 50%;
+    transform: translateY(-50%);
   }
 }
 </style>

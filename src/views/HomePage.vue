@@ -733,7 +733,7 @@ ion-header.rounded-header::after {
 /* ACCIONES / BOTONES */
 .actions {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: 1fr;
   gap: 12px;
 }
 
@@ -1146,4 +1146,39 @@ body.dark .confirm-input {
     transform: translateY(0) scale(1);
   }
 }
+
+@media (min-width: 820px) {
+  .actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 14px;
+    flex-wrap: nowrap;
+    max-width: none;
+    margin: 0 auto;
+    width: fit-content; /* el ancho será el de los 2 botones + gap */
+  }
+
+  .actions .btn {
+    width: clamp(360px, 46vw, 560px);
+    flex: 0 0 auto; /* evita que se estiren/encojan distinto */
+    margin: 0;
+  }
+
+  .pantry-list {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 24px;
+    width: fit-content; /* mismo concepto */
+    max-width: none;
+    margin: 0 auto;
+    margin-top: clamp(20px, 3vh, 40px);
+  }
+
+  .pantry-list {
+    grid-template-columns: repeat(2, clamp(360px, 46vw, 560px)); /* mismo ancho que .btn */
+  }
+}
+
+
 </style>
