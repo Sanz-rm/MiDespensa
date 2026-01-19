@@ -13,29 +13,23 @@
 </div>
 
 
----
-
 ## ✨ Qué es
 
 **Mi Despensa** es una aplicación móvil para gestionar tu despensa. En la que podrás administrar tu productos y sus caducidades, mediante una organización de la despensa con una interfaz clara y agradable.
 
----
 
 ## 🔗 Enlaces
 
 - **Video (YouTube):** 
 - **Prototipo (Visme):** https://my.visme.co/view/q69oq019-prototipo-mi-despensa#s1  
 
----
 
 ## 👥 Autores
 
 - <a href="https://www.linkedin.com/in/silvia-aparicio-mart%C3%ADn-bb465b333" target="_blank" rel="noopener noreferrer"> **Silvia Aparicio Martín** </a> — Diseño UI/UX · Frontend · Desarrollo de interfaz  
 
-
 - <a href="https://www.linkedin.com/in/manuel-sanz-romero-6a8797320" target="_blank" rel="noopener noreferrer"> **Manuel Sanz Romero** </a> — Lógica · Infraestructura · Frontend   
 
----
 
 ## 📄 Licencia (CC BY-NC 4.0)
 
@@ -51,7 +45,6 @@ Este proyecto está licenciado bajo **Creative Commons Atribución–NoComercial
 
 Texto completo: https://creativecommons.org/licenses/by-nc/4.0/
 
----
 
 ## 🏷️ Atribución sugerida
 
