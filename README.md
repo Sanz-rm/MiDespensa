@@ -30,8 +30,15 @@
 
 ## 👥 Autores
 
-- **Silvia Aparicio Martín** — Diseño UI/UX · Frontend · Desarrollo de interfaz   
+- **Silvia Aparicio Martín** — Diseño UI/UX · Frontend · Desarrollo de interfaz  
+  <a href="https://www.linkedin.com/in/TU_LINK_SILVIA/" target="_blank" rel="noopener noreferrer">
+    <img alt="LinkedIn" src="https://img.shields.io/badge/LinkedIn-Perfil-1F6F34?style=for-the-badge&labelColor=F0F2F8&color=1F6F34">
+  </a>
+
 - **Manuel Sanz Romero** — Lógica · Infraestructura · Frontend  
+  <a href="https://www.linkedin.com/in/TU_LINK_MANUEL/" target="_blank" rel="noopener noreferrer">
+    <img alt="LinkedIn" src="https://img.shields.io/badge/LinkedIn-Perfil-2F9145?style=for-the-badge&labelColor=F0F2F8&color=2F9145">
+  </a> 
 
 ---
 
