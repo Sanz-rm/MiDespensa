@@ -4,7 +4,7 @@
     <ion-header translucent>
       <ion-toolbar class="top-toolbar">
         <ion-buttons slot="start">
-          <ion-back-button defaultHref="/tabs/home" text="Inicio" />
+          <ion-back-button defaultHref="/tabs/home" text="" />
         </ion-buttons>
         <ion-title>Ajustes</ion-title>
       </ion-toolbar>
