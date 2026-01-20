@@ -4,7 +4,7 @@
     <ion-header translucent>
       <ion-toolbar class="top-toolbar">
         <ion-buttons slot="start">
-          <ion-back-button defaultHref="/tabs/home" text="" />
+          <ion-back-button defaultHref="/tabs/home" />
         </ion-buttons>
         <ion-title>Ajustes</ion-title>
       </ion-toolbar>
@@ -1282,6 +1282,27 @@ const onExitApp = async () => {
   border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
 
+:deep(.top-toolbar) {
+  position: relative;
+  --min-height: 56px;
+}
+
+:deep(.top-toolbar ion-title) {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: auto;
+  text-align: center;
+  pointer-events: none;
+  margin: 0;
+  padding: 0;
+  text-transform: uppercase;
+  line-height: 1;
+  letter-spacing: 0.4px;
+  font-size: 20px;
+  font-weight: 600;
+}
 .top-toolbar ion-title,
 .condense-toolbar ion-title,
 .top-toolbar ion-back-button,
@@ -1363,6 +1384,7 @@ ion-back-button {
   font-weight: 500;
   color: var(--ion-text-color, #ffffff);
   opacity: 1;
+  margin-right: 10%;
 }
 
 /* CONTENEDOR DE TARJETAS */
@@ -1431,6 +1453,23 @@ body.dark .accent-toggle {
   align-items: center;
   gap: 10px;
 }
+
+ :deep(ion-item.setting-item::part(native)) {
+    justify-content: flex-start; /* quita el "space-between" */
+    gap: 12px;                  /* separación pequeña entre label y toggle */
+  }
+
+  :deep(ion-item.setting-item ion-label) {
+    flex: 0 1 auto;             /* que NO ocupe todo el ancho */
+    width: auto;
+    margin: 0;
+    margin-right: 10%;
+  }
+
+  :deep(ion-item.setting-item ion-toggle.accent-toggle) {
+    margin: 0;                  /* pisa tu margin-left: 4% */
+  }
+  
 
 /* RESETAR TEMA POR DEFECTO */
 .reset-pill {
@@ -1740,4 +1779,69 @@ body.dark .color-chip {
   color: var(--ion-text-color2);
   opacity: 0.9;
 }
+
+
+@media (min-width: 520px) {
+  .hero-card {
+  margin: 14px 0 20px;
+  padding: 15px 18px;
+  }
+
+  .container {
+    max-width: 980px;
+    margin: 0 auto;
+    padding: 18px 0 0;
+  }
+
+  ion-list.list-card {
+    margin: 0 0 16px !important;
+  }
+
+  .hero-card {
+    margin: 12px 0 18px;
+  }
+
+  .hero-content {
+    padding: 6px 6px;
+  }
+
+  .hero-title {
+    font-size: 24px;
+  }
+
+  .hero-subtitle {
+    font-size: 14px;
+  }
+
+  ion-item.setting-item {
+    --min-height: 62px;
+    --padding-start: 18px;
+    --inner-padding-end: 18px;
+  }
+
+  .section-divider {
+    font-size: 12px;
+  }
+
+  .confirm-dialog {
+    width: min(420px, 92%);
+  }
+  :deep(ion-item.setting-item ion-label) {
+    margin-right: 3%;
+  }
+}
+
+@media (min-width: 520px) and (max-width: 1500px) {
+  .container {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+
+  ion-list.list-card,
+  .hero-card {
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+  }
+}
+
 </style>

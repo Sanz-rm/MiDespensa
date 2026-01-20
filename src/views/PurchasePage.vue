@@ -562,4 +562,63 @@ body.dark .note-row {
   place-content: center;
   min-height: 40vh;
 }
+
+@media (min-width: 840px) {
+  ion-content.pantry-content {
+    --padding-start: 14px;
+    --padding-end: 14px;
+  }
+
+  .actions {
+    max-width: 1020px;
+    margin: 0 auto 10px;
+  }
+
+  .list-cards {
+    max-width: 1020px;
+    margin: 0 auto;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .item-row {
+    grid-template-columns: 44px 1fr auto auto;
+    gap: 10px 12px;
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+
+  .icon,
+  .icon-letter {
+    width: 40px;
+    height: 40px;
+  }
+
+  .icon-letter {
+    font-size: 28px;
+  }
+
+  .info .name {
+    font-size: 15px;
+  }
+
+  .info .units {
+    font-size: 13px;
+  }
+
+  .note-row {
+    padding: 0 10px;
+    border-radius: 10px;
+  }
+
+  .note-textarea {
+    min-height: 46px;
+  }
+
+  .note-actions {
+    gap: 10px;
+  }
+}
+
 </style>

@@ -132,7 +132,7 @@
                   <div class="qty-inline">
                     <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-minus qty-inline-btn"
                       @click="changeEditQuantity(-1)" :disabled="savingItem">
-                      <span class="material-icons">remove</span>
+                      <span class="material-icons" style="color: var(--ion-text-color4);">remove</span>
                     </ion-button>
 
                     <ion-input type="number" inputmode="numeric" v-model.number="editQuantity"
@@ -140,7 +140,7 @@
 
                     <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-plus qty-inline-btn"
                       @click="changeEditQuantity(1)" :disabled="savingItem">
-                      <span class="material-icons">add</span>
+                      <span class="material-icons" style="color: var(--ion-text-color4);">add</span>
                     </ion-button>
                   </div>
                 </div>
@@ -1938,7 +1938,7 @@ body.dark .btn-info-cancel {
   color: #111827;
 }
 
-/* ====== BARRA ALFABÉTICA (aparece/desaparece con transición) ====== */
+/* BARRA ALFABÉTICA */
 .alpha-bar {
   position: fixed;
   right: 8px;
@@ -1961,7 +1961,6 @@ body.dark .btn-info-cancel {
 
   transition: opacity 180ms ease, transform 180ms ease;
 
-  /* claro */
   background: rgba(255, 255, 255, 0.78);
   border: 1px solid rgba(0, 0, 0, 0.08);
   backdrop-filter: blur(6px);
@@ -1974,7 +1973,6 @@ body.dark .btn-info-cancel {
   pointer-events: auto;
 }
 
-/* oscuro */
 body.dark .alpha-bar {
   background: rgba(20, 20, 20, 0.68);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -1991,24 +1989,56 @@ body.dark .alpha-bar {
 
   font-weight: 600;
 
-  /* SIEMPRE color principal */
   color: var(--md-accent, #2ea15d);
 }
 
-/* IMPORTANTE: fuerza también en oscuro (te estaba pisando otra regla) */
 body.dark .alpha-letter {
   color: var(--md-accent, #2ea15d);
 }
 
-/* Activa (la que estás tocando) */
 .alpha-letter--active {
   font-weight: 700;
-
-  /* claro */
   background: rgba(0, 0, 0, 0.12);
 }
 
 body.dark .alpha-letter--active {
   background: rgba(255, 255, 255, 0.14);
 }
+
+
+@media (min-width: 820px) {
+  ion-content.pantry-content {
+    --padding-start: 14px;
+    --padding-end: 14px;
+  }
+
+  .actions {
+    max-width: 1020px;
+    margin: 0 auto 8px;
+  }
+
+  .items-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 16px;
+    max-width: 1020px;
+    margin: 8px auto 0;
+  }
+
+  .item-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .alpha-bar {
+    right: 10px;
+  }
+
+  .product-info-modal::part(content),
+  .move-product-modal::part(content) {
+    width: min(360px, 90%);
+    max-height: 100%;
+  }
+
+}
+
 </style>
