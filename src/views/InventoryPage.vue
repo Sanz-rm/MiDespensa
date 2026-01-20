@@ -439,7 +439,7 @@ async function restoreScrollSnapshot() {
   }
 
   try {
-    await c.scrollToPoint(0, targetY, 0)
+    await c.scrollToPoint(0, targetY, 200)
   } catch {
     // fallback (por si scrollToPoint falla por alguna razón)
     scrollEl.scrollTop = targetY
@@ -818,6 +818,10 @@ function requestCloseInfoModal() {
 
 // didDismiss del modal info: reset + restaurar scroll
 async function onInfoDidDismiss() {
+
+  // si se cerró por backdrop, tu estado puede seguir en true
+  isInfoOpen.value = false
+
   // Si tenía una imagen en preview sin guardar, la restauramos al cerrar
   if (selectedItem.value) {
     restorePrevImageIfNeeded(selectedItem.value)
@@ -1114,6 +1118,10 @@ function requestCloseMoveModal() {
 
 // didDismiss del modal mover: reset + restaurar scroll
 async function onMoveDidDismiss() {
+
+  // si se cerró por backdrop, tu estado puede seguir en true
+  isMoveOpen.value = false
+
   moveItem.value = null
   selectedPantryCode.value = ''
   moveQuantity.value = null
