@@ -38,21 +38,23 @@
 
       <!-- Productos de la despensa seleccionada START -->
       <div v-if="!loading && itemsFiltered.length">
-        <!-- ====== VISTA GENERAL (GRID) ====== -->
+        <!-- VISTA GENERAL START -->
         <div v-if="viewMode === 'general'" class="items-grid">
           <div v-for="item in itemsFiltered" :key="item.id" :ref="(el) => setItemCardRef(item.id, el)" class="item-card"
             :class="{ 'item-card-expiring': isExpiringSoon(item) }" @click="openInfoModal(item)">
-            <!-- Botón mover -->
+            <!-- BOTÓN MOVER START -->
             <ion-button class="move-btn" fill="clear" size="small" aria-label="Mover producto"
               @click.stop="openMoveModal(item)">
               <ion-icon :icon="swapHorizontalOutline" />
             </ion-button>
+            <!-- BOTÓN MOVER END -->
 
-            <!-- Botón eliminar -->
+            <!-- BOTÓN ELIMINAR START -->
             <ion-button class="delete-btn" fill="clear" size="small" aria-label="Eliminar producto"
               @click.stop="deleteItemFromPantry(item)">
               <ion-icon :icon="trashOutline" />
             </ion-button>
+            <!-- BOTÓN ELIMINAR END -->
 
             <img v-if="item.imageUrl" :src="getOptimizedUrl(item.imageUrl)" :alt="item.name"
               :class="{ 'img-galery': isImageGalery(item.imageUrl) }" />
@@ -63,7 +65,7 @@
 
             <p class="item-name">{{ item.name }}</p>
 
-            <!-- Controles cantidad en card -->
+            <!-- UNIDADES + CONTROLES START -->
             <div class="item-units">
               <ion-button fill="clear" size="small" class="qty-btn qty-btn-card"
                 @click.stop="adjustItemQuantity(item, -1)">
@@ -79,7 +81,9 @@
                 <span class="material-icons">add</span>
               </ion-button>
             </div>
+            <!-- UNIDADES + CONTROLES END -->
 
+            <!-- ACCIONES START -->
             <div class="card-actions">
               <ion-button size="small" :class="item.inPurchase ? 'btn-remove' : 'btn-add'"
                 @click.stop="togglePurchaseState(item)">
@@ -87,25 +91,28 @@
                 {{ item.inPurchase ? 'Quitar de compra' : 'Añadir a compra' }}
               </ion-button>
             </div>
+            <!-- ACCIONES END -->
           </div>
         </div>
+        <!-- VISTA GENERAL END -->
 
-        <!-- ====== VISTA LISTADO ====== -->
+        <!-- VISTA LISTADO START -->
         <div v-else class="list-cards">
           <div v-for="item in itemsFiltered" :key="item.id" :ref="(el) => setItemCardRef(item.id, el)" class="item-row"
             :class="{ 'item-row-expiring': isExpiringSoon(item) }" @click="openInfoModal(item)">
-            <!-- IZQUIERDA: imagen + info -->
+            <!-- IMAGEN + NOMBRE START -->
             <div class="row-left">
               <img v-if="item.imageUrl" class="icon" :src="getOptimizedUrl(item.imageUrl)" :alt="item.name"
                 :class="{ 'img-galery': isImageGalery(item.imageUrl) }" />
               <div v-else class="icon-letter" aria-hidden="true">
                 {{ getInitial(item.name) }}
               </div>
+              <!-- IMAGEN + NOMBRE END -->
 
               <div class="info">
                 <p class="name">{{ item.name }}</p>
 
-                <!-- Unidades + controles (como en la vista general) -->
+                <!-- UNIDADES + CONTROLES START -->
                 <div class="row-units">
                   <ion-button fill="clear" size="small" class="qty-btn qty-btn-row"
                     @click.stop="adjustItemQuantity(item, -1)">
@@ -121,10 +128,11 @@
                     <span class="material-icons">add</span>
                   </ion-button>
                 </div>
+                <!-- UNIDADES + CONTROLES END -->
               </div>
             </div>
 
-            <!-- DERECHA: acciones -->
+            <!-- ACCIONES START -->
             <div class="row-actions" @click.stop>
               <ion-button size="small" class="icon-action purchase-action"
                 :class="item.inPurchase ? 'btn-remove' : 'btn-add'" aria-label="Añadir o quitar de compra"
@@ -142,8 +150,10 @@
                 <ion-icon :icon="trashOutline" />
               </ion-button>
             </div>
+            <!-- ACCIONES END -->
           </div>
         </div>
+        <!-- VISTA LISTADO END -->
       </div>
       <!-- Productos de la despensa seleccionada END -->
 
@@ -313,7 +323,7 @@
                   <div class="qty-inline">
                     <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-minus qty-inline-btn"
                       @click="changeMoveQuantity(-1)" :disabled="movingItem">
-                      <span class="material-icons">remove</span>
+                      <span class="material-icons" style="color: var(--ion-text-color4);">remove</span>
                     </ion-button>
 
                     <ion-input type="number" inputmode="numeric" v-model.number="moveQuantity"
@@ -321,7 +331,7 @@
 
                     <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-plus qty-inline-btn"
                       @click="changeMoveQuantity(1)" :disabled="movingItem">
-                      <span class="material-icons">add</span>
+                      <span class="material-icons" style="color: var(--ion-text-color4);">add</span>
                     </ion-button>
                   </div>
 
@@ -429,7 +439,9 @@ function loadViewMode() {
 function persistViewMode(mode: InventoryViewMode) {
   try {
     localStorage.setItem(INVENTORY_VIEW_KEY, mode)
-  } catch { }
+  } catch { 
+    console.log("Error al modificar el tipo de vista en el storage")
+  }
 }
 
 function onViewModeChange() {
@@ -454,7 +466,7 @@ function scheduleHideAlphaBar() {
   alphaHideTimer = setTimeout(() => {
     // Si el usuario está arrastrando la barra, no la escondas aún
     if (!alphaDragging.value) showAlphaBar.value = false
-  }, 1000)
+  }, 2000)
 }
 
 function onContentScroll() {
@@ -1361,69 +1373,67 @@ body.dark ion-searchbar {
   --border-radius: 999px;
 }
 
-/* Selector de vista (más bajo + icono al lado + letra más pequeña) */
+/* Selector de vista */
 .view-toggle {
   width: 100%;
-  padding: 2px 6px; /* menos alto */
+  padding: 2px 6px;
+  margin-bottom: 2%;
   border-radius: 12px;
-  background: color-mix(in srgb, var(--ion-background-color) 90%, #000 10%);
-  border: 1px solid rgba(0, 0, 0, 0.06);
+  background: color-mix(in srgb, var(--ion-background-color) 92%, var(--md-accent, #2ea15d) 8%);
+  border: 1px solid rgba(112, 112, 112, 0.06);
 }
 
 body.dark .view-toggle {
-  background: rgba(20, 20, 20, 0.55);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: color-mix(in srgb, var(--ion-background-color) 96%, var(--md-accent, #2ea15d) 4%);
+  border: 1px solid rgba(112, 112, 112, 0.06);
 }
 
 .view-segment {
   --background: transparent;
 }
 
-/* Segment button más bajo */
+
 .view-segment-btn {
   --border-radius: 10px;
   --indicator-color: var(--md-accent, #2ea15d);
 
-  /* ✅ Texto con el color genérico de la app (como el subrayado) */
   --color: var(--md-accent, #2ea15d);
   --color-checked: var(--md-accent, #2ea15d);
 
-  --padding-top: 4px; /* menos alto */
+  --padding-top: 4px;
   --padding-bottom: 4px;
   --padding-start: 10px;
   --padding-end: 10px;
 }
 
 .view-segment-btn::part(native) {
-  min-height: 34px; /* menos alto */
+  min-height: 34px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-/* Contenido interno para alinear icono y texto */
 .seg-content {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 6px; /* icono más pegado al texto */
+  gap: 6px;
   line-height: 1;
 }
 
 .seg-content ion-icon {
-  font-size: 16px; /* un poco más pequeño */
+  font-size: 20px;
   margin: 0;
   position: relative;
-  top: 0.5px; /* micro-ajuste vertical */
+  top: 0.5px;
 }
 
 .seg-text {
-  font-size: 12px; /* letra más pequeña */
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: bolder;
   letter-spacing: 0.2px;
   line-height: 1;
 
-  /* ✅ fuerza el color también en el texto */
   color: var(--md-accent, #2ea15d);
 }
 
@@ -1771,8 +1781,6 @@ body.dark .item-row-expiring {
 
 .row-left {
   display: grid;
-
-  /* ✅ icono un poco más compacto para ganar ancho */
   grid-template-columns: 36px 1fr;
 
   align-items: center;
@@ -2067,9 +2075,69 @@ body.dark .alpha-letter--active {
     width: min(360px, 90%);
     max-height: 100%;
   }
+
+
+/* PRODUCTOS FORMATO LISTA */
+.row-units{
+  margin-top: 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 15px;
 }
 
-/* ===== FIX MODALES (editar + mover) ===== */
+.units-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ion-text-color2);
+  min-width: 0;
+  padding: 0 2px;
+  margin: 0;
+  line-height: 1;
+  text-align: left;
+}
+
+.qty-btn-row {
+  --border-radius: 999px;
+  --border-width: 1px;
+  --border-style: solid;
+  --border-color: #d1d5db;
+
+  --background: var(--ion-background-color);
+
+  width: 24px;
+  height: 24px;
+
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+}
+
+body.dark .qty-btn-row {
+  --border-color: #9c9c9c;
+}
+
+.qty-btn-row::part(native) {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  line-height: 0;
+}
+
+.qty-btn-row .material-icons{
+  font-size: 13px;
+  line-height: 1;
+  display: block;
+}
+
+}
+
+/* FIX MODALES (editar + mover) */
 .product-info-modal::part(content),
 .move-product-modal::part(content) {
   width: min(360px, 90%);
@@ -2095,7 +2163,6 @@ body.dark .move-product-modal::part(content) {
   padding: 18px 16px 20px;
 }
 
-/* evita que estilos del listado afecten al modal */
 .product-info-wrapper .info,
 .product-info-wrapper .name,
 .product-info-wrapper .units,
