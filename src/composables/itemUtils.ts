@@ -12,6 +12,17 @@ export function getMeasurementUnit(unit: string, quantity: number): string {
   return quantity === 1 ? singular[unit] : plural[unit];
 }
 
+export function getMeasurementUnitAbbr(unit: string): string {
+  const map: Record<string, string> = {
+    Gramo: 'g',
+    Kilogramo: 'kg',
+    Mililitro: 'ml',
+    Litro: 'l',
+    Unidad: 'u'
+  }
+  return map[unit] ?? 'u'
+}
+
 // Optimiza la URL de una imagen para carga automática y calidad automática
 export function getOptimizedUrl(url: string | null | undefined): string {
   if (!url) return ''; // o una imagen placeholder
