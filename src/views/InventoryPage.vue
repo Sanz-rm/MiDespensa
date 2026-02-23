@@ -1824,12 +1824,33 @@ body.dark .item-row-expiring {
   line-height: 1;
 }
 
+.modal-item-letter{
+  width: 100px;
+  height: 100px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, #ffffff 65%, var(--md-accent, #2ea15d) 35%);
+  background: color-mix(in srgb, #ffffff 88%, var(--md-accent, #2ea15d) 12%);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+
+  color: var(--md-accent, #2ea15d);
+
+  font-family: "Risque", serif;
+  font-weight: 400;
+  font-size: 72px;
+  line-height: 1;
+
+  position: relative;
+}
+
 .info {
   align-self: center;
   min-width: 0;
 }
 
-/* ✅ nombre en 2 líneas (más largo) */
 .info .name {
   margin: 0;
   font-size: 14px;
