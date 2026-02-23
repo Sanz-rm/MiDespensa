@@ -6,6 +6,27 @@
       <!-- Buscador START -->
       <div class="actions">
         <ion-searchbar v-model="search" placeholder="Buscar producto…" :debounce="150" show-clear-button="focus" />
+
+        <!-- Selector de vista START -->
+        <div class="view-toggle" role="group" aria-label="Modo de visualización">
+          <ion-segment v-model="viewMode" mode="md" class="view-segment" @ionChange="onViewModeChange">
+            <ion-segment-button value="general" class="view-segment-btn">
+              <div class="seg-content">
+                <ion-icon :icon="gridOutline" />
+                <span class="seg-text">General</span>
+              </div>
+            </ion-segment-button>
+
+            <ion-segment-button value="list" class="view-segment-btn">
+              <div class="seg-content">
+                <ion-icon :icon="listOutline" />
+                <span class="seg-text">Listado</span>
+              </div>
+            </ion-segment-button>
+
+          </ion-segment>
+        </div>
+        <!-- Selector de vista END -->
       </div>
       <!-- Buscador END -->
 
@@ -16,55 +37,123 @@
       <!-- Loading END -->
 
       <!-- Productos de la despensa seleccionada START -->
-      <div v-if="!loading && itemsFiltered.length" class="items-grid">
-        <div v-for="item in itemsFiltered" :key="item.id" :ref="(el) => setItemCardRef(item.id, el)" class="item-card"
-          :class="{ 'item-card-expiring': isExpiringSoon(item) }" @click="openInfoModal(item)">
-          <!-- Botón mover -->
-          <ion-button class="move-btn" fill="clear" size="small" aria-label="Mover producto"
-            @click.stop="openMoveModal(item)">
-            <ion-icon :icon="swapHorizontalOutline" />
-          </ion-button>
-
-          <!-- Botón eliminar -->
-          <ion-button class="delete-btn" fill="clear" size="small" aria-label="Eliminar producto"
-            @click.stop="deleteItemFromPantry(item)">
-            <ion-icon :icon="trashOutline" />
-          </ion-button>
-
-          <img v-if="item.imageUrl" :src="getOptimizedUrl(item.imageUrl)" :alt="item.name"
-            :class="{ 'img-galery': isImageGalery(item.imageUrl) }" />
-
-          <div v-else class="item-letter" aria-hidden="true">
-            {{ getInitial(item.name) }}
-          </div>
-
-          <p class="item-name">{{ item.name }}</p>
-
-          <!-- Controles cantidad en card -->
-          <div class="item-units">
-            <ion-button fill="clear" size="small" class="qty-btn qty-btn-card"
-              @click.stop="adjustItemQuantity(item, -1)">
-              <span class="material-icons">remove</span>
+      <div v-if="!loading && itemsFiltered.length">
+        <!-- VISTA GENERAL START -->
+        <div v-if="viewMode === 'general'" class="items-grid">
+          <div v-for="item in itemsFiltered" :key="item.id" :ref="(el) => setItemCardRef(item.id, el)" class="item-card"
+            :class="{ 'item-card-expiring': isExpiringSoon(item) }" @click="openInfoModal(item)">
+            <!-- BOTÓN MOVER START -->
+            <ion-button class="move-btn" fill="clear" size="small" aria-label="Mover producto"
+              @click.stop="openMoveModal(item)">
+              <ion-icon :icon="swapHorizontalOutline" />
             </ion-button>
+            <!-- BOTÓN MOVER END -->
 
-            <span class="item-units-value">
-              {{ item.quantity }} {{ getMeasurementUnit(item.unit, item.quantity) }}
-            </span>
-
-            <ion-button fill="clear" size="small" class="qty-btn qty-btn-card"
-              @click.stop="adjustItemQuantity(item, 1)">
-              <span class="material-icons">add</span>
+            <!-- BOTÓN ELIMINAR START -->
+            <ion-button class="delete-btn" fill="clear" size="small" aria-label="Eliminar producto"
+              @click.stop="deleteItemFromPantry(item)">
+              <ion-icon :icon="trashOutline" />
             </ion-button>
-          </div>
+            <!-- BOTÓN ELIMINAR END -->
 
-          <div class="card-actions">
-            <ion-button size="small" :class="item.inPurchase ? 'btn-remove' : 'btn-add'"
-              @click.stop="togglePurchaseState(item)">
-              <ion-icon :icon="cartOutline" slot="start" />
-              {{ item.inPurchase ? 'Quitar de compra' : 'Añadir a compra' }}
-            </ion-button>
+            <img v-if="item.imageUrl" :src="getOptimizedUrl(item.imageUrl)" :alt="item.name"
+              :class="{ 'img-galery': isImageGalery(item.imageUrl) }" />
+
+            <div v-else class="item-letter" aria-hidden="true">
+              {{ getInitial(item.name) }}
+            </div>
+
+            <p class="item-name">{{ item.name }}</p>
+
+            <!-- UNIDADES + CONTROLES START -->
+            <div class="item-units">
+              <ion-button fill="clear" size="small" class="qty-btn qty-btn-card"
+                @click.stop="adjustItemQuantity(item, -1)">
+                <span class="material-icons">remove</span>
+              </ion-button>
+
+              <span class="item-units-value">
+                {{ item.quantity }} {{ getMeasurementUnit(item.unit, item.quantity) }}
+              </span>
+
+              <ion-button fill="clear" size="small" class="qty-btn qty-btn-card"
+                @click.stop="adjustItemQuantity(item, 1)">
+                <span class="material-icons">add</span>
+              </ion-button>
+            </div>
+            <!-- UNIDADES + CONTROLES END -->
+
+            <!-- ACCIONES START -->
+            <div class="card-actions">
+              <ion-button size="small" :class="item.inPurchase ? 'btn-remove' : 'btn-add'"
+                @click.stop="togglePurchaseState(item)">
+                <ion-icon :icon="cartOutline" slot="start" />
+                {{ item.inPurchase ? 'Quitar de compra' : 'Añadir a compra' }}
+              </ion-button>
+            </div>
+            <!-- ACCIONES END -->
           </div>
         </div>
+        <!-- VISTA GENERAL END -->
+
+        <!-- VISTA LISTADO START -->
+        <div v-else class="list-cards">
+          <div v-for="item in itemsFiltered" :key="item.id" :ref="(el) => setItemCardRef(item.id, el)" class="item-row"
+            :class="{ 'item-row-expiring': isExpiringSoon(item) }" @click="openInfoModal(item)">
+            <!-- IMAGEN + NOMBRE START -->
+            <div class="row-left">
+              <img v-if="item.imageUrl" class="icon" :src="getOptimizedUrl(item.imageUrl)" :alt="item.name"
+                :class="{ 'img-galery': isImageGalery(item.imageUrl) }" />
+              <div v-else class="icon-letter" aria-hidden="true">
+                {{ getInitial(item.name) }}
+              </div>
+              <!-- IMAGEN + NOMBRE END -->
+
+              <div class="info">
+                <p class="name">{{ item.name }}</p>
+
+                <!-- UNIDADES + CONTROLES START -->
+                <div class="row-units">
+                  <ion-button fill="clear" size="small" class="qty-btn qty-btn-row"
+                    @click.stop="adjustItemQuantity(item, -1)">
+                    <span class="material-icons">remove</span>
+                  </ion-button>
+
+                  <span class="units-value">
+                    {{ item.quantity }} {{ getMeasurementUnitAbbr(item.unit) }}
+                  </span>
+
+                  <ion-button fill="clear" size="small" class="qty-btn qty-btn-row"
+                    @click.stop="adjustItemQuantity(item, 1)">
+                    <span class="material-icons">add</span>
+                  </ion-button>
+                </div>
+                <!-- UNIDADES + CONTROLES END -->
+              </div>
+            </div>
+
+            <!-- ACCIONES START -->
+            <div class="row-actions" @click.stop>
+              <ion-button size="small" class="icon-action purchase-action"
+                :class="item.inPurchase ? 'btn-remove' : 'btn-add'" aria-label="Añadir o quitar de compra"
+                @click.stop="togglePurchaseState(item)">
+                <ion-icon :icon="cartOutline" />
+              </ion-button>
+
+              <ion-button size="small" class="icon-action move-action" fill="clear" aria-label="Mover producto"
+                @click.stop="openMoveModal(item)">
+                <ion-icon :icon="swapHorizontalOutline" />
+              </ion-button>
+
+              <ion-button size="small" class="icon-action delete-action" fill="clear" aria-label="Eliminar producto"
+                @click.stop="deleteItemFromPantry(item)">
+                <ion-icon :icon="trashOutline" />
+              </ion-button>
+            </div>
+            <!-- ACCIONES END -->
+          </div>
+        </div>
+        <!-- VISTA LISTADO END -->
       </div>
       <!-- Productos de la despensa seleccionada END -->
 
@@ -91,12 +180,10 @@
       <!-- Barra alfabética (scroll rápido) START -->
       <div class="alpha-bar" :class="{ 'alpha-bar--visible': showAlphaBar }" @pointerdown.prevent="onAlphaPointerDown"
         @pointermove.prevent="onAlphaPointerMove" @pointerup="onAlphaPointerUp" @pointercancel="onAlphaPointerUp">
-
         <div v-for="l in alphabet" :key="l" class="alpha-letter" :class="{ 'alpha-letter--active': activeLetter === l }"
           :data-letter="l">
           {{ l }}
         </div>
-
       </div>
       <!-- Barra alfabética END -->
 
@@ -104,7 +191,7 @@
       <ModalAddProduct :pantry-code="props.code" :items="items" view="inventory" @willOpen="search = ''" />
       <!-- Botón flotante END -->
 
-      <!-- Modal info producto START -->
+      <!-- Modal info producto START (NO TOCADO) -->
       <ion-modal :is-open="isInfoOpen" css-class="product-info-modal" @didDismiss="onInfoDidDismiss"
         :backdropDismiss="!savingItem" :canDismiss="!savingItem">
         <ion-content class="product-info-content" v-if="selectedItem">
@@ -236,7 +323,7 @@
                   <div class="qty-inline">
                     <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-minus qty-inline-btn"
                       @click="changeMoveQuantity(-1)" :disabled="movingItem">
-                      <span class="material-icons">remove</span>
+                      <span class="material-icons" style="color: var(--ion-text-color4);">remove</span>
                     </ion-button>
 
                     <ion-input type="number" inputmode="numeric" v-model.number="moveQuantity"
@@ -244,7 +331,7 @@
 
                     <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-plus qty-inline-btn"
                       @click="changeMoveQuantity(1)" :disabled="movingItem">
-                      <span class="material-icons">add</span>
+                      <span class="material-icons" style="color: var(--ion-text-color4);">add</span>
                     </ion-button>
                   </div>
 
@@ -293,9 +380,11 @@ import {
   IonModal,
   IonInput,
   IonSelect,
-  IonSelectOption
+  IonSelectOption,
+  IonSegment,
+  IonSegmentButton
 } from '@ionic/vue'
-import { cartOutline, trashOutline, swapHorizontalOutline } from 'ionicons/icons'
+import { cartOutline, trashOutline, swapHorizontalOutline, gridOutline, listOutline } from 'ionicons/icons'
 import type { Item } from '@/models/item'
 import type { Location } from '@/models/location'
 import type { Pantry } from '@/models/pantry'
@@ -316,7 +405,7 @@ import {
 } from 'firebase/firestore'
 import { db } from '@/firebase'
 import { showToast } from '@/composables/showToast'
-import { getMeasurementUnit, getOptimizedUrl, isImageGalery, getInitial } from '@/composables/itemUtils'
+import { getMeasurementUnit, getMeasurementUnitAbbr, getOptimizedUrl, isImageGalery, getInitial } from '@/composables/itemUtils'
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera'
 import ModalAddProduct from '@/components/layout/ModalAddProduct.vue'
 import InventoryAndPurcharseHeader from '@/components/ui/InventoryAndPurcharseHeader.vue'
@@ -330,6 +419,34 @@ const loading = ref<boolean>(false)
 const search = ref<string>('')
 const savingItem = ref<boolean>(false)
 const movingItem = ref<boolean>(false)
+
+// -----------------------------
+// Vista: general/list (persistencia localStorage)
+// -----------------------------
+type InventoryViewMode = 'general' | 'list'
+const INVENTORY_VIEW_KEY = 'inventoryViewMode'
+const viewMode = ref<InventoryViewMode>('general')
+
+function loadViewMode() {
+  try {
+    const v = localStorage.getItem(INVENTORY_VIEW_KEY)
+    if (v === 'general' || v === 'list') viewMode.value = v
+  } catch {
+    viewMode.value = 'general'
+  }
+}
+
+function persistViewMode(mode: InventoryViewMode) {
+  try {
+    localStorage.setItem(INVENTORY_VIEW_KEY, mode)
+  } catch { 
+    console.log("Error al modificar el tipo de vista en el storage")
+  }
+}
+
+function onViewModeChange() {
+  persistViewMode(viewMode.value)
+}
 
 // -----------------------------
 // 1) Mantener scroll al cerrar modales (editar / mover)
@@ -349,7 +466,7 @@ function scheduleHideAlphaBar() {
   alphaHideTimer = setTimeout(() => {
     // Si el usuario está arrastrando la barra, no la escondas aún
     if (!alphaDragging.value) showAlphaBar.value = false
-  }, 1000)
+  }, 2000)
 }
 
 function onContentScroll() {
@@ -413,7 +530,7 @@ async function saveScrollSnapshot(itemId: string) {
   const el = itemCardEls.value[itemId]
   if (el) {
     const elTop = calcOffsetTopWithinScroll(el, scrollEl)
-    // Offset del item respecto al viewport del scroll (para que al volver quede en el mismo sitio)
+    // Offset del item respecto al viewport del scroll (para que al volver quedeă quede en el mismo sitio)
     savedItemOffset.value = elTop - scrollEl.scrollTop
   } else {
     savedItemOffset.value = 0
@@ -569,6 +686,7 @@ watch(
 )
 
 onMounted(() => {
+  loadViewMode()
   getPantryItems(props.code)
   loadPantries()
 })
@@ -760,7 +878,7 @@ function getAdjustedQuantity(
   return target
 }
 
-// Ajuste de cantidad directo en la card
+// Ajuste de cantidad directo en la card/listado
 async function adjustItemQuantity(item: Item, deltaSign: 1 | -1) {
   const step = getStepForUnit(item.unit)
   const newQty = getAdjustedQuantity(item.quantity, step, deltaSign, 0)
@@ -1237,7 +1355,7 @@ async function confirmMove() {
 /* BUSCADOR */
 .actions {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   margin-bottom: 8px;
 }
 
@@ -1253,6 +1371,70 @@ body.dark ion-searchbar {
   --clear-icon-color: #888888;
   --border-color: #444444;
   --border-radius: 999px;
+}
+
+/* Selector de vista */
+.view-toggle {
+  width: 100%;
+  padding: 2px 6px;
+  margin-bottom: 2%;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--ion-background-color) 92%, var(--md-accent, #2ea15d) 8%);
+  border: 1px solid rgba(112, 112, 112, 0.06);
+}
+
+body.dark .view-toggle {
+  background: color-mix(in srgb, var(--ion-background-color) 96%, var(--md-accent, #2ea15d) 4%);
+  border: 1px solid rgba(112, 112, 112, 0.06);
+}
+
+.view-segment {
+  --background: transparent;
+}
+
+
+.view-segment-btn {
+  --border-radius: 10px;
+  --indicator-color: var(--md-accent, #2ea15d);
+
+  --color: var(--md-accent, #2ea15d);
+  --color-checked: var(--md-accent, #2ea15d);
+
+  --padding-top: 4px;
+  --padding-bottom: 4px;
+  --padding-start: 10px;
+  --padding-end: 10px;
+}
+
+.view-segment-btn::part(native) {
+  min-height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.seg-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  line-height: 1;
+}
+
+.seg-content ion-icon {
+  font-size: 20px;
+  margin: 0;
+  position: relative;
+  top: 0.5px;
+}
+
+.seg-text {
+  font-size: 15px;
+  font-weight: bolder;
+  letter-spacing: 0.2px;
+  line-height: 1;
+
+  color: var(--md-accent, #2ea15d);
 }
 
 /* LOADING */
@@ -1306,6 +1488,7 @@ body.dark ion-searchbar {
   color: var(--ion-text-color2);
 }
 
+/* GRID */
 .items-grid {
   margin-top: 8px;
 
@@ -1386,7 +1569,7 @@ body.dark .item-card-expiring {
   min-height: calc(1.2em * 2);
 }
 
-/* CANTIDAD DE PRODUCTOS */
+/* CANTIDAD DE PRODUCTOS (card) */
 .item-units {
   margin: 3px 0 5px;
 
@@ -1406,7 +1589,7 @@ body.dark .item-card-expiring {
 
 .qty-btn {
   --padding: 2px;
-  margin: 2% 1%;
+  margin: 0;
 }
 
 .qty-btn .material-icons {
@@ -1557,385 +1740,225 @@ body.dark .item-letter {
   background: color-mix(in srgb, var(--ion-background-color) 85%, var(--md-accent, #2ea15d) 15%);
 }
 
-/* LETRA EN MODALES (cuando no hay imagen) */
-.modal-item-letter {
-  width: 100%;
-  height: 100%;
+/* ====== VISTA LISTADO (inventario) ====== */
+.list-cards {
+  display: grid;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.item-row {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-items: center;
+
+  /* ✅ un pelín menos de gap para ganar ancho */
+  gap: 8px;
+
+  padding: 10px 12px;
+
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #eef2f4;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.03);
+}
+
+body.dark .item-row {
+  background: var(--ion-background-color);
+  border-color: #333333;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+}
+
+.item-row-expiring {
+  border: 2px solid #ef4444;
+  box-shadow: 0 2px 12px rgba(239, 68, 68, 0.18);
+}
+
+body.dark .item-row-expiring {
+  border: 2px solid #ef4444;
+  box-shadow: 0 2px 12px rgba(239, 68, 68, 0.18);
+}
+
+.row-left {
+  display: grid;
+  grid-template-columns: 36px 1fr;
+
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.item-row .icon {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 6px rgba(202, 202, 202, 0.37));
+}
+
+.item-row img.img-galery {
+  width: 80%;
+  margin: 0 8px;
+  display: block;
+
+  border-radius: 5%;
+  object-fit: cover;
+}
+
+.icon-letter {
+  width: 36px;
+  height: 36px;
 
   display: grid;
   place-items: center;
 
-  border-radius: 14px;
-  border: 1px solid var(--ion-border-color);
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, #ffffff 65%, var(--md-accent, #2ea15d) 35%);
+  background: color-mix(in srgb, #ffffff 88%, var(--md-accent, #2ea15d) 12%);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+
+  color: var(--md-accent, #2ea15d);
 
   font-family: "Risque", serif;
   font-weight: 400;
+  font-size: 26px;
   line-height: 1;
-  letter-spacing: 0;
-
-  /* Ajustada a 108x108 */
-  font-size: 74px;
-
-  color: var(--md-accent, #2ea15d);
-  background: color-mix(in srgb, var(--ion-background-color) 88%, var(--md-accent, #2ea15d) 12%);
 }
 
-body.dark .modal-item-letter {
-  border-color: #333333;
-  background: color-mix(in srgb, var(--ion-background-color) 85%, var(--md-accent, #2ea15d) 15%);
-}
-
-/* ÍNDICE ALFABÉTICO (barra derecha) */
-.alpha-index {
-  position: fixed;
-  right: 6px;
-  top: 52%;
-  transform: translateY(-50%);
-  z-index: 50;
-
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-
-  padding: 8px 6px;
-  border-radius: 999px;
-
-  background: rgba(255, 255, 255, 0.78);
-  border: 1px solid rgba(229, 231, 235, 0.9);
-  backdrop-filter: blur(6px);
-
-  user-select: none;
-  -webkit-user-select: none;
-  touch-action: none;
-}
-
-body.dark .alpha-index {
-  background: rgba(30, 30, 30, 0.7);
-  border-color: rgba(60, 60, 60, 0.9);
-}
-
-.alpha-letter {
-  width: 18px;
-  height: 16px;
+.modal-item-letter{
+  width: 100px;
+  height: 100px;
 
   display: grid;
   place-items: center;
 
-  font-size: 11px;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, #ffffff 65%, var(--md-accent, #2ea15d) 35%);
+  background: color-mix(in srgb, #ffffff 88%, var(--md-accent, #2ea15d) 12%);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+
+  color: var(--md-accent, #2ea15d);
+
+  font-family: "Risque", serif;
+  font-weight: 400;
+  font-size: 72px;
+  line-height: 1;
+
+  position: relative;
+}
+
+.info {
+  align-self: center;
+  min-width: 0;
+}
+
+.info .name {
+  margin: 0;
+  font-size: 14px;
   font-weight: 700;
+  color: var(--ion-text-color);
 
-  color: color-mix(in srgb, #ffffff 55%, var(--md-accent, #2ea15d) 45%);
-}
-
-body.dark .alpha-letter {
-  color: color-mix(in srgb, #ffffff 88%, var(--md-accent, #2ea15d) 12%);
-}
-
-.alpha-letter.disabled {
-  opacity: 0.22;
-}
-
-/* MODAL INFO PRODUCTO + MODAL MOVER PRODUCTO: */
-
-/* VENTANA MODAL */
-.product-info-modal::part(content),
-.move-product-modal::part(content) {
-  width: min(360px, 90%);
-  max-height: 70%;
-
-  border-radius: 18px;
+  white-space: normal;
   overflow: hidden;
 
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
-  background: var(--ion-background-color);
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
 }
 
-body.dark .product-info-modal::part(content),
-body.dark .move-product-modal::part(content) {
-  background: #1e1e1e;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+.row-units {
+  margin-top: 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
 }
 
-.product-info-content {
+.units-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ion-text-color2);
+
+  min-width: auto; /* quita hueco */
+  padding: 0 4px; /* solo un poco */
+  text-align: left;
+}
+
+.qty-btn-row {
+  --border-radius: 999px;
+  --border-width: 1px;
+  --border-style: solid;
+  --border-color: #d1d5db;
+
   --background: var(--ion-background-color);
+
+  width: 26px;
+  height: 26px;
 }
 
-.product-info-wrapper {
-  position: relative;
-  padding: 18px 16px 20px;
+body.dark .qty-btn-row {
+  --border-color: #9c9c9c;
 }
 
-/* TITULO INFORMACION PRODUCTO MODAL */
-.info-title {
-  margin: 0 0 10px;
-  text-align: center;
+.qty-btn-row::part(native) {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
 
-  font-size: 20px;
-  font-weight: 700;
-  color: var(--ion-text-color);
-
-  margin-bottom: 6%;
-}
-
-.info-product-block {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 12%;
-}
-
-/* IMAGEN INFORMACIÓN PRODUCTO */
-.info-product-image-wrapper {
-  position: relative;
-  width: 108px;
-  height: 108px;
-}
-
-.info-product-image-wrapper img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-}
-
-/* IMAGEN DE GALERÍA EN MODAL */
-.info-product-image-wrapper img.info-img-galery {
-  object-fit: cover;
-  border-radius: 14px;
-}
-
-/* ICONO CAMBIAR FOTO */
-.info-product-icon {
-  position: absolute;
-  top: 85px;
-  right: 1px;
-
-  font-size: 25px;
-  padding: 2px;
-
-  border-radius: 50%;
-  background: var(--md-accent, #2ea15d);
-  color: #ffffff;
-
-  pointer-events: none;
-}
-
-.info-product-name {
-  margin-top: 4%;
-  font-size: 18px;
-  font-weight: 600;
-  color: var(--ion-text-color);
-}
-
-/* FORMULARIO */
-.info-form {
-  margin-top: 4px;
-}
-
-.info-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  margin-bottom: 18px;
-}
-
-.info-row2,
-.info-row-single {
-  display: grid;
-  grid-template-columns: 1fr;
-  margin-bottom: 18px;
-}
-
-.info-field {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.info-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--ion-text-color2);
-}
-
-/* INPUTS/SELECT */
-.info-input,
-.info-select {
-  --background: #f7f9fa;
-  --padding-start: 8px;
-  --padding-end: 8px;
-  --padding-top: 6px;
-  --padding-bottom: 6px;
-  --border-radius: 10px;
-
-  --highlight-color-focused: var(--md-accent, #2ea15d);
-  --highlight-color: var(--md-accent, #2ea15d);
-  --highlight-color-valid: var(--md-accent, #2ea15d);
-  --highlight-height: 2px;
-
-  border-radius: 10px;
-  border: 1px solid rgba(229, 231, 235, 0.13);
-
-  font-size: 14px;
-}
-
-body.dark .info-input,
-body.dark .info-select {
-  --background: #292929;
-}
-
-.info-input-exception {
-  --background: #f7f9fa;
-  --padding-start: 1px;
-  --padding-top: 6px;
-  --padding-bottom: 6px;
-
-  border-radius: 10px;
-  font-size: 14px;
-
-  --highlight-color-focused: var(--md-accent, #2ea15d);
-  --highlight-color: var(--md-accent, #2ea15d);
-  --highlight-color-valid: var(--md-accent, #2ea15d);
-  --highlight-height: 2px;
-}
-
-body.dark .info-input-exception {
-  --background: #292929;
-}
-
-.info-input-readonly {
-  --background: #f3f4f6;
-}
-
-.info-helper {
-  margin-top: 4px;
-  font-size: 11px;
-  color: var(--ion-text-color2);
-}
-
-/* CONTENEDOR MODAL */
-.qty-inline {
   display: flex;
   align-items: center;
-  gap: 4px;
-
-  padding: 0 10px;
-
-  background: #f9fafb;
-  border-radius: 10px;
-  border: 1px solid #e5e7eb;
+  justify-content: center;
 }
 
-body.dark .qty-inline {
-  background: #2a2a2a;
-  border-color: #444444;
+.row-actions {
+  display: flex;
+  align-items: center;
+
+  /* ✅ menos hueco */
+  gap: 6px;
 }
 
-.qty-inline-input {
-  width: 100%;
-  text-align: center;
-
-  --background: transparent;
-  --border-width: 0;
-
-  --padding-start: 0;
-  --padding-end: 0;
-  --padding-top: 6px;
-  --padding-bottom: 6px;
-}
-
-/* BOTONES */
-.qty-inline-btn {
-  margin: 0;
+/* ✅ botones de acciones más pequeños */
+.icon-action {
+  width: 35px;
+  height: 35px;
 
   --padding-start: 0;
   --padding-end: 0;
   --padding-top: 0;
   --padding-bottom: 0;
+
+  border-radius: 9px;
 }
 
-/* BOTONES DE + Y - */
-.qty-btn-modal::part(native) {
-  width: 32px;
-  height: 32px;
-  border-radius: 999px;
+.icon-action::part(native) {
+  width: 35px;
+  height: 35px;
+
+  border-radius: 9px;
 
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.qty-btn-plus {
-  --background: #2fa15e;
-  --background-hover: rgba(var(--md-accent-rgb, 46, 161, 93), 0.92);
-  --background-activated: rgba(var(--md-accent-rgb, 46, 161, 93), 0.86);
+.icon-action ion-icon {
+  font-size: 16px;
+}
+
+.purchase-action {
   --color: #ffffff;
 }
 
-.qty-btn-minus {
-  --background: #ef4444;
-  --background-hover: #dc2626;
-  --background-activated: #b91c1c;
-  --color: #ffffff;
-}
-
-/* MODAL ACCIONES */
-.info-actions {
-  display: flex;
-  gap: 10px;
-}
-
-.btn-info-cancel {
-  flex: 1;
-
-  --background: var(--ion-background-color);
-  --border-color: var(--md-accent, #2ea15d);
-  --border-width: 1px;
-  --box-shadow: none;
-
+.move-action {
   --color: var(--md-accent, #2ea15d);
-
-  border-radius: 999px;
-  font-weight: 600;
-  text-transform: none;
+  border: 1px solid color-mix(in srgb, var(--md-accent, #2ea15d) 55%, transparent);
+  background: color-mix(in srgb, var(--ion-background-color) 92%, var(--md-accent, #2ea15d) 8%);
 }
 
-body.dark .btn-info-cancel {
-  --background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.08);
-}
-
-.btn-info-save {
-  flex: 1;
-
-  --background: var(--md-accent, #2ea15d);
-  --background-hover: rgba(var(--md-accent-rgb, 46, 161, 93), 0.92);
-  --background-activated: rgba(var(--md-accent-rgb, 46, 161, 93), 0.86);
-  --color: #ffffff;
-
-  border-radius: 999px;
-  font-weight: 600;
-  text-transform: none;
-}
-
-/* MODAL DE CARGA */
-.modal-saving-overlay {
-  position: absolute;
-  inset: 0;
-  z-index: 999;
-
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-
-  background: rgba(255, 255, 255, 0.75);
-  backdrop-filter: blur(2px);
-}
-
-.modal-saving-text {
-  margin: 0;
-  font-weight: 700;
-  color: #111827;
+.delete-action {
+  --color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.35);
+  background: color-mix(in srgb, var(--ion-background-color) 92%, #ef4444 8%);
 }
 
 /* BARRA ALFABÉTICA */
@@ -2005,7 +2028,6 @@ body.dark .alpha-letter--active {
   background: rgba(255, 255, 255, 0.14);
 }
 
-
 @media (min-width: 820px) {
   ion-content.pantry-content {
     --padding-start: 14px;
@@ -2029,6 +2051,42 @@ body.dark .alpha-letter--active {
     border-radius: 14px;
   }
 
+  .list-cards {
+    max-width: 1020px;
+    margin: 8px auto 0;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .item-row {
+    padding: 12px 14px;
+    border-radius: 14px;
+  }
+
+  .row-left {
+    grid-template-columns: 44px 1fr;
+  }
+
+  .icon,
+  .icon-letter {
+    width: 40px;
+    height: 40px;
+  }
+
+  .icon-letter {
+    font-size: 28px;
+  }
+
+  .info .name {
+    font-size: 15px;
+  }
+
+  .units-value {
+    font-size: 13px;
+    min-width: 110px;
+  }
+
   .alpha-bar {
     right: 10px;
   }
@@ -2039,6 +2097,346 @@ body.dark .alpha-letter--active {
     max-height: 100%;
   }
 
+
+/* PRODUCTOS FORMATO LISTA */
+.row-units{
+  margin-top: 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 15px;
 }
 
+.units-value {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ion-text-color2);
+  min-width: 0;
+  padding: 0 2px;
+  margin: 0;
+  line-height: 1;
+  text-align: left;
+}
+
+.qty-btn-row {
+  --border-radius: 999px;
+  --border-width: 1px;
+  --border-style: solid;
+  --border-color: #d1d5db;
+
+  --background: var(--ion-background-color);
+
+  width: 24px;
+  height: 24px;
+
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+}
+
+body.dark .qty-btn-row {
+  --border-color: #9c9c9c;
+}
+
+.qty-btn-row::part(native) {
+  width: 24px;
+  height: 24px;
+  border-radius: 999px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  line-height: 0;
+}
+
+.qty-btn-row .material-icons{
+  font-size: 13px;
+  line-height: 1;
+  display: block;
+}
+
+}
+
+/* FIX MODALES (editar + mover) */
+.product-info-modal::part(content),
+.move-product-modal::part(content) {
+  width: min(360px, 90%);
+  max-height: 70%;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  background: var(--ion-background-color);
+}
+
+body.dark .product-info-modal::part(content),
+body.dark .move-product-modal::part(content) {
+  background: #1e1e1e;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.product-info-content {
+  --background: var(--ion-background-color);
+}
+
+.product-info-wrapper {
+  position: relative;
+  padding: 18px 16px 20px;
+}
+
+.product-info-wrapper .info,
+.product-info-wrapper .name,
+.product-info-wrapper .units,
+.product-info-wrapper .row-units,
+.product-info-wrapper .units-value {
+  all: unset;
+  display: revert;
+}
+
+.info-title {
+  margin: 0 0 10px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ion-text-color);
+  margin-bottom: 6%;
+}
+
+.info-product-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 12%;
+}
+
+.info-product-image-wrapper {
+  position: relative;
+  width: 108px;
+  height: 108px;
+}
+
+.info-product-image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.info-product-image-wrapper img.info-img-galery {
+  object-fit: cover;
+  border-radius: 14px;
+}
+
+.info-product-icon {
+  position: absolute;
+  top: 85px;
+  right: 1px;
+  font-size: 25px;
+  padding: 2px;
+  border-radius: 50%;
+  background: var(--md-accent, #2ea15d);
+  color: #ffffff;
+  pointer-events: none;
+}
+
+.info-product-name {
+  margin-top: 4%;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ion-text-color);
+}
+
+.info-form {
+  margin-top: 4px;
+}
+
+.info-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.info-row2,
+.info-row-single {
+  display: grid;
+  grid-template-columns: 1fr;
+  margin-bottom: 18px;
+}
+
+.info-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ion-text-color2);
+}
+
+.info-input,
+.info-select {
+  --background: #f7f9fa;
+  --padding-start: 8px;
+  --padding-end: 8px;
+  --padding-top: 6px;
+  --padding-bottom: 6px;
+  --border-radius: 10px;
+
+  --highlight-color-focused: var(--md-accent, #2ea15d);
+  --highlight-color: var(--md-accent, #2ea15d);
+  --highlight-color-valid: var(--md-accent, #2ea15d);
+  --highlight-height: 2px;
+
+  border-radius: 10px;
+  border: 1px solid rgba(229, 231, 235, 0.13);
+  font-size: 14px;
+}
+
+body.dark .info-input,
+body.dark .info-select {
+  --background: #292929;
+}
+
+.info-input-exception {
+  --background: #f7f9fa;
+  --padding-start: 1px;
+  --padding-top: 6px;
+  --padding-bottom: 6px;
+
+  border-radius: 10px;
+  font-size: 14px;
+
+  --highlight-color-focused: var(--md-accent, #2ea15d);
+  --highlight-color: var(--md-accent, #2ea15d);
+  --highlight-color-valid: var(--md-accent, #2ea15d);
+  --highlight-height: 2px;
+}
+
+body.dark .info-input-exception {
+  --background: #292929;
+}
+
+.info-input-readonly {
+  --background: #f3f4f6;
+}
+
+.info-helper {
+  margin-top: 4px;
+  font-size: 11px;
+  color: var(--ion-text-color2);
+}
+
+.qty-inline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  padding: 0 10px;
+
+  background: #f9fafb;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+}
+
+body.dark .qty-inline {
+  background: #2a2a2a;
+  border-color: #444444;
+}
+
+.qty-inline-input {
+  width: 100%;
+  text-align: center;
+
+  --background: transparent;
+  --border-width: 0;
+
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 6px;
+  --padding-bottom: 6px;
+}
+
+.qty-inline-btn {
+  margin: 0;
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+}
+
+.qty-btn-modal::part(native) {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qty-btn-plus {
+  --background: #2fa15e;
+  --background-hover: rgba(var(--md-accent-rgb, 46, 161, 93), 0.92);
+  --background-activated: rgba(var(--md-accent-rgb, 46, 161, 93), 0.86);
+  --color: #ffffff;
+}
+
+.qty-btn-minus {
+  --background: #ef4444;
+  --background-hover: #dc2626;
+  --background-activated: #b91c1c;
+  --color: #ffffff;
+}
+
+.info-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-info-cancel {
+  flex: 1;
+  --background: var(--ion-background-color);
+  --border-color: var(--md-accent, #2ea15d);
+  --border-width: 1px;
+  --box-shadow: none;
+  --color: var(--md-accent, #2ea15d);
+  border-radius: 999px;
+  font-weight: 600;
+  text-transform: none;
+}
+
+body.dark .btn-info-cancel {
+  --background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.08);
+}
+
+.btn-info-save {
+  flex: 1;
+  --background: var(--md-accent, #2ea15d);
+  --background-hover: rgba(var(--md-accent-rgb, 46, 161, 93), 0.92);
+  --background-activated: rgba(var(--md-accent-rgb, 46, 161, 93), 0.86);
+  --color: #ffffff;
+  border-radius: 999px;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.modal-saving-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(2px);
+}
+
+.modal-saving-text {
+  margin: 0;
+  font-weight: 700;
+  color: #111827;
+}
 </style>
