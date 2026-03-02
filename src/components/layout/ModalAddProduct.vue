@@ -56,7 +56,12 @@
           <!-- Render de los items comunes -->
           <div v-if="comunItemsFiltered && comunItemsFiltered.length">
             <div class="suggested-grid">
-              <div v-for="item in comunItemsFiltered" :key="item.id" class="suggested-card">
+              <div
+                v-for="item in comunItemsFiltered"
+                :key="item.id"
+                class="suggested-card"
+                @click="openQuickCreateFromCommon(item.name, item.imageUrl)"
+              >
                 <img
                   v-if="item.imageUrl"
                   :src="getOptimizedUrl(item.imageUrl)"
@@ -72,7 +77,11 @@
                 <p class="suggested-name">{{ item.name }}</p>
 
                 <!-- Botón para añadir al inventario -->
-                <ion-button size="small" class="btn-add" @click="addItemFromPantry(item.name, item.imageUrl)">
+                <ion-button
+                  size="small"
+                  class="btn-add"
+                  @click.stop="addItemFromPantry(item.name, item.imageUrl)"
+                >
                   <ion-icon :icon="addOutline" slot="start" />
                   Añadir
                 </ion-button>
@@ -111,7 +120,12 @@
 
           <!-- Lista combinada START-->
           <div v-if="combinedItems && combinedItems.length" class="suggested-grid">
-            <div v-for="item in combinedItems" :key="item.kind + '-' + item.id" class="suggested-card">
+            <div
+              v-for="item in combinedItems"
+              :key="item.kind + '-' + item.id"
+              class="suggested-card"
+              @click="item.kind === 'common' ? openQuickCreateFromCommon(item.name, item.imageUrl) : null"
+            >
               <img
                 v-if="item.imageUrl"
                 :src="getOptimizedUrl(item.imageUrl)"
@@ -130,7 +144,7 @@
               <ion-button
                 size="small"
                 class="btn-add"
-                @click="
+                @click.stop="
                   item.kind === 'common'
                     ? addItemFromPantry(item.name, item.imageUrl)
                     : addExistingToPurchase(item.id)
@@ -158,6 +172,129 @@
     <!-- Contenido modal END -->
   </ion-modal>
   <!-- Modal crear producto END -->
+
+  <ion-modal :is-open="isQuickCreateOpen" css-class="product-info-modal" @didDismiss="onQuickCreateDidDismiss">
+    <ion-content class="product-info-content">
+      <div class="product-info-wrapper">
+        <h3 class="info-title">CREAR PRODUCTO</h3>
+
+        <div class="info-product-block">
+          <div class="info-product-image-wrapper">
+            <img
+              v-if="quickImageUrl"
+              :src="getOptimizedUrl(quickImageUrl)"
+              :alt="quickName"
+              :class="{ 'info-img-galery': isImageGalery(quickImageUrl) }"
+            />
+
+            <div v-else class="modal-item-letter" aria-hidden="true">
+              {{ getInitial(quickName) }}
+            </div>
+          </div>
+          <span class="info-product-name">{{ quickName }}</span>
+        </div>
+
+        <div class="info-form">
+          <div class="info-row">
+            <div class="info-field">
+              <label class="info-label">Cantidad</label>
+              <div class="qty-inline">
+                <ion-button
+                  fill="clear"
+                  size="small"
+                  class="qty-btn qty-btn-modal qty-btn-minus qty-inline-btn"
+                  @click="changeQuickQuantity(-1)"
+                  :disabled="loading"
+                >
+                  <span class="material-icons" style="color: var(--ion-text-color4);">remove</span>
+                </ion-button>
+
+                <ion-input
+                  type="number"
+                  inputmode="numeric"
+                  v-model.number="quickQuantity"
+                  class="info-input-exception qty-input qty-inline-input"
+                  :disabled="loading"
+                />
+
+                <ion-button
+                  fill="clear"
+                  size="small"
+                  class="qty-btn qty-btn-modal qty-btn-plus qty-inline-btn"
+                  @click="changeQuickQuantity(1)"
+                  :disabled="loading"
+                >
+                  <span class="material-icons" style="color: var(--ion-text-color4);">add</span>
+                </ion-button>
+              </div>
+            </div>
+
+            <div class="info-field">
+              <label class="info-label">Unidad</label>
+              <ion-select interface="popover" v-model="quickUnit" class="info-select" :disabled="loading">
+                <ion-select-option v-for="u in unitOptions" :key="u" :value="u">
+                  {{ u }}
+                </ion-select-option>
+              </ion-select>
+            </div>
+          </div>
+
+          <div class="info-row2">
+            <div class="info-field">
+              <label class="info-label">Localización</label>
+              <ion-select
+                interface="popover"
+                v-model="quickLocation"
+                class="info-select"
+                placeholder="Selecciona una localización"
+                :disabled="loading"
+              >
+                <ion-select-option :value="null">
+                  Ninguna
+                </ion-select-option>
+                <ion-select-option v-for="l in locations" :key="l.id" :value="l">
+                  {{ l.name }}
+                </ion-select-option>
+              </ion-select>
+            </div>
+          </div>
+
+          <div class="info-row2">
+            <div class="info-field">
+              <label class="info-label">Caducidad</label>
+              <ion-input type="date" class="info-input" v-model="quickExpirationDateInput" :disabled="loading" />
+            </div>
+          </div>
+
+          <div class="info-actions">
+            <ion-button
+              expand="block"
+              fill="outline"
+              class="btn-info-cancel"
+              @click="requestCloseQuickCreateModal"
+              :disabled="loading"
+            >
+              <span class="material-icons">close</span> Cancelar
+            </ion-button>
+
+            <ion-button
+              expand="block"
+              class="btn-info-save"
+              @click="confirmQuickCreate"
+              :disabled="loading"
+            >
+              Crear
+            </ion-button>
+          </div>
+        </div>
+
+        <div v-if="loading" class="modal-saving-overlay">
+          <ion-spinner name="crescent" style="transform:scale(1.6);" />
+          <p class="modal-saving-text">Guardando…</p>
+        </div>
+      </div>
+    </ion-content>
+  </ion-modal>
 </template>
 
 <script setup lang="ts">
@@ -175,7 +312,10 @@ import {
   IonItem,
   IonInput,
   IonLabel,
-  IonIcon
+  IonIcon,
+  IonSelect,
+  IonSelectOption,
+  IonSpinner
 } from '@ionic/vue'
 import { addOutline } from 'ionicons/icons'
 import { ref, computed, watch, onBeforeUnmount } from 'vue'
@@ -198,6 +338,7 @@ import { showToast } from '@/composables/showToast'
 import { getOptimizedUrl, isImageGalery, getInitial } from '@/composables/itemUtils'
 import type { Item } from '@/models/item'
 import type { ComunItem } from '@/models/comunItem'
+import type { Location } from '@/models/location'
 
 const props = defineProps<{
   pantryCode: string
@@ -473,7 +614,235 @@ watch(isCreateOpen, open => {
 
 onBeforeUnmount(() => {
   stopComunItemsListener()
+  stopLocationsListener()
 })
+
+const isQuickCreateOpen = ref(false)
+const quickName = ref<string>('')
+const quickImageUrl = ref<string>('')
+const quickQuantity = ref<number | null>(null)
+const quickUnit = ref<string>('Unidad')
+const quickLocation = ref<Location | null>(null)
+const quickExpirationDate = ref<string | null>(null)
+
+const quickExpirationDateInput = computed<string>({
+  get: () => quickExpirationDate.value ?? '',
+  set: (v: string) => {
+    const s = String(v ?? '').trim()
+    quickExpirationDate.value = s ? s : null
+  }
+})
+
+const unitOptions = ['Unidad', 'Kilogramo', 'Gramo', 'Litro', 'Mililitro']
+
+const locations = ref<Location[]>([])
+const locationsUnsub = ref<Unsubscribe | null>(null)
+
+function stopLocationsListener() {
+  if (locationsUnsub.value) {
+    locationsUnsub.value()
+    locationsUnsub.value = null
+  }
+}
+
+function startLocationsListener() {
+  stopLocationsListener()
+  const q = query(collection(db, 'locations'), orderBy('name', 'asc'))
+  locationsUnsub.value = onSnapshot(
+    q,
+    snap => {
+      locations.value = snap.docs.map(d => {
+        const loc = d.data() as any
+        return {
+          id: String(d.id),
+          name: String(loc.name ?? '')
+        } as Location
+      })
+    },
+    async err => {
+      console.error('Error al obtener localizaciones:', err)
+      await showToast('Error al cargar las localizaciones.', 'danger')
+    }
+  )
+}
+
+function getStepForUnit(unitRaw: string | undefined | null): number {
+  const u = (unitRaw || '').toLowerCase()
+
+  if (u === 'gramo' || u === 'gramos' || u === 'mililitro' || u === 'mililitros') {
+    return 50
+  }
+
+  if (
+    u === 'kilogramo' ||
+    u === 'kilogramos' ||
+    u === 'kg' ||
+    u === 'litro' ||
+    u === 'litros' ||
+    u === 'unidad' ||
+    u === 'unidades'
+  ) {
+    return 1
+  }
+
+  return 1
+}
+
+function getAdjustedQuantity(
+  current: number,
+  step: number,
+  deltaSign: 1 | -1,
+  min = 0,
+  max = Number.POSITIVE_INFINITY
+): number {
+  let target = current
+
+  if (step === 50) {
+    if (deltaSign === 1) {
+      if (current < step) {
+        target = step
+      } else if (current % step === 0) {
+        target = current + step
+      } else {
+        target = Math.floor(current / step) * step + step
+      }
+    } else {
+      if (current <= 0) {
+        target = 0
+      } else if (current % step === 0) {
+        target = current - step
+      } else {
+        target = Math.floor(current / step) * step
+      }
+    }
+  } else {
+    target = current + deltaSign * step
+  }
+
+  if (target < min) target = min
+  if (target > max) target = max
+
+  return target
+}
+
+function changeQuickQuantity(deltaSign: 1 | -1) {
+  const unitToUse = quickUnit.value || 'Unidad'
+  const step = getStepForUnit(unitToUse)
+  const current = quickQuantity.value ?? 0
+  const newQty = getAdjustedQuantity(current, step, deltaSign, 0)
+  quickQuantity.value = newQty
+}
+
+function openQuickCreateFromCommon(nameItem: string, imageUrl: string) {
+  const name = (nameItem ?? '').trim()
+  if (!name) return
+
+  quickName.value = name
+  quickImageUrl.value = String(imageUrl ?? '')
+  quickUnit.value = 'Unidad'
+  quickLocation.value = null
+  quickExpirationDate.value = null
+  quickQuantity.value = defaultInPurchase.value ? 0 : 1
+
+  startLocationsListener()
+  isQuickCreateOpen.value = true
+}
+
+function requestCloseQuickCreateModal() {
+  isQuickCreateOpen.value = false
+}
+
+function onQuickCreateDidDismiss() {
+  isQuickCreateOpen.value = false
+  quickName.value = ''
+  quickImageUrl.value = ''
+  quickQuantity.value = null
+  quickUnit.value = 'Unidad'
+  quickLocation.value = null
+  quickExpirationDate.value = null
+  stopLocationsListener()
+}
+
+async function confirmQuickCreate() {
+  const name = (quickName.value ?? '').trim()
+  if (!name) {
+    await showToast('Escribe un nombre de producto.', 'danger')
+    return
+  }
+
+  if (quickQuantity.value == null || Number.isNaN(quickQuantity.value)) {
+    await showToast('Introduce una cantidad válida.', 'danger')
+    return
+  }
+
+  const qty = Number(quickQuantity.value)
+  if (qty < 0) {
+    await showToast('La cantidad no puede ser negativa.', 'danger')
+    return
+  }
+
+  const unit = String(quickUnit.value ?? 'Unidad')
+  const imageUrl = String(quickImageUrl.value ?? '')
+  const expirationToSave = quickExpirationDate.value ? quickExpirationDate.value.trim() : null
+  const locationIdToSave = quickLocation.value ? quickLocation.value.id : null
+
+  loading.value = true
+  try {
+    const dupQ = query(
+      collection(db, 'items'),
+      where('pantryCode', '==', props.pantryCode),
+      where('name', '==', name)
+    )
+    const dupSnap = await getDocs(dupQ)
+
+    const existsSameNameAndImage =
+      !dupSnap.empty &&
+      dupSnap.docs.some(d => {
+        const data = d.data() as any
+        const existingImg = String(data?.imageUrl ?? '')
+        const newImg = String(imageUrl ?? '')
+        return existingImg === newImg
+      })
+
+    if (existsSameNameAndImage) {
+      await showToast(`El producto ${name} ya existe en la despensa.`, 'danger')
+      return
+    }
+
+    const batch = writeBatch(db)
+    const newItemRef = doc(collection(db, 'items'))
+    const itemName = name.charAt(0).toUpperCase() + name.slice(1)
+
+    batch.set(newItemRef, {
+      name: itemName,
+      pantryCode: props.pantryCode,
+      quantity: qty,
+      unit: unit,
+      inPurchase: defaultInPurchase.value,
+      imageUrl: imageUrl,
+      locationId: locationIdToSave,
+      expirationDate: expirationToSave
+    })
+
+    const pantryRef = await getPantryRefByCode()
+    batch.update(pantryRef, { totalItems: increment(1) })
+
+    await batch.commit()
+
+    const k = keyFor(name, String(imageUrl ?? ''))
+    if (!localExcludedKeys.value.includes(k)) {
+      localExcludedKeys.value = [...localExcludedKeys.value, k]
+    }
+
+    await showToast(`Producto ${name} añadido.`, 'success')
+    requestCloseQuickCreateModal()
+  } catch (err) {
+    console.error('Error al añadir producto:', err)
+    await showToast(`No se pudo añadir el producto ${name}.`, 'danger')
+  } finally {
+    loading.value = false
+  }
+}
 </script>
 
 <style scoped>
@@ -775,5 +1144,275 @@ body.dark .filter-radios.mydict input[type='radio']:checked + span {
   display: grid;
   place-content: center;
   min-height: 40vh;
+}
+
+/* FIX MODALES (editar + mover) */
+.product-info-modal::part(content) {
+  width: min(360px, 90%);
+  max-height: 70%;
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  background: var(--ion-background-color);
+}
+
+body.dark .product-info-modal::part(content) {
+  background: #1e1e1e;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+.product-info-content {
+  --background: var(--ion-background-color);
+}
+
+.product-info-wrapper {
+  position: relative;
+  padding: 18px 16px 20px;
+}
+
+.info-title {
+  margin: 0 0 10px;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--ion-text-color);
+  margin-bottom: 6%;
+}
+
+.info-product-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 12%;
+}
+
+.info-product-image-wrapper {
+  position: relative;
+  width: 108px;
+  height: 108px;
+}
+
+.info-product-image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.info-product-image-wrapper img.info-img-galery {
+  object-fit: cover;
+  border-radius: 14px;
+}
+
+.modal-item-letter{
+  width: 100px;
+  height: 100px;
+
+  display: grid;
+  place-items: center;
+
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, #ffffff 65%, var(--md-accent, #2ea15d) 35%);
+  background: color-mix(in srgb, #ffffff 88%, var(--md-accent, #2ea15d) 12%);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+
+  color: var(--md-accent, #2ea15d);
+
+  font-family: "Risque", serif;
+  font-weight: 400;
+  font-size: 72px;
+  line-height: 1;
+
+  position: relative;
+}
+
+.info-product-name {
+  margin-top: 4%;
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--ion-text-color);
+}
+
+.info-form {
+  margin-top: 4px;
+}
+
+.info-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.info-row2 {
+  display: grid;
+  grid-template-columns: 1fr;
+  margin-bottom: 18px;
+}
+
+.info-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.info-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ion-text-color2);
+}
+
+.info-input,
+.info-select {
+  --background: #f7f9fa;
+  --padding-start: 8px;
+  --padding-end: 8px;
+  --padding-top: 6px;
+  --padding-bottom: 6px;
+  --border-radius: 10px;
+
+  --highlight-color-focused: var(--md-accent, #2ea15d);
+  --highlight-color: var(--md-accent, #2ea15d);
+  --highlight-color-valid: var(--md-accent, #2ea15d);
+  --highlight-height: 2px;
+
+  border-radius: 10px;
+  border: 1px solid rgba(229, 231, 235, 0.13);
+  font-size: 14px;
+}
+
+body.dark .info-input,
+body.dark .info-select {
+  --background: #292929;
+}
+
+.info-input-exception {
+  --background: #f7f9fa;
+  --padding-start: 1px;
+  --padding-top: 6px;
+  --padding-bottom: 6px;
+
+  border-radius: 10px;
+  font-size: 14px;
+
+  --highlight-color-focused: var(--md-accent, #2ea15d);
+  --highlight-color: var(--md-accent, #2ea15d);
+  --highlight-color-valid: var(--md-accent, #2ea15d);
+  --highlight-height: 2px;
+}
+
+body.dark .info-input-exception {
+  --background: #292929;
+}
+
+.qty-inline {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+
+  padding: 0 10px;
+
+  background: #f9fafb;
+  border-radius: 10px;
+  border: 1px solid #e5e7eb;
+}
+
+body.dark .qty-inline {
+  background: #2a2a2a;
+  border-color: #444444;
+}
+
+.qty-inline-input {
+  width: 100%;
+  text-align: center;
+
+  --background: transparent;
+  --border-width: 0;
+
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 6px;
+  --padding-bottom: 6px;
+}
+
+.qty-inline-btn {
+  margin: 0;
+  --padding-start: 0;
+  --padding-end: 0;
+  --padding-top: 0;
+  --padding-bottom: 0;
+}
+
+.qty-btn-modal::part(native) {
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qty-btn-plus {
+  --background: #2fa15e;
+  --background-hover: rgba(var(--md-accent-rgb, 46, 161, 93), 0.92);
+  --background-activated: rgba(var(--md-accent-rgb, 46, 161, 93), 0.86);
+  --color: #ffffff;
+}
+
+.qty-btn-minus {
+  --background: #ef4444;
+  --background-hover: #dc2626;
+  --background-activated: #b91c1c;
+  --color: #ffffff;
+}
+
+.info-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.btn-info-cancel {
+  flex: 1;
+  --background: var(--ion-background-color);
+  --border-color: var(--md-accent, #2ea15d);
+  --border-width: 1px;
+  --box-shadow: none;
+  --color: var(--md-accent, #2ea15d);
+  border-radius: 999px;
+  font-weight: 600;
+  text-transform: none;
+}
+
+body.dark .btn-info-cancel {
+  --background: rgba(var(--md-accent-rgb, 46, 161, 93), 0.08);
+}
+
+.btn-info-save {
+  flex: 1;
+  --background: var(--md-accent, #2ea15d);
+  --background-hover: rgba(var(--md-accent-rgb, 46, 161, 93), 0.92);
+  --background-activated: rgba(var(--md-accent-rgb, 46, 161, 93), 0.86);
+  --color: #ffffff;
+  border-radius: 999px;
+  font-weight: 600;
+  text-transform: none;
+}
+
+.modal-saving-overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 999;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(2px);
+}
+
+.modal-saving-text {
+  margin: 0;
+  font-weight: 700;
+  color: #111827;
 }
 </style>
