@@ -38,6 +38,23 @@
             </p>
           </div>
 
+          <div class="item-units">
+            <ion-button fill="clear" size="small" class="qty-btn qty-btn-card"
+              @click.stop="adjustPurchaseQuantity(item, -1)">
+              <span class="material-icons">remove</span>
+            </ion-button>
+
+            <span class="item-units-value">
+              {{ getSafePurchaseQuantity(item.unit, item.purchaseQuantity) }}
+              {{ getMeasurementUnitAbbr(item.unit) }}
+            </span>
+
+            <ion-button fill="clear" size="small" class="qty-btn qty-btn-card"
+              @click.stop="adjustPurchaseQuantity(item, 1)">
+              <span class="material-icons">add</span>
+            </ion-button>
+          </div>
+
           <!-- Icono para añadir nota cuando no hay nota -->
           <ion-button v-if="!item.notePurchase && editingNoteItemId !== item.id" class="note-icon" fill="clear"
             size="small" aria-label="Añadir nota" @click="openNoteInput(item)">
@@ -112,7 +129,7 @@ import {
   orderBy,
   increment
 } from 'firebase/firestore'
-import { getInitial, getMeasurementUnit, getOptimizedUrl, isImageGalery } from '@/composables/itemUtils'
+import { getInitial, getMeasurementUnit, getMeasurementUnitAbbr, getOptimizedUrl, isImageGalery } from '@/composables/itemUtils'
 import { db } from '@/firebase'
 import ConfirmPopup from '@/components/ui/ConfirmPopup.vue'
 import ModalAddProduct from '@/components/layout/ModalAddProduct.vue'
@@ -145,6 +162,92 @@ const editingNoteItemId = ref<string | null>(null)
 const noteDraft = ref<{ [key: string]: string }>({})
 const savedNoteItemId = ref<string | null>(null)
 
+function getStepForUnit(unitRaw: string | undefined | null): number {
+  const u = (unitRaw || '').toLowerCase()
+
+  if (u === 'gramo' || u === 'gramos' || u === 'mililitro' || u === 'mililitros') {
+    return 50
+  }
+
+  if (
+    u === 'kilogramo' ||
+    u === 'kilogramos' ||
+    u === 'kg' ||
+    u === 'litro' ||
+    u === 'litros' ||
+    u === 'unidad' ||
+    u === 'unidades'
+  ) {
+    return 1
+  }
+
+  return 1
+}
+
+function getDefaultPurchaseQuantity(unitRaw: string | undefined | null): number {
+  const step = getStepForUnit(unitRaw)
+  return step === 50 ? 50 : 1
+}
+
+function getMinPurchaseQuantityForUnit(unitRaw: string | undefined | null): number {
+  const step = getStepForUnit(unitRaw)
+  return step === 50 ? 50 : 1
+}
+
+function getSafePurchaseQuantity(unitRaw: string | undefined | null, rawValue: unknown): number {
+  const step = getStepForUnit(unitRaw)
+  const min = getMinPurchaseQuantityForUnit(unitRaw)
+  const value = Number(rawValue)
+
+  if (!Number.isFinite(value)) return getDefaultPurchaseQuantity(unitRaw)
+
+  if (step === 50) {
+    if (value < min) return getDefaultPurchaseQuantity(unitRaw)
+    if (value % step !== 0) return getDefaultPurchaseQuantity(unitRaw)
+    return value
+  }
+
+  if (value < min) return getDefaultPurchaseQuantity(unitRaw)
+  return Math.floor(value)
+}
+
+function getAdjustedQuantity(
+  current: number,
+  step: number,
+  deltaSign: 1 | -1,
+  min = 1,
+  max = Number.POSITIVE_INFINITY
+): number {
+  let target = current
+
+  if (step === 50) {
+    if (deltaSign === 1) {
+      if (current < step) {
+        target = step
+      } else if (current % step === 0) {
+        target = current + step
+      } else {
+        target = Math.floor(current / step) * step + step
+      }
+    } else {
+      if (current <= min) {
+        target = min
+      } else if (current % step === 0) {
+        target = current - step
+      } else {
+        target = Math.floor(current / step) * step
+      }
+    }
+  } else {
+    target = current + deltaSign * step
+  }
+
+  if (target < min) target = min
+  if (target > max) target = max
+
+  return target
+}
+
 // Lista de productos en compra con imagen y filtro por nombre
 onMounted(() => {
   getPurchaseItems(props.code)
@@ -170,8 +273,12 @@ async function getPurchaseItems(pantryCode: string) {
           pantryCode: String(item.pantryCode ?? pantryCode),
           locationId: String(item.locationId ?? null),
           inPurchase: Boolean(item.inPurchase ?? false),
-          imageUrl: String(item.imageUrl ?? ''), // <- ya NO metemos imagen por letra
-          notePurchase: String(item.notePurchase ?? '')
+          imageUrl: String(item.imageUrl ?? ''),
+          notePurchase: String(item.notePurchase ?? ''),
+          purchaseQuantity: getSafePurchaseQuantity(
+            String(item.unit ?? 'Unidad'),
+            item.purchaseQuantity
+          )
         } as Item
       })
 
@@ -194,6 +301,22 @@ async function getPurchaseItems(pantryCode: string) {
       await showToast('Error al cargar los productos de la compra.', 'danger')
     }
   )
+}
+
+async function adjustPurchaseQuantity(item: Item, deltaSign: 1 | -1) {
+  const step = getStepForUnit(item.unit)
+  const min = getMinPurchaseQuantityForUnit(item.unit)
+  const current = getSafePurchaseQuantity(item.unit, item.purchaseQuantity)
+  const newQty = getAdjustedQuantity(current, step, deltaSign, min)
+
+  try {
+    const refItem = doc(db, 'items', item.id)
+    await updateDoc(refItem, { purchaseQuantity: newQty })
+    item.purchaseQuantity = newQty
+  } catch (err) {
+    console.error('Error al actualizar cantidad de compra:', err)
+    await showToast('No se pudo actualizar la cantidad de compra.', 'danger')
+  }
 }
 
 // abrir input para nueva nota
@@ -282,10 +405,16 @@ async function deleteItemToPurchase(idItem: string) {
       console.log('No existe el item:', idItem)
       return
     }
+
+    const item = snap.data() as any
+    const unit = String(item.unit ?? 'Unidad')
+    const purchaseQuantity = getSafePurchaseQuantity(unit, item.purchaseQuantity)
+
     await updateDoc(ref, {
       inPurchase: false,
       notePurchase: null,
-      quantity: increment(1)
+      quantity: increment(purchaseQuantity),
+      purchaseQuantity: getDefaultPurchaseQuantity(unit)
     })
   } catch (err) {
     console.error('Error al quitar de la compra:', err)
@@ -300,9 +429,12 @@ async function clearPurchase() {
     if (!toClear.length) return
     const batch = writeBatch(db)
     for (const it of toClear) {
+      const purchaseQuantity = getSafePurchaseQuantity(it.unit, it.purchaseQuantity)
       batch.update(doc(db, 'items', it.id), {
         inPurchase: false,
-        quantity: increment(1),
+        notePurchase: null,
+        quantity: increment(purchaseQuantity),
+        purchaseQuantity: getDefaultPurchaseQuantity(it.unit),
       })
     }
     await batch.commit()
@@ -343,9 +475,9 @@ body.dark ion-searchbar {
 
 .item-row {
   display: grid;
-  grid-template-columns: 40px 1fr auto auto;
-  align-items: flex-start;
-  gap: 8px 12px;
+  grid-template-columns: 40px minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  gap: 8px 8px;
 
   padding: 10px 12px;
 
@@ -403,6 +535,7 @@ body.dark .item-row {
 /* INFORMACION PRODUCTO COMPRA */
 .info {
   align-self: center;
+  min-width: 0;
 }
 
 .info .name {
@@ -418,11 +551,66 @@ body.dark .item-row {
   color: var(--ion-text-color2);
 }
 
+.item-units {
+  margin: 0;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+
+  font-size: 12px;
+  color: var(--ion-text-color);
+}
+
+.item-units-value {
+  text-align: center;
+  font-weight: 600;
+  color: var(--ion-text-color2);
+  white-space: nowrap;
+}
+
+.qty-btn {
+  --padding: 2px;
+  margin: 0;
+}
+
+.qty-btn .material-icons {
+  font-size: 14px;
+  color: var(--ion-text-color);
+}
+
+.qty-btn-card {
+  --border-radius: 999px;
+  --border-width: 1px;
+  --border-style: solid;
+  --border-color: #d1d5db;
+
+  --background: var(--ion-background-color);
+
+  width: 26px;
+  height: 26px;
+}
+
+body.dark .qty-btn-card {
+  --border-color: #9c9c9c;
+}
+
+.qty-btn-card::part(native) {
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* ICONOS DE NOTA Y BORRAR DE COMPRA */
 .note-icon,
 .trash {
-  --padding-start: 6px;
-  --padding-end: 6px;
+  --padding-start: 3px;
+  --padding-end: 3px;
 }
 
 .note-icon {
@@ -583,8 +771,8 @@ body.dark .note-row {
   }
 
   .item-row {
-    grid-template-columns: 44px 1fr auto auto;
-    gap: 10px 12px;
+    grid-template-columns: 44px minmax(0, 1fr) auto auto auto;
+    gap: 10px 8px;
     padding: 12px 14px;
     border-radius: 14px;
   }
