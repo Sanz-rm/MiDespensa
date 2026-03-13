@@ -8,7 +8,8 @@
   <!-- Botón flotante END -->
 
   <!-- Modal crear producto START -->
-  <ion-modal :is-open="isCreateOpen" @didDismiss="closeCreateModal" @willPresent="emit('willOpen')">
+  <ion-modal :is-open="isCreateOpen" :class="{ 'create-modal-under-blur': isQuickCreateOpen }"
+    @didDismiss="closeCreateModal" @willPresent="emit('willOpen')">
     <!-- Header modal START -->
     <ion-header>
       <ion-toolbar class="create-modal-toolbar">
@@ -29,12 +30,8 @@
           <ion-label position="stacked" class="create-modal-label">
             Nombre del producto
           </ion-label>
-          <ion-input
-            v-model="newProductName"
-            class="create-modal-input"
-            placeholder="Ej. Leche, Huevos, Arroz"
-            @keyup.enter="confirmCreate"
-          />
+          <ion-input v-model="newProductName" class="create-modal-input" placeholder="Ej. Leche, Huevos, Arroz"
+            @keyup.enter="confirmCreate" />
         </ion-item>
 
         <div class="create-modal-actions">
@@ -56,19 +53,10 @@
           <!-- Render de los items comunes -->
           <div v-if="comunItemsFiltered && comunItemsFiltered.length">
             <div class="suggested-grid">
-              <div
-                v-for="item in comunItemsFiltered"
-                :key="item.id"
-                class="suggested-card"
-                @click="openQuickCreateFromCommon(item.name, item.imageUrl)"
-              >
-                <img
-                  v-if="item.imageUrl"
-                  :src="getOptimizedUrl(item.imageUrl)"
-                  :alt="item.name"
-                  class="suggested-img"
-                  :class="{ 'img-galery': isImageGalery(item.imageUrl) }"
-                />
+              <div v-for="item in comunItemsFiltered" :key="item.id" class="suggested-card"
+                @click="openQuickCreateFromCommon(item.name, item.imageUrl)">
+                <img v-if="item.imageUrl" :src="getOptimizedUrl(item.imageUrl)" :alt="item.name" class="suggested-img"
+                  :class="{ 'img-galery': isImageGalery(item.imageUrl) }" />
 
                 <div v-else class="suggested-letter" aria-hidden="true">
                   {{ getInitial(item.name) }}
@@ -77,11 +65,7 @@
                 <p class="suggested-name">{{ item.name }}</p>
 
                 <!-- Botón para añadir al inventario -->
-                <ion-button
-                  size="small"
-                  class="btn-add"
-                  @click.stop="addItemFromPantry(item.name, item.imageUrl)"
-                >
+                <ion-button size="small" class="btn-add" @click.stop="addItemFromPantry(item.name, item.imageUrl)">
                   <ion-icon :icon="addOutline" slot="start" />
                   Añadir
                 </ion-button>
@@ -120,19 +104,10 @@
 
           <!-- Lista combinada START-->
           <div v-if="combinedItems && combinedItems.length" class="suggested-grid">
-            <div
-              v-for="item in combinedItems"
-              :key="item.kind + '-' + item.id"
-              class="suggested-card"
-              @click="item.kind === 'common' ? openQuickCreateFromCommon(item.name, item.imageUrl) : addExistingToPurchase(item.id)"
-            >
-              <img
-                v-if="item.imageUrl"
-                :src="getOptimizedUrl(item.imageUrl)"
-                :alt="item.name"
-                class="suggested-img"
-                :class="{ 'img-galery': isImageGalery(item.imageUrl) }"
-              />
+            <div v-for="item in combinedItems" :key="item.kind + '-' + item.id" class="suggested-card"
+              @click="item.kind === 'common' ? openQuickCreateFromCommon(item.name, item.imageUrl) : addExistingToPurchase(item.id)">
+              <img v-if="item.imageUrl" :src="getOptimizedUrl(item.imageUrl)" :alt="item.name" class="suggested-img"
+                :class="{ 'img-galery': isImageGalery(item.imageUrl) }" />
 
               <div v-else class="suggested-letter" aria-hidden="true">
                 {{ getInitial(item.name) }}
@@ -141,15 +116,11 @@
               <p class="suggested-name">{{ item.name }}</p>
 
               <!-- Botón según tipo -->
-              <ion-button
-                size="small"
-                class="btn-add"
-                @click.stop="
-                  item.kind === 'common'
-                    ? openQuickCreateFromCommon(item.name, item.imageUrl)
-                    : addExistingToPurchase(item.id)
-                "
-              >
+              <ion-button size="small" class="btn-add" @click.stop="
+                item.kind === 'common'
+                  ? openQuickCreateFromCommon(item.name, item.imageUrl)
+                  : addExistingToPurchase(item.id)
+                ">
                 <ion-icon :icon="addOutline" slot="start" />Añadir
               </ion-button>
             </div>
@@ -180,12 +151,8 @@
 
         <div class="info-product-block">
           <div class="info-product-image-wrapper">
-            <img
-              v-if="quickImageUrl"
-              :src="getOptimizedUrl(quickImageUrl)"
-              :alt="quickName"
-              :class="{ 'info-img-galery': isImageGalery(quickImageUrl) }"
-            />
+            <img v-if="quickImageUrl" :src="getOptimizedUrl(quickImageUrl)" :alt="quickName"
+              :class="{ 'info-img-galery': isImageGalery(quickImageUrl) }" />
 
             <div v-else class="modal-item-letter" aria-hidden="true">
               {{ getInitial(quickName) }}
@@ -199,31 +166,16 @@
             <div class="info-field">
               <label class="info-label">Cantidad</label>
               <div class="qty-inline">
-                <ion-button
-                  fill="clear"
-                  size="small"
-                  class="qty-btn qty-btn-modal qty-btn-minus qty-inline-btn"
-                  @click="changeQuickQuantity(-1)"
-                  :disabled="loading"
-                >
+                <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-minus qty-inline-btn"
+                  @click="changeQuickQuantity(-1)" :disabled="loading">
                   <span class="material-icons" style="color: var(--ion-text-color4);">remove</span>
                 </ion-button>
 
-                <ion-input
-                  type="number"
-                  inputmode="numeric"
-                  v-model.number="quickQuantity"
-                  class="info-input-exception qty-input qty-inline-input"
-                  :disabled="loading"
-                />
+                <ion-input type="number" inputmode="numeric" v-model.number="quickQuantity"
+                  class="info-input-exception qty-input qty-inline-input" :disabled="loading" />
 
-                <ion-button
-                  fill="clear"
-                  size="small"
-                  class="qty-btn qty-btn-modal qty-btn-plus qty-inline-btn"
-                  @click="changeQuickQuantity(1)"
-                  :disabled="loading"
-                >
+                <ion-button fill="clear" size="small" class="qty-btn qty-btn-modal qty-btn-plus qty-inline-btn"
+                  @click="changeQuickQuantity(1)" :disabled="loading">
                   <span class="material-icons" style="color: var(--ion-text-color4);">add</span>
                 </ion-button>
               </div>
@@ -242,13 +194,8 @@
           <div class="info-row2">
             <div class="info-field">
               <label class="info-label">Localización</label>
-              <ion-select
-                interface="popover"
-                v-model="quickLocation"
-                class="info-select"
-                placeholder="Selecciona una localización"
-                :disabled="loading"
-              >
+              <ion-select interface="popover" v-model="quickLocation" class="info-select"
+                placeholder="Selecciona una localización" :disabled="loading">
                 <ion-select-option :value="null">
                   Ninguna
                 </ion-select-option>
@@ -267,22 +214,12 @@
           </div>
 
           <div class="info-actions">
-            <ion-button
-              expand="block"
-              fill="outline"
-              class="btn-info-cancel"
-              @click="requestCloseQuickCreateModal"
-              :disabled="loading"
-            >
+            <ion-button expand="block" fill="outline" class="btn-info-cancel" @click="requestCloseQuickCreateModal"
+              :disabled="loading">
               <span class="material-icons">close</span> Cancelar
             </ion-button>
 
-            <ion-button
-              expand="block"
-              class="btn-info-save"
-              @click="confirmQuickCreate"
-              :disabled="loading"
-            >
+            <ion-button expand="block" class="btn-info-save" @click="confirmQuickCreate" :disabled="loading">
               {{ quickActionLabel }}
             </ion-button>
           </div>
@@ -1123,7 +1060,7 @@ body.dark .suggested-letter {
   margin: 16px 4px 22px;
 }
 
-.filter-radios.mydict > div {
+.filter-radios.mydict>div {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
@@ -1139,7 +1076,7 @@ body.dark .suggested-letter {
   clip-path: inset(100%);
 }
 
-.filter-radios.mydict input[type='radio']:focus + span {
+.filter-radios.mydict input[type='radio']:focus+span {
   outline: 0;
   border-color: var(--md-accent, #2ea15d);
   box-shadow: 0 0 0 4px color-mix(in srgb, #ffffff 80%, var(--md-accent, #2ea15d) 20%);
@@ -1169,14 +1106,14 @@ body.dark .suggested-letter {
   border-radius: 0 0.375em 0.375em 0;
 }
 
-.filter-radios.mydict input[type='radio']:checked + span {
+.filter-radios.mydict input[type='radio']:checked+span {
   z-index: 1;
   color: var(--md-accent, #2ea15d);
   box-shadow: 0 0 0 0.0625em var(--md-accent, #2ea15d);
   background-color: color-mix(in srgb, #ffffff 80%, var(--md-accent, #2ea15d) 20%);
 }
 
-body.dark .filter-radios.mydict input[type='radio']:checked + span {
+body.dark .filter-radios.mydict input[type='radio']:checked+span {
   background-color: rgba(46, 161, 94, 0.1);
   color: color-mix(in srgb, #ffffff 92%, var(--md-accent, #2ea15d) 8%);
   box-shadow: 0 0 0 0.0625em var(--md-accent, #2ea15d);
@@ -1234,28 +1171,69 @@ body.dark .filter-radios.mydict input[type='radio']:checked + span {
   min-height: 40vh;
 }
 
+/* MODAL PADRE DIFUMINADO CUANDO SE ABRE EL MODAL INTERNO */
+.create-modal-under-blur::part(backdrop) {
+  background: rgba(0, 0, 0, 0.18);
+}
+
+.create-modal-under-blur::part(content) {
+  filter: blur(2px) saturate(0.98) brightness(0.98);
+  transform: scale(0.985);
+  transition: filter 180ms ease, transform 180ms ease, opacity 180ms ease;
+  pointer-events: none;
+}
+
+body.dark .create-modal-under-blur::part(content) {
+  filter: blur(3px) saturate(0.96) brightness(0.92);
+}
+
 /* FIX MODALES (editar + mover) */
+.product-info-modal::part(backdrop) {
+  background: rgba(10, 14, 18, 0.18);
+}
+
 .product-info-modal::part(content) {
   width: min(360px, 90%);
   max-height: 70%;
   border-radius: 18px;
   overflow: hidden;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.18);
+  border: 2px solid var(--md-accent, #2ea15d);
+  box-shadow:
+    0 14px 36px rgba(0, 0, 0, 0.24),
+    0 0 0 1px color-mix(in srgb, var(--md-accent, #2ea15d) 35%, transparent);
   background: var(--ion-background-color);
+}
+
+body.dark .product-info-modal::part(backdrop) {
+  background: rgba(0, 0, 0, 0.28);
 }
 
 body.dark .product-info-modal::part(content) {
   background: #1e1e1e;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  border: 2px solid var(--md-accent, #2ea15d);
+  box-shadow:
+    0 14px 40px rgba(0, 0, 0, 0.5),
+    0 0 0 1px color-mix(in srgb, var(--md-accent, #2ea15d) 40%, transparent);
 }
 
 .product-info-content {
-  --background: var(--ion-background-color);
+  --background: transparent;
 }
 
 .product-info-wrapper {
   position: relative;
   padding: 18px 16px 20px;
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, var(--ion-background-color) 94%, var(--md-accent, #2ea15d) 6%) 0%,
+      var(--ion-background-color) 100%);
+}
+
+body.dark .product-info-wrapper {
+  background:
+    linear-gradient(180deg,
+      color-mix(in srgb, #1e1e1e 94%, var(--md-accent, #2ea15d) 6%) 0%,
+      #1e1e1e 100%);
 }
 
 .info-title {
@@ -1291,7 +1269,7 @@ body.dark .product-info-modal::part(content) {
   border-radius: 14px;
 }
 
-.modal-item-letter{
+.modal-item-letter {
   width: 100px;
   height: 100px;
 
