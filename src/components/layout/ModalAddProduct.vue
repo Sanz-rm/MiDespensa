@@ -124,7 +124,7 @@
               v-for="item in combinedItems"
               :key="item.kind + '-' + item.id"
               class="suggested-card"
-              @click="item.kind === 'common' ? openQuickCreateFromCommon(item.name, item.imageUrl) : null"
+              @click="item.kind === 'common' ? openQuickCreateFromCommon(item.name, item.imageUrl) : addExistingToPurchase(item.id)"
             >
               <img
                 v-if="item.imageUrl"
@@ -146,7 +146,7 @@
                 class="btn-add"
                 @click.stop="
                   item.kind === 'common'
-                    ? addItemFromPantry(item.name, item.imageUrl)
+                    ? openQuickCreateFromCommon(item.name, item.imageUrl)
                     : addExistingToPurchase(item.id)
                 "
               >
@@ -176,7 +176,7 @@
   <ion-modal :is-open="isQuickCreateOpen" css-class="product-info-modal" @didDismiss="onQuickCreateDidDismiss">
     <ion-content class="product-info-content">
       <div class="product-info-wrapper">
-        <h3 class="info-title">CREAR PRODUCTO</h3>
+        <h3 class="info-title">{{ quickModalTitle }}</h3>
 
         <div class="info-product-block">
           <div class="info-product-image-wrapper">
@@ -283,7 +283,7 @@
               @click="confirmQuickCreate"
               :disabled="loading"
             >
-              Crear
+              {{ quickActionLabel }}
             </ion-button>
           </div>
         </div>
@@ -479,6 +479,87 @@ function startComunItemsListener() {
   )
 }
 
+function getStepForUnit(unitRaw: string | undefined | null): number {
+  const u = (unitRaw || '').toLowerCase()
+
+  if (u === 'gramo' || u === 'gramos' || u === 'mililitro' || u === 'mililitros') {
+    return 50
+  }
+
+  if (
+    u === 'kilogramo' ||
+    u === 'kilogramos' ||
+    u === 'kg' ||
+    u === 'litro' ||
+    u === 'litros' ||
+    u === 'unidad' ||
+    u === 'unidades'
+  ) {
+    return 1
+  }
+
+  return 1
+}
+
+function getDefaultPurchaseQuantity(unitRaw: string | undefined | null): number {
+  const step = getStepForUnit(unitRaw)
+  return step === 50 ? 50 : 1
+}
+
+function getSafePurchaseQuantity(unitRaw: string | undefined | null, rawValue: unknown): number {
+  const step = getStepForUnit(unitRaw)
+  const min = getDefaultPurchaseQuantity(unitRaw)
+  const value = Number(rawValue)
+
+  if (!Number.isFinite(value)) return min
+
+  if (step === 50) {
+    if (value < min) return min
+    if (value % step !== 0) return min
+    return value
+  }
+
+  if (value < min) return min
+  return Math.floor(value)
+}
+
+function getAdjustedQuantity(
+  current: number,
+  step: number,
+  deltaSign: 1 | -1,
+  min = 0,
+  max = Number.POSITIVE_INFINITY
+): number {
+  let target = current
+
+  if (step === 50) {
+    if (deltaSign === 1) {
+      if (current < step) {
+        target = step
+      } else if (current % step === 0) {
+        target = current + step
+      } else {
+        target = Math.floor(current / step) * step + step
+      }
+    } else {
+      if (current <= min) {
+        target = min
+      } else if (current % step === 0) {
+        target = current - step
+      } else {
+        target = Math.floor(current / step) * step
+      }
+    }
+  } else {
+    target = current + deltaSign * step
+  }
+
+  if (target < min) target = min
+  if (target > max) target = max
+
+  return target
+}
+
 // Modal crear producto
 function openCreateModal() {
   filterMode.value = 'all'
@@ -496,8 +577,20 @@ function closeCreateModal() {
 
 // Confirmamos creación desde el modal
 async function confirmCreate() {
-  await addItemFromPantry(newProductName.value, '')
-  if (newProductName.value.trim()) {
+  const name = (newProductName.value ?? '').trim()
+
+  if (!name) {
+    await showToast('Escribe un nombre de producto.', 'danger')
+    return
+  }
+
+  if (props.view === 'purcharse') {
+    openQuickCreateFromCommon(name, '')
+    return
+  }
+
+  await addItemFromPantry(name, '')
+  if (name) {
     clearInput()
   }
 }
@@ -547,6 +640,7 @@ async function addItemFromPantry(nameItem: string, imageUrl: string) {
       name: itemName,
       pantryCode: props.pantryCode,
       quantity: (defaultInPurchase?.value === true) ? 0 : 1,
+      purchaseQuantity: defaultInPurchase.value ? getDefaultPurchaseQuantity('Unidad') : null,
       unit: 'Unidad',
       inPurchase: defaultInPurchase.value,
       imageUrl: imageUrl
@@ -576,19 +670,21 @@ async function addItemFromPantry(nameItem: string, imageUrl: string) {
 }
 
 // Marca un item existente como en compra (inPurchase = true)
-async function addExistingToPurchase(itemId: string) {
-  try {
-    const refItem = doc(db, 'items', itemId)
-    await updateDoc(refItem, { inPurchase: true })
-    const found = (props.items ?? []).find(i => i.id === itemId)
-    await showToast(`Producto ${found?.name ?? ''} añadido a la compra.`, 'success')
-  } catch (err) {
-    console.error('Error al añadir producto existente a la compra:', err)
-    await showToast('No se pudo añadir el producto a la compra.', 'danger')
-  } finally {
-    loading.value = false
-    clearInput()
-  }
+function addExistingToPurchase(itemId: string) {
+  const found = (props.items ?? []).find(i => i.id === itemId)
+  if (!found) return
+
+  quickEditItemId.value = found.id
+  quickName.value = String(found.name ?? '')
+  quickImageUrl.value = String(found.imageUrl ?? '')
+  quickUnit.value = String(found.unit ?? 'Unidad')
+  quickLocation.value = null
+  quickLocationIdToRestore.value = found.locationId ?? null
+  quickExpirationDate.value = found.expirationDate ?? null
+  quickQuantity.value = getSafePurchaseQuantity(found.unit, found.purchaseQuantity)
+
+  startLocationsListener()
+  isQuickCreateOpen.value = true
 }
 
 // Obtenemos el identificador del documento de la despensa actual
@@ -618,12 +714,22 @@ onBeforeUnmount(() => {
 })
 
 const isQuickCreateOpen = ref(false)
+const quickEditItemId = ref<string | null>(null)
 const quickName = ref<string>('')
 const quickImageUrl = ref<string>('')
 const quickQuantity = ref<number | null>(null)
 const quickUnit = ref<string>('Unidad')
 const quickLocation = ref<Location | null>(null)
+const quickLocationIdToRestore = ref<string | null>(null)
 const quickExpirationDate = ref<string | null>(null)
+
+const quickModalTitle = computed(() =>
+  quickEditItemId.value ? 'AÑADIR A COMPRA' : 'CREAR PRODUCTO'
+)
+
+const quickActionLabel = computed(() =>
+  quickEditItemId.value ? 'Guardar' : 'Crear'
+)
 
 const quickExpirationDateInput = computed<string>({
   get: () => quickExpirationDate.value ?? '',
@@ -658,6 +764,12 @@ function startLocationsListener() {
           name: String(loc.name ?? '')
         } as Location
       })
+
+      if (quickLocationIdToRestore.value) {
+        quickLocation.value = locations.value.find(l => l.id === quickLocationIdToRestore.value) ?? null
+      } else {
+        quickLocation.value = null
+      }
     },
     async err => {
       console.error('Error al obtener localizaciones:', err)
@@ -666,70 +778,12 @@ function startLocationsListener() {
   )
 }
 
-function getStepForUnit(unitRaw: string | undefined | null): number {
-  const u = (unitRaw || '').toLowerCase()
-
-  if (u === 'gramo' || u === 'gramos' || u === 'mililitro' || u === 'mililitros') {
-    return 50
-  }
-
-  if (
-    u === 'kilogramo' ||
-    u === 'kilogramos' ||
-    u === 'kg' ||
-    u === 'litro' ||
-    u === 'litros' ||
-    u === 'unidad' ||
-    u === 'unidades'
-  ) {
-    return 1
-  }
-
-  return 1
-}
-
-function getAdjustedQuantity(
-  current: number,
-  step: number,
-  deltaSign: 1 | -1,
-  min = 0,
-  max = Number.POSITIVE_INFINITY
-): number {
-  let target = current
-
-  if (step === 50) {
-    if (deltaSign === 1) {
-      if (current < step) {
-        target = step
-      } else if (current % step === 0) {
-        target = current + step
-      } else {
-        target = Math.floor(current / step) * step + step
-      }
-    } else {
-      if (current <= 0) {
-        target = 0
-      } else if (current % step === 0) {
-        target = current - step
-      } else {
-        target = Math.floor(current / step) * step
-      }
-    }
-  } else {
-    target = current + deltaSign * step
-  }
-
-  if (target < min) target = min
-  if (target > max) target = max
-
-  return target
-}
-
 function changeQuickQuantity(deltaSign: 1 | -1) {
   const unitToUse = quickUnit.value || 'Unidad'
   const step = getStepForUnit(unitToUse)
-  const current = quickQuantity.value ?? 0
-  const newQty = getAdjustedQuantity(current, step, deltaSign, 0)
+  const min = defaultInPurchase.value ? getDefaultPurchaseQuantity(unitToUse) : 0
+  const current = quickQuantity.value ?? min
+  const newQty = getAdjustedQuantity(current, step, deltaSign, min)
   quickQuantity.value = newQty
 }
 
@@ -737,12 +791,14 @@ function openQuickCreateFromCommon(nameItem: string, imageUrl: string) {
   const name = (nameItem ?? '').trim()
   if (!name) return
 
+  quickEditItemId.value = null
   quickName.value = name
   quickImageUrl.value = String(imageUrl ?? '')
   quickUnit.value = 'Unidad'
   quickLocation.value = null
+  quickLocationIdToRestore.value = null
   quickExpirationDate.value = null
-  quickQuantity.value = defaultInPurchase.value ? 0 : 1
+  quickQuantity.value = defaultInPurchase.value ? getDefaultPurchaseQuantity('Unidad') : 1
 
   startLocationsListener()
   isQuickCreateOpen.value = true
@@ -754,11 +810,13 @@ function requestCloseQuickCreateModal() {
 
 function onQuickCreateDidDismiss() {
   isQuickCreateOpen.value = false
+  quickEditItemId.value = null
   quickName.value = ''
   quickImageUrl.value = ''
   quickQuantity.value = null
   quickUnit.value = 'Unidad'
   quickLocation.value = null
+  quickLocationIdToRestore.value = null
   quickExpirationDate.value = null
   stopLocationsListener()
 }
@@ -775,19 +833,47 @@ async function confirmQuickCreate() {
     return
   }
 
-  const qty = Number(quickQuantity.value)
-  if (qty < 0) {
-    await showToast('La cantidad no puede ser negativa.', 'danger')
-    return
-  }
-
   const unit = String(quickUnit.value ?? 'Unidad')
   const imageUrl = String(quickImageUrl.value ?? '')
   const expirationToSave = quickExpirationDate.value ? quickExpirationDate.value.trim() : null
   const locationIdToSave = quickLocation.value ? quickLocation.value.id : null
+  const qty = Number(quickQuantity.value)
+
+  if (defaultInPurchase.value) {
+    const minQty = getDefaultPurchaseQuantity(unit)
+    if (qty < minQty) {
+      await showToast(`La cantidad mínima es ${minQty}.`, 'danger')
+      return
+    }
+
+    if (getStepForUnit(unit) === 50 && qty % 50 !== 0) {
+      await showToast('La cantidad debe ir de 50 en 50.', 'danger')
+      return
+    }
+  } else {
+    if (qty < 0) {
+      await showToast('La cantidad no puede ser negativa.', 'danger')
+      return
+    }
+  }
 
   loading.value = true
   try {
+    if (quickEditItemId.value) {
+      const refItem = doc(db, 'items', quickEditItemId.value)
+      await updateDoc(refItem, {
+        unit: unit,
+        inPurchase: true,
+        purchaseQuantity: getSafePurchaseQuantity(unit, qty),
+        locationId: locationIdToSave,
+        expirationDate: expirationToSave
+      })
+
+      await showToast(`Producto ${name} añadido a la compra.`, 'success')
+      requestCloseQuickCreateModal()
+      return
+    }
+
     const dupQ = query(
       collection(db, 'items'),
       where('pantryCode', '==', props.pantryCode),
@@ -816,7 +902,8 @@ async function confirmQuickCreate() {
     batch.set(newItemRef, {
       name: itemName,
       pantryCode: props.pantryCode,
-      quantity: qty,
+      quantity: defaultInPurchase.value ? 0 : qty,
+      purchaseQuantity: defaultInPurchase.value ? getSafePurchaseQuantity(unit, qty) : null,
       unit: unit,
       inPurchase: defaultInPurchase.value,
       imageUrl: imageUrl,
@@ -835,6 +922,7 @@ async function confirmQuickCreate() {
     }
 
     await showToast(`Producto ${name} añadido.`, 'success')
+    clearInput()
     requestCloseQuickCreateModal()
   } catch (err) {
     console.error('Error al añadir producto:', err)

@@ -9,4 +9,5 @@ export interface Item {
   imageUrl: string
   notePurchase?: string
   expirationDate?: string
+  purchaseQuantity?: number
 }
